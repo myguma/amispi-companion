@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.5] — 2026-05-11
+
+### Fixed
+- CI: Get-ChildItem -Filter のマルチ拡張子問題を Where-Object + regex に変更
+
 ## [0.1.4] — 2026-05-11
 
 ### Fixed
