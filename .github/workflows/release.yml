@@ -73,8 +73,11 @@ jobs:
           $tagName = "${{ github.ref_name || inputs.tag_name }}"
           $bundleDir = "src-tauri/target/release/bundle/nsis"
 
-          $zipFile = Get-ChildItem $bundleDir -Filter "*.nsis.zip"     -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          $sigFile = Get-ChildItem $bundleDir -Filter "*.nsis.zip.sig" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          Write-Host "Bundle dir contents:"
+          Get-ChildItem $bundleDir | ForEach-Object { Write-Host "  $($_.Name)" }
+
+          $zipFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "\.nsis\.zip$" } | Select-Object -First 1
+          $sigFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "\.nsis\.zip\.sig$" } | Select-Object -First 1
 
           if (-not $zipFile -or -not $sigFile) {
             Write-Warning "Updater zip/sig not found — skipping latest.json upload"
