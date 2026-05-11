@@ -64,29 +64,39 @@ jobs:
           releaseDraft: true
           prerelease: false
 
-      # tauri-action が生成した .nsis.zip.sig から latest.json を構築してアップロード
+      # .exe から zip を作り直して署名 → latest.json を構築してアップロード
+      # (tauri-action は .nsis.zip を生成するが次ステップ実行時には消えているため)
       - name: Upload updater assets (latest.json)
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          $tagName = "${{ github.ref_name || inputs.tag_name }}"
+          $tagName   = "${{ github.ref_name || inputs.tag_name }}"
           $bundleDir = "src-tauri/target/release/bundle/nsis"
+          $conf      = Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json
+          $version   = $conf.version
 
-          Write-Host "Bundle dir contents:"
-          Get-ChildItem $bundleDir | ForEach-Object { Write-Host "  $($_.Name)" }
+          # installer exe を探す
+          $exeFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "setup\.exe$" } | Select-Object -First 1
+          if (-not $exeFile) { Write-Error "setup.exe not found in $bundleDir"; exit 1 }
+          Write-Host "Installer: $($exeFile.FullName)"
 
-          $zipFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "\.nsis\.zip$" } | Select-Object -First 1
-          $sigFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "\.nsis\.zip\.sig$" } | Select-Object -First 1
+          # zip を作成 (temp に置く)
+          $zipName = "amispi-companion_${version}_x64-setup.nsis.zip"
+          $zipPath = Join-Path $env:TEMP $zipName
+          Compress-Archive -Path $exeFile.FullName -DestinationPath $zipPath -Force
+          Write-Host "Created: $zipPath"
 
-          if (-not $zipFile -or -not $sigFile) {
-            Write-Warning "Updater zip/sig not found — skipping latest.json upload"
-            exit 0
-          }
+          # 秘密鍵で zip に署名 (TAURI_SIGNING_PRIVATE_KEY を env から読む)
+          npx tauri signer sign $zipPath
+          $sigPath = "$zipPath.sig"
+          if (-not (Test-Path $sigPath)) { Write-Error "Signing failed — .sig not found"; exit 1 }
+          Write-Host "Signed: $sigPath"
 
-          $conf    = Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json
-          $version = $conf.version
-          $sig     = (Get-Content $sigFile.FullName -Raw).Trim()
+          # latest.json を構築
+          $sig     = (Get-Content $sigPath -Raw).Trim()
           $baseUrl = "https://github.com/myguma/amispi-companion/releases/download/$tagName"
 
           $latestJson = [ordered]@{
@@ -96,15 +106,16 @@ jobs:
             platforms = [ordered]@{
               "windows-x86_64" = [ordered]@{
                 signature = $sig
-                url       = "$baseUrl/$($zipFile.Name)"
+                url       = "$baseUrl/$zipName"
               }
             }
           } | ConvertTo-Json -Depth 5
           $latestJson | Out-File "latest.json" -Encoding utf8NoBOM
 
+          # リリースにアップロード
           gh release upload $tagName `
             "latest.json#latest.json" `
-            "$($zipFile.FullName)#$($zipFile.Name)" `
-            "$($sigFile.FullName)#$($sigFile.Name)" `
+            "${zipPath}#${zipName}" `
+            "${sigPath}#${zipName}.sig" `
             --clobber
           Write-Host "Uploaded latest.json + updater assets to $tagName"
