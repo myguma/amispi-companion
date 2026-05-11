@@ -258,6 +258,7 @@ pub fn run() {
             set_ignore_cursor_events,
             move_window,
             get_app_version,
+            quit_app,
             set_autostart,
             is_autostart_enabled,
             check_for_updates,
