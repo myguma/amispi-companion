@@ -1,4 +1,4 @@
-# AmitySpirit Companion - Release Builder
+﻿# AmitySpirit Companion - Release Builder
 # Run via build-release.bat (double-click) or: powershell -ExecutionPolicy Bypass -File build-release.ps1
 
 param(
