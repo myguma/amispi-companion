@@ -10,6 +10,7 @@ interface CharacterProps {
   state: CompanionState;
   config?: CharacterConfig;
   onClick: () => void;
+  isDragging?: boolean;
 }
 
 /** 状態に対応するスプライトURLを返す（なければフォールバック順で試みる） */
