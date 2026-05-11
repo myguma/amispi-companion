@@ -1,6 +1,5 @@
 name: Release — Windows Installer
 
-# タグ vX.Y.Z を push したとき、または手動実行で Windows ビルドを作成する
 on:
   push:
     tags:
@@ -40,13 +39,33 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build Tauri app
+      # tauri-action がビルド + Draft Release 作成 + .exe アップロードを行う
+      # .nsis.zip / .nsis.zip.sig も生成されるが action 側では latest.json を
+      # アップロードしないため、次のステップで手動追加する
+      - name: Build and create draft release
+        uses: tauri-apps/tauri-action@v0
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri:build
+        with:
+          tagName: ${{ github.ref_name || inputs.tag_name }}
+          releaseName: 'AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}'
+          releaseBody: |
+            ## AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}
 
-      - name: Create GitHub Release and upload updater assets
+            インストール方法:
+            - `amispi-companion_X.Y.Z_x64-setup.exe` をダウンロードして実行
+
+            アップデート:
+            - アプリが自動的に更新を検知します
+
+            詳細は [CHANGELOG.md](https://github.com/myguma/amispi-companion/blob/main/CHANGELOG.md) を参照してください。
+          releaseDraft: true
+          prerelease: false
+
+      # tauri-action が生成した .nsis.zip.sig から latest.json を構築してアップロード
+      - name: Upload updater assets (latest.json)
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,22 +73,19 @@ jobs:
           $tagName = "${{ github.ref_name || inputs.tag_name }}"
           $bundleDir = "src-tauri/target/release/bundle/nsis"
 
-          # --- locate generated files ---
-          $exeFile   = Get-ChildItem $bundleDir -Filter "*-setup.exe"   | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          $zipFile   = Get-ChildItem $bundleDir -Filter "*.nsis.zip"    | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          $sigFile   = Get-ChildItem $bundleDir -Filter "*.nsis.zip.sig"| Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $zipFile = Get-ChildItem $bundleDir -Filter "*.nsis.zip"     -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $sigFile = Get-ChildItem $bundleDir -Filter "*.nsis.zip.sig" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-          if (-not $exeFile) { Write-Error "setup.exe not found"; exit 1 }
-          if (-not $zipFile) { Write-Error ".nsis.zip not found"; exit 1 }
-          if (-not $sigFile) { Write-Error ".nsis.zip.sig not found"; exit 1 }
+          if (-not $zipFile -or -not $sigFile) {
+            Write-Warning "Updater zip/sig not found — skipping latest.json upload"
+            exit 0
+          }
 
-          # --- read version and signature ---
           $conf    = Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json
           $version = $conf.version
           $sig     = (Get-Content $sigFile.FullName -Raw).Trim()
           $baseUrl = "https://github.com/myguma/amispi-companion/releases/download/$tagName"
 
-          # --- build latest.json ---
           $latestJson = [ordered]@{
             version  = $version
             notes    = ""
@@ -83,12 +99,9 @@ jobs:
           } | ConvertTo-Json -Depth 5
           $latestJson | Out-File "latest.json" -Encoding utf8NoBOM
 
-          # --- create draft release ---
-          gh release create $tagName `
-            --title "AmitySpirit Companion $tagName" `
-            --notes "## AmitySpirit Companion $tagName`n`nインストール方法:`n- \`amispi-companion_${version}_x64-setup.exe\` をダウンロードして実行`n`nアップデート:`n- アプリが自動的に更新を検知します" `
-            --draft `
-            "$($exeFile.FullName)#amispi-companion_${version}_x64-setup.exe" `
-            "$($zipFile.FullName)#amispi-companion_${version}_x64-setup.nsis.zip" `
-            "$($sigFile.FullName)#amispi-companion_${version}_x64-setup.nsis.zip.sig" `
-            "latest.json#latest.json"
+          gh release upload $tagName `
+            "latest.json#latest.json" `
+            "$($zipFile.FullName)#$($zipFile.Name)" `
+            "$($sigFile.FullName)#$($sigFile.Name)" `
+            --clobber
+          Write-Host "Uploaded latest.json + updater assets to $tagName"
