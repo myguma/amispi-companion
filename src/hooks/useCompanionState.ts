@@ -164,6 +164,7 @@ export function useCompanionState(
     }, 1500);
 
     resetSleepTimer();
+    scheduleIdleSpeech();
 
     return () => {
       clearTimeout(greetTimer);
