@@ -6,85 +6,123 @@
 import type { DialogueEntry, DialogueTrigger } from "../../types/companion";
 
 const DIALOGUE_DATA: DialogueEntry[] = [
-  // ──── idle_greeting ────────────────────────────────────────
+  // ──── idle_greeting (フォールバック用) ───────────────────────
   {
-    id: "ig_01",
+    id: "ig_00",
     trigger: "idle_greeting",
+    lines: ["...いるよ", "ここにいる"],
+  },
+
+  // ──── morning_greeting (5〜11時) ──────────────────────────
+  {
+    id: "mg_01",
+    trigger: "morning_greeting",
     lines: [
-      "...",
-      "Here.",
-      "Still here.",
-      "Watching the light.",
+      "おはよう",
+      "...おはよう。早いね",
+      "朝か。今日もよろしく",
+      "...起きてる？",
     ],
   },
 
-  // ──── touch_reaction ───────────────────────────────────────
+  // ──── afternoon_greeting (11〜17時) ──────────────────────
+  {
+    id: "ag_01",
+    trigger: "afternoon_greeting",
+    lines: [
+      "...いるよ",
+      "ここにいる",
+      "何か用？",
+      "お昼だね",
+    ],
+  },
+
+  // ──── evening_greeting (17〜22時) ────────────────────────
+  {
+    id: "eg_01",
+    trigger: "evening_greeting",
+    lines: [
+      "お疲れ様",
+      "...夕方になったね",
+      "今日どうだった",
+      "そろそろ休む？",
+    ],
+  },
+
+  // ──── night_greeting (22〜5時) ────────────────────────────
+  {
+    id: "ng_01",
+    trigger: "night_greeting",
+    lines: [
+      "まだ起きてるの",
+      "...深夜だよ",
+      "夜更かしかな",
+      "...一緒にいるよ",
+    ],
+  },
+
+  // ──── touch_reaction ──────────────────────────────────────
   {
     id: "tr_01",
     trigger: "touch_reaction",
-    lines: [
-      "Ah—",
-      "Oh.",
-      "Yes?",
-      "Mm.",
-      "You found me.",
-    ],
+    lines: ["ん", "...なに？", "呼んだ？", "ここにいるよ"],
   },
   {
     id: "tr_02",
     trigger: "touch_reaction",
-    lines: [
-      "What is it?",
-      "I'm here.",
-      "...",
-    ],
+    lines: ["どうしたの", "...うん", "何かあった？"],
     weight: 0.5,
   },
 
-  // ──── wake_reaction ────────────────────────────────────────
+  // ──── wake_reaction ───────────────────────────────────────
   {
     id: "wr_01",
     trigger: "wake_reaction",
     lines: [
-      "Mm... still here.",
-      "Back.",
-      "Oh — you returned.",
-      "Was I gone long?",
+      "...ん、戻った",
+      "うとうとしてた",
+      "...起こした？",
+      "また来たんだ",
     ],
   },
 
-  // ──── speaking_response ────────────────────────────────────
+  // ──── speaking_response ───────────────────────────────────
   {
     id: "sr_01",
     trigger: "speaking_response",
     lines: [
-      "Something is moving.",
-      "I notice things.",
-      "Time passes strangely here.",
-      "You work in interesting ways.",
+      "何か動いた",
+      "...気になる",
+      "時間が経つのって不思議",
+      "面白い動き方するね",
     ],
   },
 
-  // ──── random_idle ──────────────────────────────────────────
+  // ──── random_idle ─────────────────────────────────────────
   {
     id: "ri_01",
     trigger: "random_idle",
-    lines: [
-      "...",
-      "Quiet today.",
-      "Still working?",
-      "I'm nearby.",
-    ],
+    lines: ["...", "静かだね", "作業中？", "そこにいるよ"],
     weight: 2,
   },
   {
     id: "ri_02",
     trigger: "random_idle",
-    lines: [
-      "Something's on my mind.",
-      "Strange feeling.",
-    ],
+    lines: ["なんか考えてる", "...ぼーっとしてた"],
+    weight: 0.8,
+  },
+  {
+    id: "ri_03",
+    trigger: "random_idle",
+    lines: ["休んでる？", "...疲れてない？"],
     weight: 0.5,
+  },
+
+  // ──── drag_reaction ───────────────────────────────────────
+  {
+    id: "dr_01",
+    trigger: "drag_reaction",
+    lines: ["わっ", "...どこ行くの", "ちょっと"],
   },
 ];
 
