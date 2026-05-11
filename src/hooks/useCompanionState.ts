@@ -27,6 +27,7 @@ export function useCompanionState(
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearAllTimers = useCallback(() => {
     if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
