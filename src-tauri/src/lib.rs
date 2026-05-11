@@ -1,4 +1,5 @@
 use tauri::{Manager, Runtime};
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_updater::UpdaterExt;
 
 // ウィンドウのクリックスルーを切り替えるコマンド
@@ -31,20 +32,37 @@ fn get_app_version() -> String {
 }
 
 // ──────────────────────────────────────────────────────────
+// 自動起動
+// ──────────────────────────────────────────────────────────
+
+/// Windows スタートアップへの登録を切り替える
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let autolaunch = app.autolaunch();
+    if enabled {
+        autolaunch.enable().map_err(|e| e.to_string())
+    } else {
+        autolaunch.disable().map_err(|e| e.to_string())
+    }
+}
+
+/// 自動起動が有効かどうかを返す
+#[tauri::command]
+fn is_autostart_enabled(app: tauri::AppHandle) -> bool {
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+// ──────────────────────────────────────────────────────────
 // アップデーター
-// ネットワークエラー・設定未完了の場合は None を返してサイレントに失敗する
 // ──────────────────────────────────────────────────────────
 
 #[derive(Debug, serde::Serialize, Clone)]
 pub struct UpdateInfo {
-    /// 利用可能な新バージョン文字列 (例: "0.2.0")
     pub version: String,
-    /// リリースノート (Markdown 可)
     pub body: Option<String>,
 }
 
 /// アップデートがあれば UpdateInfo を返す。なければ None。
-/// エラー時もサイレントに None を返す（オフライン時でもアプリが動くように）。
 #[tauri::command]
 async fn check_for_updates(app: tauri::AppHandle) -> Option<UpdateInfo> {
     let updater = app.updater_builder().build().ok()?;
@@ -56,7 +74,6 @@ async fn check_for_updates(app: tauri::AppHandle) -> Option<UpdateInfo> {
 }
 
 /// アップデートをダウンロードしてインストールし、アプリを再起動する。
-/// 失敗してもエラーを無視してアプリは継続する。
 #[tauri::command]
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     let updater = app
@@ -69,29 +86,34 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     };
 
     update
-        .download_and_install(
-            |_chunk, _total| { /* 進捗は将来 Tauri イベントで通知する */ },
-            || { /* ダウンロード完了コールバック */ },
-        )
+        .download_and_install(|_chunk, _total| {}, || {})
         .await
         .map_err(|e| e.to_string())?;
 
-    // Windows NSIS passive モード: インストール完了後にアプリを再起動
     app.restart();
 }
+
+// ──────────────────────────────────────────────────────────
+// アプリエントリーポイント
+// ──────────────────────────────────────────────────────────
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            // macOS 用設定。Windows では無視されるが引数として必要
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .setup(|app| {
             let window = app.get_webview_window("companion").unwrap();
 
             #[cfg(debug_assertions)]
             window.open_devtools();
 
-            // 初期位置: 右下隅に配置
+            // 初期位置: 右下隅
             if let Some(monitor) = window.current_monitor().ok().flatten() {
                 let screen_size = monitor.size();
                 let window_size = window.outer_size().unwrap_or(tauri::PhysicalSize {
@@ -106,15 +128,24 @@ pub fn run() {
                 ));
             }
 
+            // 初回インストール時にスタートアップ登録を有効にする
+            // すでに登録済みの場合は何もしない
+            let autolaunch = app.autolaunch();
+            if !autolaunch.is_enabled().unwrap_or(true) {
+                let _ = autolaunch.enable();
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             set_ignore_cursor_events,
             move_window,
             get_app_version,
+            set_autostart,
+            is_autostart_enabled,
             check_for_updates,
             install_update,
         ])
         .run(tauri::generate_context!())
-        .expect("AmitySpirit Companion の起動に失敗しました");
+        .expect("AmitySpirit Companion startup failed");
 }
