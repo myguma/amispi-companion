@@ -1,7 +1,7 @@
 // AmitySpirit Companion — ルートコンポーネント
 // ウィンドウレイアウト・状態管理・ドラッグ制御・アップデーターの統合点
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCompanionState } from "./hooks/useCompanionState";
 import { useDrag } from "./hooks/useDrag";
@@ -10,6 +10,7 @@ import { useUpdater } from "./systems/updater/useUpdater";
 import { Character } from "./components/Character";
 import { SpeechBubble } from "./components/SpeechBubble";
 import { UpdateBadge } from "./components/UpdateBadge";
+import { ContextMenu } from "./components/ContextMenu";
 import { DebugOverlay } from "./components/DebugOverlay";
 import { DEFAULT_CHARACTER_CONFIG } from "./types/companion";
 import "./styles/index.css";
@@ -18,12 +19,17 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 
 export default function App() {
   const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState();
-  const { onDragStart } = useDrag();
+  const { onDragStart, isDragging } = useDrag();
   useWander(state);
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // クリックスルーは Rust 側のカーソル位置ポーリングで制御するため JS 側は不要
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
 
   // ──────────────────────────────────────────
   // 常時最前面
@@ -38,7 +44,7 @@ export default function App() {
   // ──────────────────────────────────────────
   useEffect(() => {
     if (updateAvailable) {
-      triggerSpeak(`v${updateAvailable.version} arrived.`);
+      triggerSpeak(`v${updateAvailable.version} 来てるよ`);
     }
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -55,6 +61,7 @@ export default function App() {
         paddingBottom: 12,
         position: "relative",
       }}
+      onContextMenu={handleContextMenu}
     >
       <DebugOverlay state={state} speechText={speechText} />
 
@@ -84,6 +91,7 @@ export default function App() {
           state={state}
           config={DEFAULT_CHARACTER_CONFIG}
           onClick={onCharacterClick}
+          isDragging={isDragging}
         />
       </div>
 
@@ -93,6 +101,15 @@ export default function App() {
           version={updateAvailable.version}
           installing={installing}
           onInstall={installUpdate}
+        />
+      )}
+
+      {/* 右クリックメニュー */}
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
         />
       )}
     </div>
