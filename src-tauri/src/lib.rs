@@ -2,7 +2,53 @@ use tauri::{Manager, Runtime};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_updater::UpdaterExt;
 
-// ウィンドウのクリックスルーを切り替えるコマンド
+// ──────────────────────────────────────────────────────────
+// クリックスルー制御
+// ──────────────────────────────────────────────────────────
+
+// カーソル位置を OS から取得 (Windows のみ)
+#[cfg(windows)]
+fn cursor_pos() -> Option<(i32, i32)> {
+    use windows_sys::Win32::Foundation::POINT;
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetCursorPos;
+    let mut pt = POINT { x: 0, y: 0 };
+    unsafe {
+        if GetCursorPos(&mut pt) != 0 {
+            Some((pt.x, pt.y))
+        } else {
+            None
+        }
+    }
+}
+
+// ウィンドウ上にカーソルがあるときだけクリック有効にするスレッド
+#[cfg(windows)]
+fn start_hit_test_thread(window: tauri::WebviewWindow) {
+    std::thread::spawn(move || {
+        let mut last_ignore = true;
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(16));
+
+            let Some((cx, cy)) = cursor_pos() else { continue };
+            let Ok(pos) = window.outer_position() else { continue };
+            let Ok(size) = window.outer_size() else { continue };
+
+            let in_window = cx >= pos.x
+                && cx < pos.x + size.width as i32
+                && cy >= pos.y
+                && cy < pos.y + size.height as i32;
+
+            // 変化があるときだけ呼ぶ（毎フレーム呼ぶと重い）
+            let ignore = !in_window;
+            if ignore != last_ignore {
+                let _ = window.set_ignore_cursor_events(ignore);
+                last_ignore = ignore;
+            }
+        }
+    });
+}
+
+// JS から呼ばれるコマンド (互換性のために残す・実際には使わない)
 #[tauri::command]
 fn set_ignore_cursor_events<R: Runtime>(
     window: tauri::Window<R>,
@@ -35,7 +81,6 @@ fn get_app_version() -> String {
 // 自動起動
 // ──────────────────────────────────────────────────────────
 
-/// Windows スタートアップへの登録を切り替える
 #[tauri::command]
 fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     let autolaunch = app.autolaunch();
@@ -46,7 +91,6 @@ fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     }
 }
 
-/// 自動起動が有効かどうかを返す
 #[tauri::command]
 fn is_autostart_enabled(app: tauri::AppHandle) -> bool {
     app.autolaunch().is_enabled().unwrap_or(false)
@@ -62,7 +106,6 @@ pub struct UpdateInfo {
     pub body: Option<String>,
 }
 
-/// アップデートがあれば UpdateInfo を返す。なければ None。
 #[tauri::command]
 async fn check_for_updates(app: tauri::AppHandle) -> Option<UpdateInfo> {
     let updater = app.updater_builder().build().ok()?;
@@ -73,7 +116,6 @@ async fn check_for_updates(app: tauri::AppHandle) -> Option<UpdateInfo> {
     })
 }
 
-/// アップデートをダウンロードしてインストールし、アプリを再起動する。
 #[tauri::command]
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     let updater = app
@@ -103,7 +145,6 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
-            // macOS 用設定。Windows では無視されるが引数として必要
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
@@ -128,8 +169,13 @@ pub fn run() {
                 ));
             }
 
-            // 初回インストール時にスタートアップ登録を有効にする
-            // すでに登録済みの場合は何もしない
+            // カーソル位置ベースのクリックスルー制御 (Windows)
+            // 最初はクリックスルーON、ウィンドウ上に乗ったら自動でOFF
+            let _ = window.set_ignore_cursor_events(true);
+            #[cfg(windows)]
+            start_hit_test_thread(window.clone());
+
+            // 初回インストール時にスタートアップ登録
             let autolaunch = app.autolaunch();
             if !autolaunch.is_enabled().unwrap_or(true) {
                 let _ = autolaunch.enable();
