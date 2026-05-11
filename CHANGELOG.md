@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] — 2026-05-11
+
+### Fixed
+- ワークフロー: tauri-action に戻し、後続ステップで latest.json を手動構築・アップロード
+  (直接 tauri build では .nsis.zip が生成されないことが判明)
+
 ## [0.1.3] — 2026-05-11
 
 ### Added
