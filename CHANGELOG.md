@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.11] — 2026-05-12
+
+### Fixed
+- 自動更新: zip 圧縮方式を Compress-Archive から 7-Zip (Deflate) に変更。
+  Tauri の zip ライブラリが非対応の圧縮方式だったため "Compression method not supported" エラーが発生していた。
+
 ## [0.1.10] — 2026-05-12
 
 ### Added
