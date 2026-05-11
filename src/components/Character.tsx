@@ -162,10 +162,12 @@ export function Character({
   state,
   config = DEFAULT_CHARACTER_CONFIG,
   onClick,
+  isDragging = false,
 }: CharacterProps) {
   const [useFallback, setUseFallback] = useState(false);
 
-  const spriteUrls = getSpriteUrl(config.id, state);
+  const effectiveState: CompanionState = isDragging ? "touched" : state;
+  const spriteUrls = getSpriteUrl(config.id, effectiveState);
 
   return (
     <div
