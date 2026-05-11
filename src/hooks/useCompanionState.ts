@@ -74,6 +74,23 @@ export function useCompanionState(
   );
 
   // ──────────────────────────────────────────
+  // ランダム独り言 (2〜4分に1回、idle中のみ)
+  // ──────────────────────────────────────────
+  const stateRef = useRef<CompanionState>("idle");
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  const scheduleIdleSpeech = useCallback(() => {
+    if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
+    const delay = 120_000 + Math.random() * 120_000; // 2〜4分
+    idleSpeechTimerRef.current = setTimeout(() => {
+      if (stateRef.current === "idle") {
+        triggerSpeak(pickDialogue("random_idle"));
+      }
+      scheduleIdleSpeech();
+    }, delay);
+  }, [triggerSpeak]);
+
+  // ──────────────────────────────────────────
   // AI応答のリクエスト
   // ──────────────────────────────────────────
   const requestAIResponse = useCallback(async () => {
