@@ -46,9 +46,10 @@ export function useUpdater(): UseUpdaterReturn {
     if (!isTauri || installing) return;
     setInstalling(true);
 
-    invoke("install_update").catch(() => {
-      // インストール失敗時はボタンをリセットする
+    invoke("install_update").catch((err: unknown) => {
       setInstalling(false);
+      // eslint-disable-next-line no-alert
+      alert(`Update failed: ${String(err)}`);
     });
     // 成功時は app.restart() が呼ばれるためここには戻ってこない
   }, [installing]);
