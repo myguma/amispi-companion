@@ -33,9 +33,11 @@ export function useCompanionState(
     if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
     if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
     if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
+    if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
     sleepTimerRef.current = null;
     transitionTimerRef.current = null;
     speechTimerRef.current = null;
+    idleSpeechTimerRef.current = null;
   }, []);
 
   const resetSleepTimer = useCallback(() => {
