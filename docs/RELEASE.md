@@ -120,19 +120,28 @@ GitHub の Releases ページを開き、Draft を確認してから **Publish r
 
 ---
 
-## ビルドの手動確認
+## ローカルでビルドする (ダブルクリック)
 
-GitHub Actions を待たずにローカルでビルドを確認したい場合 (Windows PowerShell から):
+GitHub Actions を使わず Windows 上でインストーラーをビルドする方法:
 
-```powershell
-cd \path\to\amispi-companion
-npm install
-$env:TAURI_SIGNING_PRIVATE_KEY = "秘密鍵の値"
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
-npm run tauri:build
+### 1. 秘密鍵をローカルに保存
+
+Windows 側で以下のファイルを作成する:
 ```
+C:\Users\<YourName>\.tauri\amispi-companion.key
+```
+内容は `docs/RELEASE.md` の「秘密鍵」セクションをそのまま貼り付ける。
 
-生成物: `src-tauri/target/release/bundle/nsis/amispi-companion_X.Y.Z_x64-setup.exe`
+### 2. バッチファイルをダブルクリック
+
+エクスプローラーで `scripts\build-release.bat` をダブルクリック。
+
+- 依存関係チェック (Node.js / Rust / npm)
+- 署名鍵の自動読み込み
+- インストーラービルド (初回は 5〜10 分)
+- 完了後にエクスプローラーでインストーラーを開く
+
+生成物: `src-tauri\target\release\bundle\nsis\amispi-companion_X.Y.Z_x64-setup.exe`
 
 ---
 
