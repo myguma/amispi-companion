@@ -126,6 +126,15 @@ const DIALOGUE_DATA: DialogueEntry[] = [
   },
 ];
 
+/** 起動時刻に合わせた挨拶を返す */
+export function pickTimedGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 11) return pickDialogue("morning_greeting");
+  if (h >= 11 && h < 17) return pickDialogue("afternoon_greeting");
+  if (h >= 17 && h < 22) return pickDialogue("evening_greeting");
+  return pickDialogue("night_greeting");
+}
+
 /**
  * トリガーに対応するセリフをランダムに1行選ぶ
  * 重み付き抽選を行う
