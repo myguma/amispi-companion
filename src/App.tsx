@@ -19,8 +19,8 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 
 export default function App() {
   const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState();
-  const { onDragStart, isDragging } = useDrag();
-  useWander(state);
+  const { onDragStart, isDragging, mouseDownRef } = useDrag();
+  useWander(state, mouseDownRef);
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const containerRef = useRef<HTMLDivElement>(null);
 
