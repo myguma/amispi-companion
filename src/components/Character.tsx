@@ -189,7 +189,7 @@ export function Character({
         />
       ) : (
         <SpiritOrbFallback
-          state={state}
+          state={effectiveState}
           width={config.width}
           height={config.height}
         />
