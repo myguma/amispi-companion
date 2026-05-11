@@ -3,7 +3,6 @@
 
 import { useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { invoke } from "@tauri-apps/api/core";
 import { useCompanionState } from "./hooks/useCompanionState";
 import { useDrag } from "./hooks/useDrag";
 import { useWander } from "./hooks/useWander";
