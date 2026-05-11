@@ -8,7 +8,7 @@ import { DEFAULT_STATE_CONFIG } from "../types/companion";
 import { logEvent } from "../systems/memory/memoryStore";
 import { getAIResponse } from "../systems/ai/AIProvider";
 import { getRecentEvents } from "../systems/memory/memoryStore";
-import { pickDialogue } from "../systems/dialogue/dialogueData";
+import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
 
 interface UseCompanionStateReturn {
   state: CompanionState;
