@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6] — 2026-05-12
+
+### Fixed
+- 自動更新: tauri-action が .nsis.zip を次ステップ実行前に削除するため、
+  .exe から自前で zip を作成 → npx tauri signer sign で署名 → latest.json 構築
+
 ## [0.1.5] — 2026-05-11
 
 ### Fixed
