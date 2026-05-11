@@ -83,10 +83,11 @@ jobs:
           if (-not $exeFile) { Write-Error "setup.exe not found in $bundleDir"; exit 1 }
           Write-Host "Installer: $($exeFile.FullName)"
 
-          # zip を作成 (temp に置く)
+          # zip を作成 (7-Zip で Deflate 圧縮 — Compress-Archive は非対応方式になる場合がある)
           $zipName = "amispi-companion_${version}_x64-setup.nsis.zip"
           $zipPath = Join-Path $env:TEMP $zipName
-          Compress-Archive -Path $exeFile.FullName -DestinationPath $zipPath -Force
+          & "C:\Program Files\7-Zip\7z.exe" a -tzip -mm=Deflate -mx=5 $zipPath $exeFile.FullName
+          if ($LASTEXITCODE -ne 0) { Write-Error "7-Zip failed"; exit 1 }
           Write-Host "Created: $zipPath"
 
           # 秘密鍵で zip に署名 (TAURI_SIGNING_PRIVATE_KEY を env から読む)
