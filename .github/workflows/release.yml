@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'リリースタグ (例: v0.2.0)'
+        description: 'Release tag (e.g. v0.2.0)'
         required: true
         default: 'v0.1.0'
 
@@ -16,56 +16,79 @@ jobs:
   build-windows:
     name: Windows NSIS Installer
     permissions:
-      contents: write   # GitHub Release の作成・アップロードに必要
+      contents: write
     runs-on: windows-latest
 
     steps:
-      # ── ソース取得 ────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Node.js セットアップ ────────────────────────────────
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
 
-      # ── Rust セットアップ ────────────────────────────────────
       - name: Setup Rust (stable)
         uses: dtolnay/rust-toolchain@stable
 
-      # ── Rust キャッシュ ─────────────────────────────────────
       - name: Cache Rust build
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      # ── フロントエンド依存関係 ─────────────────────────────
       - name: Install frontend dependencies
         run: npm install
 
-      # ── Tauri ビルド + GitHub Release 作成 ────────────────
-      # TAURI_SIGNING_PRIVATE_KEY: Repository Secrets に設定すること
-      # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: パスワードなしの場合は空文字
-      - name: Build and publish release
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        with:
-          tagName: ${{ github.ref_name || inputs.tag_name }}
-          releaseName: 'AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}'
-          releaseBody: |
-            ## AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}
+        run: npm run tauri:build
 
-            インストール方法:
-            - `amispi-companion_X.Y.Z_x64-setup.exe` をダウンロードして実行
+      - name: Create GitHub Release and upload updater assets
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tagName = "${{ github.ref_name || inputs.tag_name }}"
+          $bundleDir = "src-tauri/target/release/bundle/nsis"
 
-            アップデート:
-            - アプリが自動的に更新を検知します
+          # --- locate generated files ---
+          $exeFile   = Get-ChildItem $bundleDir -Filter "*-setup.exe"   | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $zipFile   = Get-ChildItem $bundleDir -Filter "*.nsis.zip"    | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $sigFile   = Get-ChildItem $bundleDir -Filter "*.nsis.zip.sig"| Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
-            詳細は [CHANGELOG.md](https://github.com/myguma/amispi-companion/blob/main/CHANGELOG.md) を参照してください。
-          releaseDraft: true
-          prerelease: false
+          if (-not $exeFile) { Write-Error "setup.exe not found"; exit 1 }
+          if (-not $zipFile) { Write-Error ".nsis.zip not found"; exit 1 }
+          if (-not $sigFile) { Write-Error ".nsis.zip.sig not found"; exit 1 }
+
+          # --- read version and signature ---
+          $conf    = Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json
+          $version = $conf.version
+          $sig     = (Get-Content $sigFile.FullName -Raw).Trim()
+          $baseUrl = "https://github.com/myguma/amispi-companion/releases/download/$tagName"
+
+          # --- build latest.json ---
+          $latestJson = [ordered]@{
+            version  = $version
+            notes    = ""
+            pub_date = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+            platforms = [ordered]@{
+              "windows-x86_64" = [ordered]@{
+                signature = $sig
+                url       = "$baseUrl/$($zipFile.Name)"
+              }
+            }
+          } | ConvertTo-Json -Depth 5
+          $latestJson | Out-File "latest.json" -Encoding utf8NoBOM
+
+          # --- create draft release ---
+          gh release create $tagName `
+            --title "AmitySpirit Companion $tagName" `
+            --notes "## AmitySpirit Companion $tagName`n`nインストール方法:`n- \`amispi-companion_${version}_x64-setup.exe\` をダウンロードして実行`n`nアップデート:`n- アプリが自動的に更新を検知します" `
+            --draft `
+            "$($exeFile.FullName)#amispi-companion_${version}_x64-setup.exe" `
+            "$($zipFile.FullName)#amispi-companion_${version}_x64-setup.nsis.zip" `
+            "$($sigFile.FullName)#amispi-companion_${version}_x64-setup.nsis.zip.sig" `
+            "latest.json#latest.json"
