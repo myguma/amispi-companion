@@ -3,6 +3,7 @@
 // 参考: Shimeji (java.simmi.org) の random-walk アプローチを TypeScript で再実装
 
 import { useEffect, useRef } from "react";
+import type React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { CompanionState } from "../types/companion";
 
