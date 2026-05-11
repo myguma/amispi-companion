@@ -1,46 +1,40 @@
 // AmitySpirit Companion — ルートコンポーネント
-// ウィンドウレイアウト・状態管理・ドラッグ制御の統合点
+// ウィンドウレイアウト・状態管理・ドラッグ制御・アップデーターの統合点
 
 import { useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
 import { useCompanionState } from "./hooks/useCompanionState";
 import { useDrag } from "./hooks/useDrag";
+import { useUpdater } from "./systems/updater/useUpdater";
 import { Character } from "./components/Character";
 import { SpeechBubble } from "./components/SpeechBubble";
+import { UpdateBadge } from "./components/UpdateBadge";
 import { DebugOverlay } from "./components/DebugOverlay";
 import { DEFAULT_CHARACTER_CONFIG } from "./types/companion";
 import "./styles/index.css";
 
-// Tauri環境かブラウザ環境かを判定
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 export default function App() {
-  const { state, speechText, onCharacterClick } = useCompanionState();
+  const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState();
   const { onDragStart } = useDrag();
+  const { updateAvailable, installing, installUpdate } = useUpdater();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // ──────────────────────────────────────────
   // クリックスルー制御
-  // マウスがキャラクターエリアにある場合のみイベントを受け取る
   // ──────────────────────────────────────────
   useEffect(() => {
     if (!isTauri) return;
-
     const container = containerRef.current;
     if (!container) return;
 
-    const handleMouseEnter = () => {
-      void invoke("set_ignore_cursor_events", { ignore: false });
-    };
-    const handleMouseLeave = () => {
-      void invoke("set_ignore_cursor_events", { ignore: true });
-    };
+    const handleMouseEnter = () => void invoke("set_ignore_cursor_events", { ignore: false });
+    const handleMouseLeave = () => void invoke("set_ignore_cursor_events", { ignore: true });
 
     container.addEventListener("mouseenter", handleMouseEnter);
     container.addEventListener("mouseleave", handleMouseLeave);
-
-    // 初期状態: 透明エリアはクリックスルー
     void invoke("set_ignore_cursor_events", { ignore: true });
 
     return () => {
@@ -50,17 +44,23 @@ export default function App() {
   }, []);
 
   // ──────────────────────────────────────────
-  // ウィンドウフォーカス制御
-  // 起動時にフォーカスを奪わない
+  // 常時最前面
   // ──────────────────────────────────────────
   useEffect(() => {
     if (!isTauri) return;
-    const win = getCurrentWindow();
-    void win.setAlwaysOnTop(true);
+    void getCurrentWindow().setAlwaysOnTop(true);
   }, []);
 
+  // ──────────────────────────────────────────
+  // アップデートが見つかったらキャラクターに一言言わせる
+  // ──────────────────────────────────────────
+  useEffect(() => {
+    if (updateAvailable) {
+      triggerSpeak(`v${updateAvailable.version} arrived.`);
+    }
+  }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    // 外側コンテナ: ウィンドウ全体 (200x300)
     <div
       style={{
         width: 200,
@@ -70,11 +70,10 @@ export default function App() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-end",
-        paddingBottom: 16,
+        paddingBottom: 12,
         position: "relative",
       }}
     >
-      {/* デバッグオーバーレイ (開発時のみ) */}
       <DebugOverlay state={state} speechText={speechText} />
 
       {/* 吹き出しエリア */}
@@ -92,7 +91,7 @@ export default function App() {
         <SpeechBubble text={speechText} />
       </div>
 
-      {/* キャラクター本体 — ドラッグハンドルを兼ねる */}
+      {/* キャラクター本体 */}
       <div
         ref={containerRef}
         className="drag-handle"
@@ -105,6 +104,15 @@ export default function App() {
           onClick={onCharacterClick}
         />
       </div>
+
+      {/* アップデートバッジ (利用可能なときのみ表示) */}
+      {updateAvailable && (
+        <UpdateBadge
+          version={updateAvailable.version}
+          installing={installing}
+          onInstall={installUpdate}
+        />
+      )}
     </div>
   );
 }
