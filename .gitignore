@@ -1,0 +1,29 @@
+# 依存関係
+node_modules/
+target/
+
+# ビルド成果物
+dist/
+src-tauri/gen/
+
+# Tauri生成ファイル
+src-tauri/target/
+
+# 環境変数 (絶対にコミットしない)
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ
+.vscode/settings.json
+.idea/
+*.swp
+
+# ログ
+*.log
+npm-debug.log*

@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   ベース: 透明ウィンドウの必須スタイル
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+html,
+#root {
+  background: transparent !important;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================================
+   Spirit Orb フォールバック — キャラクターのSVGラッパー
+   ============================================================ */
+
+.spirit-orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: orb-float 3s ease-in-out infinite;
+}
+
+/* 状態別アニメーション */
+.spirit-orb[data-state="idle"] {
+  animation: orb-float 3s ease-in-out infinite, orb-pulse 4s ease-in-out infinite;
+}
+
+.spirit-orb[data-state="touched"] {
+  animation: orb-bounce 0.3s ease-out, orb-flash 0.3s ease-out;
+}
+
+.spirit-orb[data-state="sleep"] {
+  animation: orb-breathe 5s ease-in-out infinite;
+  opacity: 0.65;
+  filter: saturate(0.5) brightness(0.8);
+}
+
+.spirit-orb[data-state="waking"] {
+  animation: orb-wake 1.5s ease-out forwards;
+}
+
+.spirit-orb[data-state="thinking"] {
+  animation: orb-spin-glow 1.2s linear infinite;
+}
+
+.spirit-orb[data-state="speaking"] {
+  animation: orb-float 2s ease-in-out infinite, orb-pulse-fast 0.8s ease-in-out infinite;
+}
+
+/* ============================================================
+   キーフレーム
+   ============================================================ */
+
+@keyframes orb-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes orb-pulse {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(168, 144, 240, 0.4)); }
+  50%       { filter: drop-shadow(0 0 18px rgba(168, 144, 240, 0.9)); }
+}
+
+@keyframes orb-pulse-fast {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(168, 144, 240, 0.6)); }
+  50%       { filter: drop-shadow(0 0 22px rgba(200, 180, 255, 1)); }
+}
+
+@keyframes orb-bounce {
+  0%   { transform: scale(1) translateY(0); }
+  30%  { transform: scale(1.15) translateY(-5px); }
+  60%  { transform: scale(0.95) translateY(2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+
+@keyframes orb-flash {
+  0%   { filter: brightness(1); }
+  40%  { filter: brightness(2.5) saturate(2); }
+  100% { filter: brightness(1); }
+}
+
+@keyframes orb-breathe {
+  0%, 100% { transform: scale(0.9) translateY(4px); }
+  50%       { transform: scale(0.95) translateY(2px); }
+}
+
+@keyframes orb-wake {
+  0%   { opacity: 0.5; filter: saturate(0.3) brightness(0.7); transform: scale(0.85); }
+  60%  { opacity: 1;   filter: saturate(1.5) brightness(1.4); transform: scale(1.05); }
+  100% { opacity: 1;   filter: saturate(1)   brightness(1);   transform: scale(1); }
+}
+
+@keyframes orb-spin-glow {
+  0%   { filter: drop-shadow(0 0 12px rgba(168, 144, 240, 0.8)) hue-rotate(0deg); }
+  100% { filter: drop-shadow(0 0 12px rgba(168, 144, 240, 0.8)) hue-rotate(360deg); }
+}
+
+/* Zzzテキストアニメーション */
+.zzz-1 {
+  animation: zzz-rise 3s ease-in-out infinite;
+}
+.zzz-2 {
+  animation: zzz-rise 3s ease-in-out 0.5s infinite;
+}
+.zzz-3 {
+  animation: zzz-rise 3s ease-in-out 1s infinite;
+}
+
+@keyframes zzz-rise {
+  0%   { opacity: 0; transform: translateY(0); }
+  20%  { opacity: 0.8; }
+  80%  { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
+
+/* ============================================================
+   吹き出し
+   ============================================================ */
+
+.speech-bubble {
+  position: relative;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(168, 144, 240, 0.4);
+  border-radius: 12px;
+  padding: 8px 12px;
+  max-width: 180px;
+  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #3a2870;
+  line-height: 1.4;
+  box-shadow: 0 4px 16px rgba(100, 60, 200, 0.15);
+  animation: bubble-appear 0.25s ease-out;
+  word-break: break-word;
+}
+
+.speech-bubble-tail {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(255, 255, 255, 0.92);
+}
+
+/* 吹き出し末尾の枠線 */
+.speech-bubble-tail::before {
+  content: "";
+  position: absolute;
+  bottom: 1px;
+  left: -9px;
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid rgba(168, 144, 240, 0.4);
+  z-index: -1;
+}
+
+@keyframes bubble-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ============================================================
+   ドラッグハンドル
+   ============================================================ */
+
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
