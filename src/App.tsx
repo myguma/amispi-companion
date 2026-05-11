@@ -24,26 +24,7 @@ export default function App() {
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ──────────────────────────────────────────
-  // クリックスルー制御
-  // ──────────────────────────────────────────
-  useEffect(() => {
-    if (!isTauri) return;
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleMouseEnter = () => void invoke("set_ignore_cursor_events", { ignore: false });
-    const handleMouseLeave = () => void invoke("set_ignore_cursor_events", { ignore: true });
-
-    container.addEventListener("mouseenter", handleMouseEnter);
-    container.addEventListener("mouseleave", handleMouseLeave);
-    void invoke("set_ignore_cursor_events", { ignore: true });
-
-    return () => {
-      container.removeEventListener("mouseenter", handleMouseEnter);
-      container.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, []);
+  // クリックスルーは Rust 側のカーソル位置ポーリングで制御するため JS 側は不要
 
   // ──────────────────────────────────────────
   // 常時最前面
