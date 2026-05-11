@@ -160,7 +160,7 @@ export function useCompanionState(
 
     // 少し遅らせて起動挨拶を表示
     const greetTimer = setTimeout(() => {
-      triggerSpeak(pickDialogue("idle_greeting"));
+      triggerSpeak(pickTimedGreeting());
     }, 1500);
 
     resetSleepTimer();
