@@ -1,0 +1,71 @@
+name: Release — Windows Installer
+
+# タグ vX.Y.Z を push したとき、または手動実行で Windows ビルドを作成する
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'リリースタグ (例: v0.2.0)'
+        required: true
+        default: 'v0.1.0'
+
+jobs:
+  build-windows:
+    name: Windows NSIS Installer
+    permissions:
+      contents: write   # GitHub Release の作成・アップロードに必要
+    runs-on: windows-latest
+
+    steps:
+      # ── ソース取得 ────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node.js セットアップ ────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      # ── Rust セットアップ ────────────────────────────────────
+      - name: Setup Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      # ── Rust キャッシュ ─────────────────────────────────────
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      # ── フロントエンド依存関係 ─────────────────────────────
+      - name: Install frontend dependencies
+        run: npm install
+
+      # ── Tauri ビルド + GitHub Release 作成 ────────────────
+      # TAURI_SIGNING_PRIVATE_KEY: Repository Secrets に設定すること
+      # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: パスワードなしの場合は空文字
+      - name: Build and publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name || inputs.tag_name }}
+          releaseName: 'AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}'
+          releaseBody: |
+            ## AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}
+
+            インストール方法:
+            - `amispi-companion_X.Y.Z_x64-setup.exe` をダウンロードして実行
+
+            アップデート:
+            - アプリが自動的に更新を検知します
+
+            詳細は [CHANGELOG.md](https://github.com/myguma/amispi-companion/blob/main/CHANGELOG.md) を参照してください。
+          releaseDraft: true
+          prerelease: false
