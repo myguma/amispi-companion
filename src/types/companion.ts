@@ -68,7 +68,12 @@ export type DialogueTrigger =
   | "touch_reaction"
   | "wake_reaction"
   | "speaking_response"
-  | "random_idle";
+  | "random_idle"
+  | "morning_greeting"
+  | "afternoon_greeting"
+  | "evening_greeting"
+  | "night_greeting"
+  | "drag_reaction";
 
 export interface DialogueEntry {
   id: string;
