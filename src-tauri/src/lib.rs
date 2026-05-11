@@ -82,6 +82,23 @@ fn get_app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
+// アプリを終了する
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+// ウィンドウ表示トグル (トレイ・ショートカット共通)
+fn toggle_window_visibility(window: &tauri::WebviewWindow) {
+    let visible = window.is_visible().unwrap_or(false);
+    if visible {
+        let _ = window.hide();
+    } else {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
 // ──────────────────────────────────────────────────────────
 // 自動起動
 // ──────────────────────────────────────────────────────────
