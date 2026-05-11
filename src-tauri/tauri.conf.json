@@ -22,7 +22,6 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "allowDowngrades": true,
         "displayLanguageSelector": false
       }
     }
