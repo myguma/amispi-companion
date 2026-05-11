@@ -87,6 +87,9 @@ export function useWander(
 
       stopAnim();
       animRef.current = setInterval(async () => {
+        // マウス押下中 (ドラッグ含む) は移動しない
+        if (mouseDownRef.current) return;
+
         const s = stateRef.current;
         if (!WANDER_STATES.includes(s)) {
           stopAnim();
