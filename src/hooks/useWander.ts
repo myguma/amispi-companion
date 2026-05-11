@@ -40,7 +40,10 @@ function getCurrentPhysicalPos() {
   };
 }
 
-export function useWander(state: CompanionState) {
+export function useWander(
+  state: CompanionState,
+  mouseDownRef: React.RefObject<boolean>
+) {
   const stateRef = useRef<CompanionState>(state);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
