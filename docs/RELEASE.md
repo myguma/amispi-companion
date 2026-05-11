@@ -25,21 +25,10 @@ GitHub リポジトリの **Settings → Secrets and variables → Actions** を
 
 | Secret 名 | 値 |
 |-----------|-----|
-| `TAURI_SIGNING_PRIVATE_KEY` | 下記の秘密鍵をそのままペースト |
+| `TAURI_SIGNING_PRIVATE_KEY` | WSL で `cat ~/.tauri/amispi-companion.key` を実行し、出力をそのままペースト |
 | `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | (空白のまま) |
 
-**秘密鍵 (TAURI_SIGNING_PRIVATE_KEY):**
-
-```
-dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5
-ClJXUlRZMEl5TDhxektKUHBDejh5Q214TDcxUzZFK1NFd2IrRk5renRXbTEw
-WXEzSXNtSUFBQkFBQUFBQUFBQUFBQUlBQUFBQW5uMmpuNEdDempnNW15Y1Mx
-WlJwTktReU12YmtyamFtRHNmQWdmZGRTL3ZETE1FTk5hRklSYzVjMnBLZnBU
-amI4STgrWjVydDcxSm1kdDJ4RXVzYUF4TUF1SjRsbzRyUUcvSGMvVTB5WlhV
-QVVMYmZKRFBtOEVkSlh5c0xnK0RUYUQ2SXptV0hNYTg9Cg==
-```
-
-> ⚠️ この鍵をリポジトリにコミットしないこと。GitHub Secrets にのみ保存する。
+> ⚠️ 秘密鍵はリポジトリにコミットしないこと。`~/.tauri/amispi-companion.key` はローカルにのみ保存し、GitHub Secrets 経由でのみ CI に渡す。
 
 **公開鍵 (参考):**  
 すでに `tauri.conf.json` の `plugins.updater.pubkey` に設定済み。
