@@ -184,6 +184,45 @@ html,
 }
 
 /* ============================================================
+   アップデートバッジ
+   ============================================================ */
+
+.update-badge-wrapper {
+  margin-top: 4px;
+  display: flex;
+  justify-content: center;
+}
+
+.update-badge {
+  font-size: 10px;
+  font-family: system-ui, -apple-system, sans-serif;
+  border-radius: 8px;
+  padding: 2px 8px;
+  border: none;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+.update-badge--available {
+  background: rgba(168, 144, 240, 0.15);
+  color: #7c5cbf;
+  border: 1px solid rgba(168, 144, 240, 0.35);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.update-badge--available:hover {
+  background: rgba(168, 144, 240, 0.3);
+  transform: scale(1.05);
+}
+
+.update-badge--installing {
+  background: transparent;
+  color: #a890f0;
+  animation: orb-pulse 1.2s ease-in-out infinite;
+}
+
+/* ============================================================
    ドラッグハンドル
    ============================================================ */
 
