@@ -204,6 +204,54 @@ pub fn run() {
                 let _ = autolaunch.enable();
             }
 
+            // ────────────────────────────────────────
+            // グローバルショートカット: Ctrl+Shift+Space で表示トグル
+            // ────────────────────────────────────────
+            let shortcut_window = window.clone();
+            app.global_shortcut().on_shortcut(
+                "ctrl+shift+space",
+                move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        toggle_window_visibility(&shortcut_window);
+                    }
+                },
+            )?;
+
+            // ────────────────────────────────────────
+            // システムトレイ
+            // ────────────────────────────────────────
+            let toggle_item =
+                MenuItem::with_id(app, "toggle", "表示 / 非表示", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&toggle_item, &quit_item])?;
+
+            let tray_window = window.clone();
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .tooltip("AmitySpirit")
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .on_tray_icon_event(move |_tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        toggle_window_visibility(&tray_window);
+                    }
+                })
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "toggle" => {
+                        if let Some(w) = app.get_webview_window("companion") {
+                            toggle_window_visibility(&w);
+                        }
+                    }
+                    "quit" => app.exit(0),
+                    _ => {}
+                })
+                .build(app)?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
