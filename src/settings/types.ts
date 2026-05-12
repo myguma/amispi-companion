@@ -42,6 +42,13 @@ export type CompanionSettings = {
   // Phase 6: 音声入力
   voiceInputEnabled: boolean;
   voiceInputMode: VoiceInputMode;
+  maxRecordingMs: number;
+
+  // Phase 6b: STT エンジン設定
+  sttEngine: STTEngine;
+  whisperExecutablePath: string;
+  whisperModelPath: string;
+  whisperTimeoutMs: number;
 
   // 将来フェーズ用
   mediaAwarenessEnabled: boolean;
