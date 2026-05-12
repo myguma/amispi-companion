@@ -38,9 +38,12 @@ export type CompanionSettings = {
   ollamaModel: string;
   ollamaTimeoutMs: number;
 
-  // 将来フェーズ用 (フラグだけ先行追加)
+  // Phase 6: 音声入力
+  voiceInputEnabled: boolean;
+  voiceInputMode: VoiceInputMode;
+
+  // 将来フェーズ用
   mediaAwarenessEnabled: boolean;
   screenUnderstandingEnabled: boolean;
-  voiceInputEnabled: boolean;
   ttsEnabled: boolean;
 };
