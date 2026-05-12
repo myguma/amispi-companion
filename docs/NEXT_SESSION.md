@@ -37,6 +37,8 @@
 | Phase 3 | MediaContext — バックグラウンドメディアアプリ検出 | ✅ 完了 |
 | Phase 4 | Transparency UI v2 — 観測状態ライブパネル | ✅ 完了 |
 | Phase 5 | ウィンドウ位置の保存・復元 | ✅ 完了 |
+| Phase 6a | Voice Input Foundation / mock transcript | ✅ 完了 |
+| Phase 6b | STTAdapter interface / MockSTTAdapter | ✅ 準備済み |
 
 ---
 
