@@ -15,6 +15,11 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function SettingsApp() {
   const [tab, setTab] = useState<Tab>("transparency");
+  const [version, setVersion] = useState<string>("…");
+
+  useEffect(() => {
+    invoke<string>("get_app_version").then(setVersion).catch(() => setVersion("?"));
+  }, []);
 
   return (
     <div style={{
