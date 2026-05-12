@@ -61,7 +61,7 @@ jobs:
             - アプリが自動的に更新を検知します
 
             詳細は [CHANGELOG.md](https://github.com/myguma/amispi-companion/blob/main/CHANGELOG.md) を参照してください。
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
 
       # Tauri v2 (createUpdaterArtifacts:true) は .exe + .exe.sig を生成する。
