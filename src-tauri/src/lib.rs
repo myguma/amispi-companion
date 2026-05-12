@@ -207,15 +207,32 @@ pub fn run() {
             #[cfg(debug_assertions)]
             window.open_devtools();
 
-            // 初期位置: 右下隅
-            if let Some(monitor) = window.current_monitor().ok().flatten() {
-                let screen = monitor.size();
-                let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 300 });
-                let margin = 20i32;
-                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                    x: screen.width as i32 - win.width as i32 - margin,
-                    y: screen.height as i32 - win.height as i32 - margin,
-                }));
+            // 初期位置: 保存済み位置があれば復元、なければ右下隅
+            let saved = settings::load_settings(app);
+            let restored = if let (Some(sx), Some(sy)) = (saved.window_x, saved.window_y) {
+                // 画面外補正: 明らかにおかしな値は無視
+                if sx > -500 && sy > -500 && sx < 10_000 && sy < 10_000 {
+                    let _ = window.set_position(tauri::Position::Physical(
+                        tauri::PhysicalPosition { x: sx, y: sy },
+                    ));
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if !restored {
+                if let Some(monitor) = window.current_monitor().ok().flatten() {
+                    let screen = monitor.size();
+                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 300 });
+                    let margin = 20i32;
+                    let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: screen.width as i32 - win.width as i32 - margin,
+                        y: screen.height as i32 - win.height as i32 - margin,
+                    }));
+                }
             }
 
             let _ = window.set_ignore_cursor_events(true);
