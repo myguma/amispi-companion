@@ -312,5 +312,5 @@ export function useCompanionState(
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction };
+  return { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction, requestVoiceResponse, voiceUIState };
 }
