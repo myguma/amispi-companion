@@ -54,15 +54,14 @@ export default function App() {
     cryEngine.setVolume(settings.cryEnabled ? settings.volume : 0);
   }, [settings.cryEnabled, settings.volume]);
 
-  // 状態変化に応じて鳴き声を再生
+  // 状態変化に応じて鳴き声を再生 (クリック以外)
+  // クリック音はハンドラ内で直接鳴らす (ユーザーgesture 文脈を確実に使うため)
   const prevStateRef = useRef<typeof state>("idle");
   useEffect(() => {
     const prev = prevStateRef.current;
     prevStateRef.current = state;
     if (!settings.cryEnabled) return;
-    if (state === "touched" && prev !== "touched") {
-      void cryEngine.play({ id: "touch", synth: { kind: "surprised", durationMs: 120 } });
-    } else if (state === "speaking" && prev !== "speaking") {
+    if (state === "speaking" && prev !== "speaking") {
       void cryEngine.play({ id: "speak", synth: { kind: "soft_beep", durationMs: 200, pitch: 1.1 } });
     } else if (state === "waking" && prev !== "waking") {
       void cryEngine.play({ id: "wake", synth: { kind: "murmur", durationMs: 300 } });
@@ -70,6 +69,14 @@ export default function App() {
       void cryEngine.play({ id: "sleep", synth: { kind: "sleepy", durationMs: 400 } });
     }
   }, [state, settings.cryEnabled]);
+
+  // クリック音: ユーザーgesture 文脈で即座に再生
+  const handleCharacterClick = useCallback(() => {
+    if (settings.cryEnabled) {
+      void cryEngine.play({ id: "touch", synth: { kind: "surprised", durationMs: 150 } });
+    }
+    onCharacterClick();
+  }, [onCharacterClick, settings.cryEnabled]);
 
   // 観測ポーリング
   useEffect(() => {
