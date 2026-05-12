@@ -12,20 +12,20 @@
 | 領域 | 進捗 | 備考 |
 |------|------|------|
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
-| 観測システム (Rust) | 85% | Media/idle/folder/CPU OK。Screen未実装 |
-| 活動推定 (inferActivity) | 80% | reading・InferredActivityデルタ対応済み |
+| 観測システム (Rust) | 90% | classify_app 大幅拡充。Spotify/Bitwig/Discord/self 対応済み |
+| 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
 | AI コンテキスト構築 | 82% | CompanionContext・PromptBuilder改善済み |
-| AI プロバイダー (Ollama) | 75% | 動作する。prompt品質は改善余地あり |
-| fallback / RuleProvider | 78% | activity-aware・重複防止実装済み |
+| AI プロバイダー (Ollama) | 85% | キャッシュバグ修正・デバッグUI追加・timeout改善 |
+| fallback / RuleProvider | 80% | source/fallbackReason 可視化追加 |
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 75% | InferredActivity遷移・抑制精度向上済み |
-| 音声入力 (Voice) | 40% | 実録音OK・STT未完成 (whisper skeleton) |
+| 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
 | キャラクター表現 | 68% | 状態別CSS アニメーション実装。感情スプライト追加は将来 |
-| 設定 UI | 85% | 記憶タブ追加済み |
-| 透明性 UI | 88% | 発話制御パネル・記憶タブ案内追加済み |
-| リリース品質 (docs) | 58% | MEMORY_AND_DATA_CONTROL.md 追加 |
+| 設定 UI | 88% | AIPage にテスト発話・接続テスト・デバッグパネル追加 |
+| 透明性 UI | 92% | processName表示・自動更新・unknownReason表示追加 |
+| リリース品質 (docs) | 68% | FIELD_QA_NOTES.md 追加 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~66%** | Milestone B 第2段階完了 |
+| **総合** | **~68%** | v0.1.35 Field QA Fixes 完了 |
 
 ---
 
@@ -41,6 +41,7 @@
 | v0.1.32 | Milestone A 第2段階: RuleProvider文脈強化・autonomous speech精度向上・発話制御UI |
 | v0.1.33 | Milestone B 第1段階: Memory Viewer UI・記憶削除機能・memoryStore拡張 |
 | v0.1.34 | Milestone B 第2段階: Character State Expression・状態別CSS アニメーション・VoiceUIState統合 |
+| v0.1.35 | Field QA Fixes: OllamaProvider キャッシュバグ修正・デバッグUI・observe拡充・当たり判定改善 |
 
 ---
 
@@ -55,7 +56,7 @@
 
 ---
 
-## 次の目標: v0.1.35 候補
+## 次の目標: v0.1.36 候補
 
 優先候補A: **First-run Onboarding** ← **推奨**
 - 初回起動時に権限・Ollama・Voice・記憶の説明ウィザードを表示
