@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   aiEngine: "none",
   ollamaBaseUrl: "http://localhost:11434",
   ollamaModel: "llama3.2:3b",
-  ollamaTimeoutMs: 8_000,
+  ollamaTimeoutMs: 20_000,
 
   voiceInputEnabled: false,
   voiceInputMode: "off",
