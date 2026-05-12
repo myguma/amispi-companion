@@ -209,8 +209,17 @@ export function useCompanionState(
   useEffect(() => {
     logEvent("app_start");
 
+    // 前回セッションからの休憩期間に応じて挨拶トリガーを選択
+    const breakKind = classifyBreak();
     const greetTimer = setTimeout(() => {
-      const text = fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
+      let text: string | null = null;
+      if (breakKind === "longDay") {
+        text = fireReaction("returnAfterLongBreak");
+      } else if (breakKind === "hours" || breakKind === "short") {
+        text = fireReaction("returnAfterBreak");
+      }
+      // 休憩なし or 反応が抑制されていれば通常の時刻挨拶にフォールバック
+      text ??= fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
       triggerSpeak(text);
     }, 1500);
 
