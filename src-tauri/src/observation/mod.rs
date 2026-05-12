@@ -597,12 +597,14 @@ pub fn get_active_app_debug_info() -> ActiveAppDebugInfo {
     {
         ActiveAppDebugInfo {
             platform: "non-windows".to_string(),
-            hwnd_available: false, pid: 0, pid_available: false,
+            hwnd_available: false, hwnd_raw: 0,
+            pid: 0, pid_available: false,
             open_process_ok: false, query_name_ok: false,
             process_name: String::new(), process_path_len: 0,
             category: "unknown".to_string(),
             error_stage: "unsupported_platform".to_string(),
-            error_code: 0, is_self_app: false,
+            error_code: 0, last_error_before: 0,
+            is_self_app: false,
         }
     }
 }
