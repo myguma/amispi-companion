@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.1.30] — 2026-05-12
+
+### Added (Phase 6b-real-1 — Local STT Recording Foundation)
+- **実録音パイプライン**: Push-to-talk 中だけマイク録音 (常時監視なし)
+  - `src/systems/voice/useVoiceRecorder.ts`: Push-to-talk 録音フック
+    - `navigator.mediaDevices.getUserMedia` を長押し操作時のみ呼ぶ
+    - 録音終了後に `stream.getTracks().stop()` でマイクを即解放
+    - `maxDurationMs` 超過で自動停止 (デフォルト 15秒)
+    - `RecorderError`: not_supported / permission_denied / no_microphone / recorder_error
+  - `src/hooks/useCompanionState.ts`:
+    - `voiceListeningStart()` — 録音開始時に voiceUIState を "voiceListening" へ
+    - `requestVoiceFromBlob(blob)` — Blob → STT → AI の一連パイプライン
+    - `voiceRecordingError(err)` — エラー時に voiceError → 3秒後 voiceReady/Off
+  - `src/App.tsx`: mock transcript を実録音パイプラインに切替
+- **STTAdapter 更新**: `STTInput = Blob | ArrayBuffer` 型追加
+  - `src/systems/voice/MockSTTAdapter.ts`: STTInput 対応 (実録音 Blob を受取るが内容は無視)
+- **WhisperCliSTTAdapter skeleton** (`src/systems/voice/WhisperCliSTTAdapter.ts`):
+  - executable path / model path が設定済みかを確認
+  - 未設定なら `isAvailable() = false` → MockSTTAdapter にフォールバック
+  - Phase 6b-real-2 で Rust sidecar 統合予定
+- **STTAdapterManager 更新**: `sttEngine` 設定でアダプターを切替 (mock/whisperCli)
+- **STT 設定 UI** (`settings/pages/VoicePage.tsx`):
+  - STT エンジン選択 (Mock / Whisper CLI)
+  - Whisper executable path / model path / timeout 入力欄
+  - 「現在 skeleton — path 設定のみ有効」警告
+
+### Changed
+- `settings/types.ts`: `STTEngine`, `sttEngine`, `whisperExecutablePath`, `whisperModelPath`, `whisperTimeoutMs`, `maxRecordingMs` 追加
+- `settings/defaults.ts`: 対応するデフォルト値追加
+
+### Design
+- **常時マイク監視なし**: `getUserMedia()` は push-to-talk 長押し 500ms 後のみ
+- **音声データ非保存**: Blob は STTAdapter.transcribe() で使い捨て
+- **クラウド STT 禁止**: whisper.cpp もローカル実行のみ
+- **安全なフォールバック**: STT 失敗・未設定時は reaction fallback
+
 ## [0.1.29] — 2026-05-12
 
 ### Changed (Phase 6a.5 — Context Wiring and Input Stabilization)
