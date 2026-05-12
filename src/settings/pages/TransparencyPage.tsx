@@ -127,52 +127,70 @@ function ActiveAppDebugPanel() {
   const [info, setInfo] = useState<ActiveAppDebugInfo | null>(null);
   const [fetching, setFetching] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const fetchingRef  = useRef(false);
+  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchDebug = async () => {
-    if (fetching) return;
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setFetching(true);
     try {
       const d = await invoke<ActiveAppDebugInfo>("get_active_app_debug");
       setInfo(d);
     } catch { /* サイレント */ }
+    fetchingRef.current = false;
     setFetching(false);
   };
 
   const fetchDelayed = () => {
-    if (fetching || countdown !== null) return;
+    if (fetchingRef.current || countdown !== null) return;
     setCountdown(3);
-    const tick = (n: number) => {
+    let n = 3;
+    intervalRef.current = setInterval(() => {
+      n--;
       if (n <= 0) {
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
         setCountdown(null);
         void fetchDebug();
       } else {
-        setTimeout(() => { setCountdown(n - 1); tick(n - 1); }, 1000);
+        setCountdown(n);
       }
-    };
-    setTimeout(() => { setCountdown(2); tick(2); }, 1000);
+    }, 1000);
   };
 
   useEffect(() => {
     void fetchDebug();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!info && countdown === null) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
+  // hwndRaw を安全に hex 表示するヘルパー
+  const fmtHwnd = (v: number | undefined | null): string => {
+    if (v == null) return "N/A";
+    if (v === 0) return "NULL(0)";
+    return `0x${v.toString(16)}`;
+  };
+
+  if (!info && countdown === null && !fetching) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
 
   const stageOk = info?.errorStage === "ok";
   const stageColor = stageOk ? "#4caf7d" : "#e05050";
 
   return (
     <div style={{ background: "#fff8f0", borderRadius: 8, padding: "10px 12px", fontSize: 11, lineHeight: 1.9, fontFamily: "monospace" }}>
-      {info && (
+      {info ? (
         <>
           <div style={{ color: stageColor, fontWeight: 700, marginBottom: 4 }}>
-            [{info.platform}] {errorStageLabel(info.errorStage, info.errorCode)}
+            [{info.platform ?? "?"}] {errorStageLabel(info.errorStage ?? "", info.errorCode ?? 0)}
           </div>
-          <div>hwnd: {info.hwndAvailable ? "✓" : "✗"}  (raw={info.hwndRaw === 0 ? "NULL(0)" : `0x${info.hwndRaw.toString(16)}`})</div>
+          <div>hwnd: {info.hwndAvailable ? "✓" : "✗"}  (raw={fmtHwnd(info.hwndRaw)})</div>
           <div>pid: {info.pidAvailable ? `✓ (${info.pid})` : "✗"}</div>
           <div>OpenProcess: {info.openProcessOk ? "✓" : "✗"}</div>
           <div>QueryName: {info.queryNameOk ? "✓" : "✗"}</div>
-          {info.lastErrorBefore > 0 && <div style={{ color: "#e08030" }}>pre-call LastError: {info.lastErrorBefore}</div>}
+          {info.lastErrorBefore != null && info.lastErrorBefore > 0 && (
+            <div style={{ color: "#e08030" }}>pre-call LastError: {info.lastErrorBefore}</div>
+          )}
           {info.processName && <div>processName: <strong>{info.processName}</strong></div>}
           {info.queryNameOk && <div>category: <strong>{info.category}</strong></div>}
           {info.isSelfApp && (
@@ -181,6 +199,8 @@ function ActiveAppDebugPanel() {
             </div>
           )}
         </>
+      ) : (
+        <div style={{ color: "#bbb" }}>{fetching ? "取得中…" : "データなし"}</div>
       )}
       <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
         <button
