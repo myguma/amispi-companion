@@ -104,19 +104,21 @@ impl Default for PermissionConfig {
 
 #[cfg(target_os = "windows")]
 mod windows_impl {
-    use super::*;
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
     use windows_sys::Win32::{
-        Foundation::{CloseHandle, BOOL, HANDLE, MAX_PATH, RECT},
+        Foundation::{CloseHandle, HANDLE, MAX_PATH, RECT},
         Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST},
         System::Threading::{
             OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
             PROCESS_QUERY_LIMITED_INFORMATION,
         },
-        UI::WindowsAndMessaging::{
-            GetForegroundWindow, GetLastInputInfo, GetWindowRect, GetWindowTextLengthW,
-            GetWindowTextW, GetWindowThreadProcessId, LASTINPUTINFO,
+        UI::{
+            Input::KeyboardAndMouse::{GetLastInputInfo, LASTINPUTINFO},
+            WindowsAndMessaging::{
+                GetForegroundWindow, GetWindowRect, GetWindowTextLengthW,
+                GetWindowTextW, GetWindowThreadProcessId,
+            },
         },
     };
 
