@@ -144,6 +144,19 @@ export function inferActivity(snapshot: ObservationSnapshot): ActivityInsight {
     };
   }
 
+  // ── コミュニケーションアプリ ──────────────────────────────────
+  if (cat === "communication") {
+    if (inputActive) {
+      return { kind: "browsing", confidence: 0.55, reasons: ["category=communication", "input_active"], summary: "チャット・連絡中" };
+    }
+    return { kind: "breakLikely", confidence: 0.5, reasons: ["category=communication"], summary: "チャットアプリを開いている" };
+  }
+
+  // ── 自アプリ (設定画面等) ──────────────────────────────────────
+  if (cat === "self") {
+    return { kind: "unknown", confidence: 0.2, reasons: ["category=self"], summary: "設定画面が前面" };
+  }
+
   // ── office 系 ─────────────────────────────────────────────────
   if (cat === "office") {
     if (idle >= IDLE_MS) {
