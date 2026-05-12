@@ -5,6 +5,7 @@ import type { PermissionSettings } from "../privacy/permissions";
 export type MovementFrequency = "low" | "normal" | "high";
 export type SpeechFrequency = "rare" | "low" | "normal";
 export type AIEngine = "none" | "mock" | "ollama";
+export type VoiceInputMode = "off" | "pushToTalk";
 
 export type CompanionSettings = {
   quietMode: boolean;
