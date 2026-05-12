@@ -139,7 +139,11 @@ export default function App() {
       <DebugOverlay state={state} speechText={speechText} />
 
       <div style={{ position: "absolute", top: 10, left: 0, right: 0, display: "flex", justifyContent: "center", padding: "0 8px" }}>
-        <SpeechBubble text={speechText} />
+        {tinyText ? (
+          <TinyWhisper text={tinyText} />
+        ) : (
+          <SpeechBubble text={speechText} />
+        )}
       </div>
 
       <div className="drag-handle" onMouseDown={onDragStart} style={{ position: "relative" }}>
