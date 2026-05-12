@@ -155,42 +155,49 @@ SpeechBubble / TinyWhisper / Cry
 - 起動時に保存位置を復元 (範囲チェックあり)
 - ドラッグ終了後 100ms で位置を保存
 
-### Phase 6a — Voice Input Foundation ← **次に実装**
+### Phase 6a — Voice Input Foundation ✅ 完了 (v0.1.28)
 
-目的: 本物の STT 統合はまだしない。設定・状態・導線・mock transcript まで。
-
-新規:
 - `src/settings/pages/VoicePage.tsx` — Voice ON/OFF / mode / プライバシー説明
-- `docs/VOICE_INTERACTION.md`
-
-変更:
 - `src/settings/types.ts` — `voiceInputMode: "off" | "pushToTalk"` 追加
-- `src/settings/defaults.ts` — `voiceInputMode: "off"`
-- `src/settings/SettingsApp.tsx` — "音声" タブ追加
 - `src/hooks/useCompanionState.ts` — `requestVoiceResponse(transcript)` 追加
 - `src/App.tsx` — push-to-talk エントリポイント (長押し)
-- `src/systems/ai/PromptBuilder.ts` — voiceInput をプロンプトに追加
+- `docs/VOICE_INTERACTION.md`
 
-完了条件:
-- 設定から Voice Input ON/OFF / mode 変更できる
-- キャラクター長押しで mock transcript → voice trigger → 返答が出る
-- 既存クリック反応・Ollama fallback・MediaContext が壊れない
-- `npm run build` が通る
+### Phase 6a.5 — Context Wiring and Input Stabilization ✅ 完了 (v0.1.29)
 
-### Phase 6b — Local STT Adapter
+- AIProvider.respond(ctx: CompanionContext) — インターフェース刷新
+- OllamaProvider から EMPTY_SNAPSHOT 依存除去
+- contextToProviderInput() ブリッジ削除
+- requestVoiceResponse に finally ブロック追加
+- isDragging → PTT タイマーキャンセル
 
-- STTAdapter interface 設計
-- MockSTTAdapter 実装
-- WhisperCliSTTAdapter 設計 (Tauri sidecar または CLI 経由)
-- 録音データは処理後即削除
-- `docs/VOICE_INTERACTION.md` に STT 候補比較
+### Phase 6b-real-1 — Local STT Recording Foundation ✅ 完了 (v0.1.30)
+
+- `src/systems/voice/useVoiceRecorder.ts` — Push-to-talk 実録音フック
+- `src/systems/voice/STTAdapter.ts` — STTInput 型追加 (Blob | ArrayBuffer)
+- `src/systems/voice/MockSTTAdapter.ts` — STTInput 対応
+- `src/systems/voice/WhisperCliSTTAdapter.ts` — skeleton (path 設定チェック)
+- `src/systems/voice/STTAdapterManager.ts` — sttEngine 設定で切替
+- `src/hooks/useCompanionState.ts` — requestVoiceFromBlob / voiceListeningStart / voiceRecordingError
+- `src/settings/types.ts` — sttEngine / whisper* / maxRecordingMs 追加
+- `src/settings/pages/VoicePage.tsx` — STT エンジン選択 UI
+- `src/App.tsx` — 実録音パイプラインへ切替
+
+### Phase 6b-real-2 — WhisperCli Rust Sidecar Integration ← **次**
+
+- `src-tauri/src/voice/mod.rs` — `transcribe_with_whisper` Tauri コマンド
+- WebM Blob → bytes → Rust → 一時 WAV 書き出し
+- `std::process::Command` で whisper CLI 呼び出し (shell injection なし)
+- 処理後に一時ファイル必ず削除
+- WhisperCliSTTAdapter.transcribe() を実装 (Tauri invoke)
+- docs 更新
 
 ### Phase 6c — Voice UX Hardening
 
-- 録音中の視覚フィードバック・鳴き声
-- 長すぎる録音の自動停止
-- DND / Quiet / Focus との整合
+- 録音中の視覚フィードバック強化 (パルスアニメーション等)
+- DND / Quiet / Focus との整合確認
 - 連続録音防止
+- 無音録音の検出と fallback
 
 ### Phase 7a — Screen Understanding Planning Only
 
