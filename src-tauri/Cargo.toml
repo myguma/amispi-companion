@@ -1,6 +1,6 @@
 [package]
 name = "amispi-companion"
-version = "0.1.18"
+version = "0.1.19"
 description = "AmitySpirit Companion — Desktop AI Presence"
 authors = []
 edition = "2021"
