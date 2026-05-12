@@ -79,13 +79,27 @@ export default function App() {
     onCharacterClick();
   }, [onCharacterClick, settings.cryEnabled]);
 
-  // ドラッグ開始で reaction を発火
+  // ドラッグ開始で reaction を発火 / ドラッグ終了後に位置を保存
   const prevIsDragging = useRef(false);
   useEffect(() => {
-    if (isDragging && !prevIsDragging.current) {
+    const wasDragging = prevIsDragging.current;
+    prevIsDragging.current = isDragging;
+
+    if (isDragging && !wasDragging) {
       triggerDragReaction();
     }
-    prevIsDragging.current = isDragging;
+
+    // ドラッグ終了 → ウィンドウ位置を保存
+    if (!isDragging && wasDragging && isTauri) {
+      // startDragging() は OS ネイティブなので少し待ってから位置を取得する
+      setTimeout(async () => {
+        try {
+          const { getCurrentWindow } = await import("@tauri-apps/api/window");
+          const pos = await getCurrentWindow().outerPosition();
+          await invoke("save_window_position", { x: pos.x, y: pos.y });
+        } catch { /* サイレント */ }
+      }, 100);
+    }
   }, [isDragging, triggerDragReaction]);
 
   // 観測ポーリング
