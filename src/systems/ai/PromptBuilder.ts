@@ -152,6 +152,15 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
     contextLines.push(`ユーザーの声: ${safe}`);
   }
 
+  // 直近の発話 (最新3件) — 同一・類似表現を繰り返させないため
+  const recentSpeech = recentEvents
+    .filter((e) => e.type === "speech_shown" && typeof e.data?.text === "string")
+    .slice(-3)
+    .map((e) => e.data!.text as string);
+  if (recentSpeech.length > 0) {
+    contextLines.push(`直近の発話 (繰り返し厳禁): ${recentSpeech.join(" / ")}`);
+  }
+
   const userContent = contextLines.join("\n") + "\n\n日本語一文のみで返答してください。";
 
   return { system: SYSTEM_PROMPT, user: userContent };
