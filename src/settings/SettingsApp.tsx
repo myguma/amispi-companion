@@ -6,13 +6,15 @@ import { invoke } from "@tauri-apps/api/core";
 import { TransparencyPage } from "./pages/TransparencyPage";
 import { BehaviorPage } from "./pages/BehaviorPage";
 import { AIPage } from "./pages/AIPage";
+import { VoicePage } from "./pages/VoicePage";
 
-type Tab = "transparency" | "behavior" | "ai";
+type Tab = "transparency" | "behavior" | "ai" | "voice";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "transparency", label: "無明が見ているもの" },
   { id: "behavior", label: "動作設定" },
   { id: "ai", label: "AI エンジン" },
+  { id: "voice", label: "音声" },
 ];
 
 export function SettingsApp() {
