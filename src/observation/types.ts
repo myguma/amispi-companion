@@ -9,7 +9,9 @@ export type AppCategory =
   | "game"
   | "office"
   | "terminal"
+  | "communication"
   | "system"
+  | "self"      // 自アプリ (設定画面・コンパニオン本体)
   | "unknown";
 
 export type FolderSummary = {
