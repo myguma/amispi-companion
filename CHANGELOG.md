@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19] — 2026-05-12
+
+### Fixed
+- `GetLastInputInfo` / `LASTINPUTINFO` は windows-sys 0.59 で
+  `Win32::UI::WindowsAndMessaging` から `Win32::UI::Input::KeyboardAndMouse` に移動。
+  Cargo.toml に `Win32_UI_Input_KeyboardAndMouse` フィーチャーを追加しインポートパスを修正。
+
 ## [0.1.18] — 2026-05-12
 
 ### Fixed
