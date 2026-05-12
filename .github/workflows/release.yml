@@ -64,8 +64,8 @@ jobs:
           releaseDraft: true
           prerelease: false
 
-      # tauri build が生成した .nsis.zip / .nsis.zip.sig をビルドディレクトリから直接利用。
-      # 自前で zip を再作成すると圧縮方式が Tauri updater と非互換になるため使わない。
+      # Tauri v2 (createUpdaterArtifacts:true) は .exe + .exe.sig を生成する。
+      # .exe は tauri-action が既にアップロード済みなので .exe.sig と latest.json だけ追加する。
       - name: Upload updater assets (latest.json)
         shell: pwsh
         env:
@@ -80,20 +80,21 @@ jobs:
           Write-Host "Files in bundle dir:"
           Get-ChildItem $bundleDir | ForEach-Object { Write-Host "  $($_.Name)" }
 
-          # tauri build が生成した zip と sig を取得
-          $zipFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "setup\.nsis\.zip$" -and $_.Name -notmatch "\.sig$" } | Select-Object -First 1
-          $sigFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "setup\.nsis\.zip\.sig$" } | Select-Object -First 1
+          # Tauri v2: .exe (インストーラー本体) と .exe.sig (署名) を取得
+          $exeFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "setup\.exe$" -and $_.Name -notmatch "\.sig$" } | Select-Object -First 1
+          $sigFile = Get-ChildItem $bundleDir | Where-Object { $_.Name -match "setup\.exe\.sig$" } | Select-Object -First 1
 
-          if (-not $zipFile) { Write-Error "nsis.zip not found in $bundleDir"; exit 1 }
-          if (-not $sigFile) { Write-Error "nsis.zip.sig not found in $bundleDir"; exit 1 }
-          Write-Host "zip: $($zipFile.Name)"
+          if (-not $exeFile) { Write-Error "setup.exe not found in $bundleDir"; exit 1 }
+          if (-not $sigFile) { Write-Error "setup.exe.sig not found in $bundleDir"; exit 1 }
+          Write-Host "exe: $($exeFile.Name)"
           Write-Host "sig: $($sigFile.Name)"
 
-          $zipName = $zipFile.Name
+          $exeName = $exeFile.Name
+          $sigName = $sigFile.Name
           $sig     = (Get-Content $sigFile.FullName -Raw).Trim()
           $baseUrl = "https://github.com/myguma/amispi-companion/releases/download/$tagName"
 
-          # latest.json を構築
+          # latest.json を構築 (URL は .exe を直接指す)
           $latestJson = [ordered]@{
             version  = $version
             notes    = ""
@@ -101,16 +102,15 @@ jobs:
             platforms = [ordered]@{
               "windows-x86_64" = [ordered]@{
                 signature = $sig
-                url       = "$baseUrl/$zipName"
+                url       = "$baseUrl/$exeName"
               }
             }
           } | ConvertTo-Json -Depth 5
           $latestJson | Out-File "latest.json" -Encoding utf8NoBOM
 
-          # zip / sig / latest.json をリリースへアップロード
+          # .exe.sig と latest.json をリリースへアップロード (.exe は tauri-action が既にアップロード済み)
           gh release upload $tagName `
             "latest.json#latest.json" `
-            "$($zipFile.FullName)#${zipName}" `
-            "$($sigFile.FullName)#${zipName}.sig" `
+            "$($sigFile.FullName)#${sigName}" `
             --clobber
           Write-Host "Uploaded to $tagName"
