@@ -5,6 +5,7 @@ import type { MemoryEvent } from "../../types/companion";
 import type { ObservationSnapshot } from "../../observation/types";
 import type { CompanionSettings } from "../../settings/types";
 import type { AITrigger, CompanionContext } from "../../companion/ai/types";
+import type { AIProviderInput } from "../../companion/ai/types";
 import { inferActivity } from "../../companion/activity/inferActivity";
 import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
 
