@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21] — 2026-05-12
+
+### Fixed
+- 鳴き声が鳴らない: AudioContext をシングルトン化し、suspended 状態で `resume()` を呼ぶよう修正
+- クリック音を useEffect ではなくクリックハンドラ直下で再生 (ユーザーgesture 文脈を確実に使用)
+- エラーが silent failure していた: `catch {}` を `console.warn` に変更
+
 ## [0.1.20] — 2026-05-12
 
 ### Fixed
