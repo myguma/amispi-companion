@@ -137,6 +137,8 @@
 ✅ MediaContext (Spotify等のバックグラウンド検出)
 ✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル)
 ✅ Memory Viewer UI (MemoryPage) - 削除後も表示が壊れない
+✅ Character State Expression - thinking/speaking/sleep/waking CSS アニメーション
+✅ VoiceUIState dot インジケーター (Character 内部)
 ✅ cargo build が通ること
 ✅ npm run build が通ること
 ✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
