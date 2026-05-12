@@ -32,9 +32,14 @@ export function SettingsApp() {
     }}>
       {/* ヘッダー */}
       <div style={{ padding: "16px 20px 0", borderBottom: "1px solid #ebe6ff" }}>
-        <h1 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px", color: "#3a2870" }}>
-          AmitySpirit 設定
-        </h1>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+          <h1 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: "#3a2870" }}>
+            AmitySpirit 設定
+          </h1>
+          <span style={{ fontSize: 11, color: "#aaa", fontVariantNumeric: "tabular-nums" }}>
+            v{version}
+          </span>
+        </div>
         <div style={{ display: "flex", gap: 0 }}>
           {TABS.map((t) => (
             <button
