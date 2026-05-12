@@ -18,7 +18,8 @@ interface UseCompanionStateReturn {
 }
 
 export function useCompanionState(
-  config: StateConfig = DEFAULT_STATE_CONFIG
+  config: StateConfig = DEFAULT_STATE_CONFIG,
+  autonomousSpeechEnabled = false
 ): UseCompanionStateReturn {
   const [state, setState] = useState<CompanionState>("idle");
   const [speechText, setSpeechText] = useState<string | null>(null);
