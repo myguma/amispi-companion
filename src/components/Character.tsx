@@ -186,11 +186,21 @@ export function Character({
   onClick,
   isDragging = false,
   facingRight = false,
+  voiceUIState,
 }: CharacterProps) {
   const [useFallback, setUseFallback] = useState(false);
 
   const effectiveState: CompanionState = isDragging ? "touched" : state;
   const spriteUrls = getSpriteUrl(config.id, effectiveState);
+
+  const isVoiceActive =
+    voiceUIState === "voiceListening" ||
+    voiceUIState === "voiceTranscribing" ||
+    voiceUIState === "voiceResponding";
+
+  // character-anim--sprite: スプライト使用時のみ状態アニメーションを適用
+  // SVGフォールバック時は spirit-orb が独自アニメーションを持つため二重適用を避ける
+  const animClass = `character-anim${!useFallback ? " character-anim--sprite" : ""}`;
 
   return (
     <div
@@ -205,20 +215,29 @@ export function Character({
         transition: "transform 0.1s ease",
       }}
     >
-      {!useFallback ? (
-        <SpriteImage
-          urls={spriteUrls}
-          width={config.width}
-          height={config.height}
-          onFallback={() => setUseFallback(true)}
-        />
-      ) : (
-        <SpiritOrbFallback
-          state={effectiveState}
-          width={config.width}
-          height={config.height}
-        />
-      )}
+      <div
+        className={animClass}
+        data-state={effectiveState}
+        style={{ width: "100%", height: "100%", position: "relative" }}
+      >
+        {!useFallback ? (
+          <SpriteImage
+            urls={spriteUrls}
+            width={config.width}
+            height={config.height}
+            onFallback={() => setUseFallback(true)}
+          />
+        ) : (
+          <SpiritOrbFallback
+            state={effectiveState}
+            width={config.width}
+            height={config.height}
+          />
+        )}
+        {isVoiceActive && (
+          <div className={`voice-dot voice-dot--${voiceUIState}`} />
+        )}
+      </div>
     </div>
   );
 }
