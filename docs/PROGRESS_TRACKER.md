@@ -14,19 +14,19 @@
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
 | 観測システム (Rust) | 90% | 3秒遅延キャプチャ・hwndRaw・SetLastError(0) 追加 |
 | 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
-| AI コンテキスト構築 | 85% | PromptBuilder 強化 (長さ制限・英語禁止・例文追加) |
+| AI コンテキスト構築 | 90% | trigger別ヒント・直近発話context・時刻偏重修正 |
 | AI プロバイダー (Ollama) | 93% | 127.0.0.1修正・temperature 0.5・QualityFilter強化 |
 | fallback / RuleProvider | 82% | fallbackReason 詳細化 (model_not_found等) |
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
-| 自律発話 (autonomous speech) | 82% | AI-first: 起動挨拶・idle speech・activity 遷移全て |
+| 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 68% | 状態別CSS アニメーション実装。感情スプライト追加は将来 |
-| 設定 UI | 88% | AIPage にテスト発話・接続テスト・デバッグパネル追加 |
-| 透明性 UI | 94% | 3秒遅延キャプチャ・hwndRaw追加 |
-| ウィンドウ hit test | 90% | 200×180 リサイズ方式で上部透明領域問題を根本解決 |
-| リリース品質 (docs) | 70% | RESPONSE_QUALITY_GUIDE 更新 |
+| キャラクター表現 | 72% | DPI対応 220px ウィンドウ。感情スプライト追加は将来 |
+| 設定 UI | 93% | TabErrorBoundary追加・TransparencyPage 防御的描画 |
+| 透明性 UI | 94% | 3秒遅延キャプチャ・hwndRaw・useRef防御対応 |
+| ウィンドウ hit test | 95% | DPI対応 scale_factor()・220px で clipping 根本解決 |
+| リリース品質 (docs) | 72% | CHANGELOG / NEXT_SESSION / PROGRESS_TRACKER 更新 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~73%** | v0.1.37 AI-first + Window Resize 完了 (実機確認待ち) |
+| **総合** | **~76%** | v0.1.38 Hotfix 完了 (実機確認待ち) |
 
 ---
 
