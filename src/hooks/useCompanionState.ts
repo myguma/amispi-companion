@@ -32,7 +32,8 @@ interface UseCompanionStateReturn {
 export function useCompanionState(
   config: StateConfig = DEFAULT_STATE_CONFIG,
   autonomousSpeechEnabled = false,
-  isFullscreen = false
+  isFullscreen = false,
+  snapshot: ObservationSnapshot = EMPTY_SNAPSHOT
 ): UseCompanionStateReturn {
   const [state, setState] = useState<CompanionState>("idle");
   const [speechText, setSpeechText] = useState<string | null>(null);
