@@ -2,7 +2,7 @@
 // タイマー競合を防ぐため全タイマーをここで一元管理する
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { CompanionState, StateConfig } from "../types/companion";
+import type { CompanionState, StateConfig, VoiceUIState } from "../types/companion";
 import { DEFAULT_STATE_CONFIG } from "../types/companion";
 import { logEvent, getRecentEvents } from "../systems/memory/memoryStore";
 import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
