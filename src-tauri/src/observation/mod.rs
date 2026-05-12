@@ -52,6 +52,24 @@ pub struct SystemInfo {
     pub memory_load: Option<f32>,
 }
 
+/// フォアグラウンドプロセス取得の詳細デバッグ情報
+/// 実機でどの段階で失敗しているかを UI に表示するために使う
+#[derive(Debug, Serialize, Clone)]
+pub struct ActiveAppDebugInfo {
+    pub platform: String,
+    pub hwnd_available: bool,
+    pub pid: u32,
+    pub pid_available: bool,
+    pub open_process_ok: bool,
+    pub query_name_ok: bool,
+    pub process_name: String,
+    pub process_path_len: usize,
+    pub category: String,
+    pub error_stage: String,
+    pub error_code: u32,
+    pub is_self_app: bool,
+}
+
 /// バックグラウンドメディア再生の推定情報
 #[derive(Debug, Serialize, Clone)]
 pub struct MediaContext {
