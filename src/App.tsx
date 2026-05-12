@@ -71,6 +71,15 @@ export default function App() {
     pttActiveRef.current = false;
   }, []);
 
+  // ドラッグ開始時に PTT タイマーをキャンセルし、誤発火を防ぐ
+  useEffect(() => {
+    if (isDragging && pttTimerRef.current) {
+      clearTimeout(pttTimerRef.current);
+      pttTimerRef.current = null;
+      pttActiveRef.current = false;
+    }
+  }, [isDragging]);
+
   // 常時最前面
   useEffect(() => {
     if (!isTauri) return;
