@@ -13,7 +13,10 @@ export type ReactionTrigger =
   | "longIdle"
   | "manualCall"
   | "updateAvailable"
-  | "observation";
+  | "observation"
+  | "overClicked"
+  | "returnAfterBreak"
+  | "returnAfterLongBreak";
 
 export type CompanionEmotion =
   | "idle"
