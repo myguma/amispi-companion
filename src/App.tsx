@@ -177,6 +177,14 @@ export default function App() {
     if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 吹き出し表示状態を Rust の hit test スレッドに通知
+  // 非表示時はウィンドウ下部のキャラ領域のみを有効にし、透明上部が背面クリックを奪わないようにする
+  useEffect(() => {
+    if (!isTauri) return;
+    const visible = !!(tinyText || speechText);
+    void invoke("set_speech_visible", { visible });
+  }, [tinyText, speechText]);
+
   const windowW = Math.round(200 * (settings.sizeScale ?? 1));
   const windowH = Math.round(300 * (settings.sizeScale ?? 1));
 
