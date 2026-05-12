@@ -89,6 +89,17 @@ export type AIProviderOutput = {
   reason?: string;
 };
 
+export type LastAIResultDebug = {
+  source: "ollama" | "rule" | "mock" | "fallback" | "none";
+  fallbackReason?: string;
+  model?: string;
+  baseUrl?: string;
+  latencyMs?: number;
+  responsePreview?: string;
+  errorMessage?: string;
+  updatedAt: number;
+};
+
 export interface AIProvider {
   readonly name: string;
   readonly kind: AIProviderKind;
