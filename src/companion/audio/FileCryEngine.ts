@@ -1,17 +1,26 @@
-// FileCryEngine
-// MVP: Web Audio API でシンセ音を生成する。
-// 音声ファイルがなくても動作する。将来はバンドル音声 + SynthCryEngine に置き換える。
-
 import type { CryEngine } from "./CryEngine";
 import type { CrySpec } from "../reactions/types";
 
 export class FileCryEngine implements CryEngine {
   private _vol = 0.4;
+  // AudioContext はシングルトンで使い回す (毎回 new すると上限に達する)
+  private _ctx: AudioContext | null = null;
+
+  private async getCtx(): Promise<AudioContext> {
+    if (!this._ctx || this._ctx.state === "closed") {
+      this._ctx = new AudioContext();
+    }
+    // WebView2 はバックグラウンドで suspend することがある
+    if (this._ctx.state === "suspended") {
+      await this._ctx.resume();
+    }
+    return this._ctx;
+  }
 
   async play(spec: CrySpec): Promise<void> {
     if (!spec.synth) return;
     try {
-      const ctx = new AudioContext();
+      const ctx = await this.getCtx();
       const gain = ctx.createGain();
       const vol = (spec.volume ?? 1.0) * this._vol;
       gain.gain.value = vol;
@@ -49,10 +58,9 @@ export class FileCryEngine implements CryEngine {
       osc.connect(gain);
       osc.start();
       osc.stop(ctx.currentTime + dur + 0.1);
-      await new Promise((r) => setTimeout(r, (dur + 0.15) * 1000));
-      ctx.close();
-    } catch {
-      // AudioContext が許可されていない場合はサイレント失敗
+      // コンテキストは閉じない — 次の再生でも使い回す
+    } catch (e) {
+      console.warn("[CryEngine] play failed:", e);
     }
   }
 
@@ -60,8 +68,10 @@ export class FileCryEngine implements CryEngine {
     this._vol = Math.max(0, Math.min(1, v));
   }
 
-  stopAll(): void {}
+  stopAll(): void {
+    this._ctx?.close().catch(() => {});
+    this._ctx = null;
+  }
 }
 
-// シングルトン
 export const cryEngine: CryEngine = new FileCryEngine();
