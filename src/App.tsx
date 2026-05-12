@@ -30,7 +30,6 @@ export default function App() {
   // 観測スナップショット — useCompanionState より先に宣言して fullscreen を渡す
   const [snapshot, setSnapshot] = useState<ObservationSnapshot>(EMPTY_SNAPSHOT);
   const isFullscreen = snapshot.fullscreenLikely;
-  const shouldSuppress = (settings.suppressWhenFullscreen && isFullscreen) || settings.doNotDisturb;
 
   const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction } = useCompanionState(
     undefined,
