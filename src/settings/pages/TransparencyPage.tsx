@@ -10,6 +10,7 @@ import { inferActivity } from "../../companion/activity/inferActivity";
 import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
 import { buildDailySummary } from "../../companion/memory/dailySummary";
 import { getRecentEvents } from "../../systems/memory/memoryStore";
+import { canSpeak } from "../../companion/speech/SpeechPolicy";
 
 const YES = "✓";
 const NO  = "×";
