@@ -61,6 +61,7 @@ export function useObservationReactions(
 
     const currentKind = delta.nextInferredKind;
 
+    // 固定テキストによる発火 (AI 失敗時の fallback)
     const fire = (trigger: ReactionTrigger, tags?: string[]): boolean => {
       const r = selectReaction({
         trigger,
@@ -91,29 +92,49 @@ export function useObservationReactions(
       return true;
     };
 
-    // ── 1. 全画面遷移 (最優先) ───────────────────────────────────────
+    // AI-first helper: AI を試み、失敗時は fire() にフォールバック
+    const tryAIOrFire = async (trigger: ReactionTrigger, tags?: string[]): Promise<boolean> => {
+      try {
+        const events = getRecentEvents(20);
+        const ctx    = buildCompanionContext("observation", snapshot, events, s);
+        const output = await getNewAIResponse(ctx);
+        if (output.shouldSpeak && output.text) {
+          triggerSpeak(output.text);
+          return true;
+        }
+      } catch { /* AI エラー → fire() へ */ }
+      return fire(trigger, tags);
+    };
+
+    // ── 1. 全画面遷移 (最優先・固定テキスト) ────────────────────────
     if (delta.fullscreenChanged && snapshot.fullscreenLikely) {
       fire("fullscreenDetected");
       return;
     }
 
-    // ── 2. メディア / ゲーム遷移 ─────────────────────────────────────
+    // ── 2. メディア / ゲーム遷移 (AI-first) ─────────────────────────
     if (delta.activityChanged) {
-      if (delta.nextActivity === "mediaWatching") { fire("mediaDetected"); return; }
-      if (delta.nextActivity === "gamingLikely")  { fire("gamingDetected"); return; }
+      if (delta.nextActivity === "mediaWatching") {
+        void tryAIOrFire("mediaDetected");
+        return;
+      }
+      if (delta.nextActivity === "gamingLikely") {
+        void tryAIOrFire("gamingDetected");
+        return;
+      }
     }
 
-    // ── 3. 長時間 idle ───────────────────────────────────────────────
+    // ── 3. 長時間 idle (AI-first) ───────────────────────────────────
     if (
       delta.idleBucketChanged &&
       (delta.nextIdleBucket === "long" || delta.nextIdleBucket === "veryLong") &&
       delta.prevIdleBucket !== "long" && delta.prevIdleBucket !== "veryLong"
     ) {
-      fire("longIdle");
+      void tryAIOrFire("longIdle");
       return;
     }
 
-    // ── 4. Downloads / Desktop pile ──────────────────────────────────
+    // ── 4. Downloads / Desktop pile (固定テキスト) ───────────────────
     if (delta.downloadsPileChanged && (snapshot.folders.downloads?.fileCount ?? 0) > 20) {
       fire("downloadsPile");
       return;
@@ -124,7 +145,7 @@ export function useObservationReactions(
       return;
     }
 
-    // ── 5. InferredActivity 遷移 ─────────────────────────────────────
+    // ── 5. InferredActivity 遷移 (AI-first) ─────────────────────────
     // deepFocus / gaming / watchingVideo 中は以降の遷移通知を抑制
     if (SILENT_KINDS.includes(currentKind)) return;
     // DND / quiet 時も抑制
@@ -137,7 +158,7 @@ export function useObservationReactions(
 
       // 音楽制作開始: * → composing (deepFocusからの遷移を除く)
       if (nextInferredKind === "composing" && prevInferredKind !== "composing") {
-        fire("activityTransition", ["composing_start"]);
+        void tryAIOrFire("activityTransition", ["composing_start"]);
         return;
       }
 
@@ -148,7 +169,7 @@ export function useObservationReactions(
         prevInferredKind !== "deepFocus" &&
         isValidTransitionFrom(prevInferredKind)
       ) {
-        fire("activityTransition", ["coding_start"]);
+        void tryAIOrFire("activityTransition", ["coding_start"]);
         return;
       }
 
@@ -158,7 +179,7 @@ export function useObservationReactions(
         prevInferredKind !== "listeningMusic" &&
         prevInferredKind !== "watchingVideo"
       ) {
-        fire("activityTransition", ["music_start"]);
+        void tryAIOrFire("activityTransition", ["music_start"]);
         return;
       }
 
@@ -167,7 +188,7 @@ export function useObservationReactions(
         (prevInferredKind === "away" || delta.prevIdleBucket === "long" || delta.prevIdleBucket === "veryLong") &&
         nextInferredKind !== "away" && nextInferredKind !== "idle" && nextInferredKind !== "unknown"
       ) {
-        fire("activityTransition", ["return_from_away"]);
+        void tryAIOrFire("activityTransition", ["return_from_away"]);
         return;
       }
     }
