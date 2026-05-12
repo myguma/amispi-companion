@@ -3,12 +3,14 @@
 
 import { deriveActivity } from "../../observation/types";
 import type { ActivityKind, ObservationSnapshot } from "../../observation/types";
+import { inferActivity } from "../activity/inferActivity";
+import type { InferredActivity } from "../activity/inferActivity";
 
 export type IdleBucket = "active" | "short" | "long" | "veryLong";
 
-const LONG_IDLE_MS   = 30 * 60 * 1000;
-const VERY_LONG_IDLE_MS = 2 * 60 * 60 * 1000;
-const SHORT_IDLE_MS  = 5 * 60 * 1000;
+const LONG_IDLE_MS      = 30 * 60 * 1000;
+const VERY_LONG_IDLE_MS =  2 * 60 * 60 * 1000;
+const SHORT_IDLE_MS     =  5 * 60 * 1000;
 
 export function classifyIdle(idleMs: number): IdleBucket {
   if (idleMs >= VERY_LONG_IDLE_MS) return "veryLong";
@@ -18,30 +20,38 @@ export function classifyIdle(idleMs: number): IdleBucket {
 }
 
 export type ObservationDelta = {
-  activityChanged: boolean;
-  fullscreenChanged: boolean;
+  // ── 既存フィールド ──────────────────────────────────
+  activityChanged:          boolean;
+  fullscreenChanged:        boolean;
   activeAppCategoryChanged: boolean;
-  idleBucketChanged: boolean;
-  downloadsPileChanged: boolean;
-  desktopPileChanged: boolean;
-  prevActivity: ActivityKind;
-  nextActivity: ActivityKind;
-  prevIdleBucket: IdleBucket;
-  nextIdleBucket: IdleBucket;
+  idleBucketChanged:        boolean;
+  downloadsPileChanged:     boolean;
+  desktopPileChanged:       boolean;
+  prevActivity:             ActivityKind;
+  nextActivity:             ActivityKind;
+  prevIdleBucket:           IdleBucket;
+  nextIdleBucket:           IdleBucket;
+  // ── InferredActivity ベース (より詳細な推定) ────────
+  inferredKindChanged: boolean;
+  prevInferredKind:    InferredActivity;
+  nextInferredKind:    InferredActivity;
 };
 
 export function computeDelta(
   prev: ObservationSnapshot,
   next: ObservationSnapshot
 ): ObservationDelta {
-  const prevActivity    = deriveActivity(prev);
-  const nextActivity    = deriveActivity(next);
-  const prevIdleBucket  = classifyIdle(prev.idle.idleMs);
-  const nextIdleBucket  = classifyIdle(next.idle.idleMs);
-  const prevDownloads   = prev.folders.downloads?.fileCount ?? 0;
-  const nextDownloads   = next.folders.downloads?.fileCount ?? 0;
-  const prevDesktop     = prev.folders.desktop?.fileCount ?? 0;
-  const nextDesktop     = next.folders.desktop?.fileCount ?? 0;
+  const prevActivity   = deriveActivity(prev);
+  const nextActivity   = deriveActivity(next);
+  const prevIdleBucket = classifyIdle(prev.idle.idleMs);
+  const nextIdleBucket = classifyIdle(next.idle.idleMs);
+  const prevDownloads  = prev.folders.downloads?.fileCount ?? 0;
+  const nextDownloads  = next.folders.downloads?.fileCount ?? 0;
+  const prevDesktop    = prev.folders.desktop?.fileCount ?? 0;
+  const nextDesktop    = next.folders.desktop?.fileCount ?? 0;
+
+  const prevInferredKind = inferActivity(prev).kind;
+  const nextInferredKind = inferActivity(next).kind;
 
   return {
     activityChanged:          prevActivity !== nextActivity,
@@ -54,5 +64,8 @@ export function computeDelta(
     nextActivity,
     prevIdleBucket,
     nextIdleBucket,
+    inferredKindChanged: prevInferredKind !== nextInferredKind,
+    prevInferredKind,
+    nextInferredKind,
   };
 }
