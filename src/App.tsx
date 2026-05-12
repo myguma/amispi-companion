@@ -233,11 +233,15 @@ export default function App() {
       </div>
 
       {updateAvailable && (
-        <UpdateBadge version={updateAvailable.version} installing={installing} onInstall={installUpdate} />
+        <div style={{ pointerEvents: "auto" }}>
+          <UpdateBadge version={updateAvailable.version} installing={installing} onInstall={installUpdate} />
+        </div>
       )}
 
       {contextMenu && (
-        <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} />
+        <div style={{ pointerEvents: "auto" }}>
+          <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} />
+        </div>
       )}
     </div>
   );
