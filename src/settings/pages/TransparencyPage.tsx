@@ -7,6 +7,9 @@ import { useSettings } from "../store";
 import type { PermissionSettings } from "../../privacy/permissions";
 import type { ObservationSnapshot } from "../../observation/types";
 import { inferActivity } from "../../companion/activity/inferActivity";
+import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
+import { buildDailySummary } from "../../companion/memory/dailySummary";
+import { getRecentEvents } from "../../systems/memory/memoryStore";
 
 const YES = "✓";
 const NO  = "×";
@@ -45,6 +48,30 @@ function StatusBadge({ color, label }: { color: string; label: string }) {
   );
 }
 
+function ReasonTag({ text }: { text: string }) {
+  // 技術タグを人間向けに変換
+  const label =
+    text === "input_active"    ? "入力あり" :
+    text === "no_recent_input" ? "入力なし" :
+    text === "fullscreen"      ? "全画面" :
+    text === "high_cpu"        ? "CPU高" :
+    text === "windowed"        ? "ウィンドウ" :
+    text.startsWith("idle=")   ? text.replace("idle=", "").replace("min", "分").replace(/(\d+)s$/, "$1秒") + "無操作" :
+    text.startsWith("bg_media:")? "バックグラウンド音楽" :
+    text.startsWith("category=")? null : // category タグは表示しない
+    text;
+
+  if (label === null) return null;
+  return (
+    <span style={{
+      display: "inline-block", padding: "1px 6px", borderRadius: 6,
+      fontSize: 10, background: "#eee", color: "#666", margin: "0 2px 2px 0",
+    }}>
+      {label}
+    </span>
+  );
+}
+
 function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
   if (!snap) {
     return <div style={{ fontSize: 12, color: "#bbb", padding: "8px 0" }}>取得中…</div>;
@@ -61,9 +88,14 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
     insight.kind === "gaming"        ? "#d04060" :
     insight.kind === "watchingVideo" ? "#c040a0" :
     insight.kind === "listeningMusic"? "#4caf7d" :
+    insight.kind === "reading"       ? "#5b8fa8" :
     insight.kind === "browsing"      ? "#5090c0" :
     insight.kind === "idle"          ? "#aaa"    :
     insight.kind === "away"          ? "#ccc"    : "#888";
+
+  const reasonTags = insight.reasons.filter((r) =>
+    !r.startsWith("category=") && r !== "no_strong_signal" && r !== "no_category_match"
+  );
 
   return (
     <div style={{
@@ -75,7 +107,7 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
         <span style={{ color: "#aaa" }}>({Math.round(insight.confidence * 100)}%)</span>
       </div>
       <div style={{ color: "#666" }}>
-        アプリ: <strong>{snap.activeApp?.category ?? "不明"}</strong>
+        アプリ種別: <strong>{snap.activeApp?.category ?? "不明"}</strong>
         {snap.fullscreenLikely && <span style={{ marginLeft: 8, color: "#c040a0" }}>全画面中</span>}
       </div>
       {idleMin > 0 && (
@@ -84,6 +116,46 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
       {media?.audioLikelyActive && (
         <div style={{ color: "#4caf7d" }}>
           {media.mediaKind === "music" ? "音楽" : "動画"}再生中 ({media.sourceCategory})
+        </div>
+      )}
+      {snap.system?.cpuLoad !== undefined && snap.system.cpuLoad > 40 && (
+        <div style={{ color: "#888" }}>CPU: {Math.round(snap.system.cpuLoad)}%</div>
+      )}
+      {reasonTags.length > 0 && (
+        <div style={{ marginTop: 6 }}>
+          {reasonTags.map((r) => <ReasonTag key={r} text={r} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MemorySummaryPanel() {
+  const events  = getRecentEvents(200);
+  const memory  = buildMemorySummary(events);
+  const daily   = buildDailySummary(events);
+
+  const breakLabel =
+    memory.lastSessionBreak === "longDay"  ? "前回から日が明けた" :
+    memory.lastSessionBreak === "hours"    ? "数時間ぶり" :
+    memory.lastSessionBreak === "short"    ? "短い休憩あり" : "連続セッション";
+
+  return (
+    <div style={{
+      background: "#f4f8f4", borderRadius: 8, padding: "10px 12px",
+      fontSize: 12, lineHeight: 1.8,
+    }}>
+      <div style={{ color: "#666" }}>今日の起動: <strong>{daily.sessionCountToday}回</strong></div>
+      <div style={{ color: "#666" }}>今日のクリック: <strong>{memory.todayClickCount}回</strong></div>
+      {daily.activeHoursToday > 0 && (
+        <div style={{ color: "#666" }}>
+          起動からの経過: <strong>{daily.activeHoursToday}時間</strong>
+        </div>
+      )}
+      <div style={{ color: "#888", fontSize: 11 }}>{breakLabel}</div>
+      {memory.shortNaturalSummary && (
+        <div style={{ color: "#555", marginTop: 4, fontSize: 11, fontStyle: "italic" }}>
+          {memory.shortNaturalSummary}
         </div>
       )}
     </div>
@@ -162,6 +234,11 @@ export function TransparencyPage() {
         </div>
       </Section>
 
+      {/* ── 今日の記憶 ── */}
+      <Section title="今日の記憶">
+        <MemorySummaryPanel />
+      </Section>
+
       {/* ── AI エンジン状態 ── */}
       <Section title="AI エンジン">
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
@@ -189,6 +266,7 @@ export function TransparencyPage() {
         <Row icon={p.level >= 1 ? YES : NO} label="音楽・動画アプリが起動中か" note="Spotify等が起動中かどうかのみ — 再生内容は取得しない" />
         <Row icon={p.level >= 1 && p.folderMetadataEnabled ? YES : NO} label="Desktop のファイル数" note="増えすぎたら一言" />
         <Row icon={p.level >= 1 && p.folderMetadataEnabled ? YES : NO} label="Downloads のファイル数" note="増えすぎたら一言" />
+        <Row icon={YES} label="CPU 使用率 (概略)" note="ビルド中等の推定に使う — ファイルや内容は見ない" />
       </Section>
 
       {/* ── 許可すると見えるもの ── */}
