@@ -262,6 +262,7 @@ function OllamaStatus({ baseUrl }: { baseUrl: string }) {
 export function TransparencyPage() {
   const [settings, update] = useSettings();
   const p = settings.permissions;
+  const autonomousSpeechEnabled = (settings as { autonomousSpeechEnabled?: boolean }).autonomousSpeechEnabled ?? false;
 
   const toggle = (key: keyof PermissionSettings, val: boolean) => {
     update({ permissions: { ...p, [key]: val } });
