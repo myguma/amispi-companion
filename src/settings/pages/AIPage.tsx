@@ -2,7 +2,7 @@
 // ローカル LLM (Ollama) の接続設定・テスト・デバッグ情報を表示する
 
 import { useState, useEffect, useCallback } from "react";
-import { useSettings } from "../store";
+import { useSettings, getSettings } from "../store";
 import { getLastAIResult, subscribeLastAIResult, getAIResponse } from "../../companion/ai/AIProviderManager";
 import type { AIEngine } from "../types";
 import type { LastAIResultDebug } from "../../companion/ai/types";
