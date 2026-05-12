@@ -5,6 +5,26 @@
 import { useState } from "react";
 import type { CompanionState, CharacterConfig } from "../types/companion";
 import { DEFAULT_CHARACTER_CONFIG } from "../types/companion";
+import type { CompanionEmotion } from "../companion/reactions/types";
+
+/**
+ * CompanionEmotion → スプライト選択に使う CompanionState へのマッピング。
+ * shy / concerned は専用スプライトがないため近いものにフォールバック。
+ */
+export function emotionToSpriteState(emotion: CompanionEmotion): CompanionState {
+  switch (emotion) {
+    case "idle":      return "idle";
+    case "aware":     return "touched";
+    case "touched":   return "touched";
+    case "thinking":  return "thinking";
+    case "speaking":  return "speaking";
+    case "sleep":     return "sleep";
+    case "waking":    return "waking";
+    case "shy":       return "idle";      // 専用スプライトなし → idle
+    case "concerned": return "touched";   // 専用スプライトなし → touched
+    default:          return "idle";
+  }
+}
 
 interface CharacterProps {
   state: CompanionState;
