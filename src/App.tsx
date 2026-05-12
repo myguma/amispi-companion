@@ -26,9 +26,12 @@ const OBSERVE_INTERVAL_MS = 30_000;
 
 export default function App() {
   const [settings] = useSettings();
-  const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState(
+  const isFullscreen = useRef(false); // snapshot が来るまでの初期値
+
+  const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction } = useCompanionState(
     undefined,
-    settings.autonomousSpeechEnabled
+    settings.autonomousSpeechEnabled,
+    isFullscreen.current
   );
   const { onDragStart, isDragging, mouseDownRef } = useDrag();
   const { facingRight } = useWander(state, mouseDownRef);
