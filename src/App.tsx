@@ -192,25 +192,35 @@ export default function App() {
         justifyContent: "flex-end",
         paddingBottom: 12,
         position: "relative",
+        // 透明領域がバックグラウンドクリックを奪わないよう none に設定。
+        // インタラクティブな要素 (キャラ/吹き出し) だけ auto で上書きする。
+        pointerEvents: "none",
       }}
       onContextMenu={handleContextMenu}
     >
       <DebugOverlay state={state} speechText={speechText} />
 
-      <div style={{ position: "absolute", top: 10, left: 0, right: 0, display: "flex", justifyContent: "center", padding: "0 8px" }}>
-        {tinyText ? (
-          <TinyWhisper text={tinyText} />
-        ) : (
-          <SpeechBubble text={speechText} />
-        )}
-      </div>
+      {/* 吹き出し: コンテンツがある時だけ pointer-events: auto */}
+      {(tinyText || speechText) && (
+        <div style={{
+          position: "absolute", top: 10, left: 0, right: 0,
+          display: "flex", justifyContent: "center", padding: "0 8px",
+          pointerEvents: "auto",
+        }}>
+          {tinyText ? (
+            <TinyWhisper text={tinyText} />
+          ) : (
+            <SpeechBubble text={speechText} />
+          )}
+        </div>
+      )}
 
       <div
         className="drag-handle"
         onMouseDown={(e) => { onDragStart(e); handlePttDown(); }}
         onMouseUp={handlePttUp}
         onMouseLeave={handlePttUp}
-        style={{ position: "relative" }}
+        style={{ position: "relative", pointerEvents: "auto" }}
       >
         <Character
           state={state}
