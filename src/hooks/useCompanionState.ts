@@ -48,6 +48,7 @@ export function useCompanionState(
 ): UseCompanionStateReturn {
   const [state, setState] = useState<CompanionState>("idle");
   const [speechText, setSpeechText] = useState<string | null>(null);
+  const [voiceUIState, setVoiceUIState] = useState<VoiceUIState>("voiceOff");
 
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
