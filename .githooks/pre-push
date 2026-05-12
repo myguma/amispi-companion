@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# タグ push 時に Windows ターゲットのコンパイルチェックを実行する
-# cargo check はリンクしないので MSVC ツールチェーンなしで動く
+# タグ push 前に注意喚起する
+# Windows ターゲットのチェックは CI (check.yml) が main push 時に自動実行する
 
 set -euo pipefail
 
@@ -15,13 +15,21 @@ if [ "$pushing_tag" != true ]; then
   exit 0
 fi
 
-echo "[pre-push] Windows ターゲットのチェック中..."
+# タグ push 前に最新 main の check CI が通っているか確認
+echo "[pre-push] タグ push を検出"
 
-if ! cargo check --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc 2>&1; then
-  echo ""
-  echo "[pre-push] Windows ビルドチェック失敗 — push を中断しました"
-  echo "  エラーを修正してから再度 push してください"
-  exit 1
+if command -v gh &>/dev/null; then
+  latest=$(gh run list --repo "$(git remote get-url origin | sed 's/.*github.com[:/]//' | sed 's/\.git$//')" \
+    --workflow check.yml --branch main --limit 1 --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "unknown")
+
+  if [ "$latest" = "failure" ]; then
+    echo "[pre-push] ⚠ 直近の Windows チェックが失敗しています"
+    echo "  https://github.com/$(git remote get-url origin | sed 's/.*github.com[:/]//' | sed 's/\.git$//')/actions"
+    echo "  修正後に再 push してください (スキップするには: git push --no-verify)"
+    exit 1
+  elif [ "$latest" = "success" ]; then
+    echo "[pre-push] ✓ Windows チェック OK"
+  else
+    echo "[pre-push] チェック結果が不明のため通過します (status: $latest)"
+  fi
 fi
-
-echo "[pre-push] チェック完了 ✓"
