@@ -239,10 +239,6 @@ mod windows_impl {
     }
 }
 
-// GetTickCount64 は SystemInformation feature が必要
-#[cfg(target_os = "windows")]
-impl windows_sys::Win32::System::SystemInformation::GetTickCount64 {}
-
 // ──────────────────────────────────────────
 // フォルダスキャン (クロスプラットフォーム)
 // ──────────────────────────────────────────
