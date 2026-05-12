@@ -42,7 +42,7 @@ jobs:
       # tauri-action がビルド + Draft Release 作成 + .exe アップロードを行う
       # .nsis.zip / .nsis.zip.sig も生成されるが action 側では latest.json を
       # アップロードしないため、次のステップで手動追加する
-      - name: Build and create draft release
+      - name: Build and publish release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
