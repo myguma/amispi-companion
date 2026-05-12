@@ -108,6 +108,69 @@ function unknownReason(snap: ObservationSnapshot): string | null {
   return null;
 }
 
+function errorStageLabel(stage: string, code: number): string {
+  const labels: Record<string, string> = {
+    ok:                  "成功",
+    hwnd_null:           "フォアグラウンドウィンドウ取得失敗 (HWND null)",
+    pid_zero:            "プロセスID取得失敗 (PID=0)",
+    open_process_failed: "プロセスハンドル取得失敗 (OpenProcess)",
+    query_name_failed:   "プロセス名取得失敗 (QueryFullProcessImageNameW)",
+    unsupported_platform:"非Windowsプラットフォーム",
+  };
+  const label = labels[stage] ?? stage;
+  return code > 0 ? `${label} (Win32エラー: ${code})` : label;
+}
+
+function ActiveAppDebugPanel() {
+  const [info, setInfo] = useState<ActiveAppDebugInfo | null>(null);
+  const [fetching, setFetching] = useState(false);
+
+  const fetchDebug = async () => {
+    if (fetching) return;
+    setFetching(true);
+    try {
+      const d = await invoke<ActiveAppDebugInfo>("get_active_app_debug");
+      setInfo(d);
+    } catch { /* サイレント */ }
+    setFetching(false);
+  };
+
+  useEffect(() => {
+    void fetchDebug();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!info) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
+
+  const stageOk = info.errorStage === "ok";
+  const stageColor = stageOk ? "#4caf7d" : "#e05050";
+
+  return (
+    <div style={{ background: "#fff8f0", borderRadius: 8, padding: "10px 12px", fontSize: 11, lineHeight: 1.9, fontFamily: "monospace" }}>
+      <div style={{ color: stageColor, fontWeight: 700, marginBottom: 4 }}>
+        [{info.platform}] {errorStageLabel(info.errorStage, info.errorCode)}
+      </div>
+      <div>hwnd: {info.hwndAvailable ? "✓" : "✗"}</div>
+      <div>pid: {info.pidAvailable ? `✓ (${info.pid})` : "✗"}</div>
+      <div>OpenProcess: {info.openProcessOk ? "✓" : "✗"}</div>
+      <div>QueryName: {info.queryNameOk ? "✓" : "✗"}</div>
+      {info.processName && <div>processName: <strong>{info.processName}</strong></div>}
+      {info.queryNameOk && <div>category: <strong>{info.category}</strong></div>}
+      {info.isSelfApp && (
+        <div style={{ color: "#e08030", marginTop: 4 }}>
+          ⚠ 設定画面自身が前面です。他のアプリを前面にして再取得してください。
+        </div>
+      )}
+      <button
+        onClick={() => void fetchDebug()}
+        disabled={fetching}
+        style={{ marginTop: 6, fontSize: 11, padding: "2px 10px", border: "1px solid #ddd", borderRadius: 4, background: "white", cursor: "pointer" }}
+      >
+        {fetching ? "取得中…" : "再取得"}
+      </button>
+    </div>
+  );
+}
+
 function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
   if (!snap) {
     return <div style={{ fontSize: 12, color: "#bbb", padding: "8px 0" }}>取得中…</div>;
