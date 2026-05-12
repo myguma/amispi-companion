@@ -53,28 +53,36 @@ export default function App() {
     setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
 
-  // push-to-talk 長押し (500ms 以上)
-  // Phase 6a: 本物の録音はまだしない。mock transcript を使う。
-  const pttTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // push-to-talk 長押し (500ms 以上) — 実録音パイプライン
+  // Phase 6b-real: 長押し 500ms で getUserMedia → 録音開始 → 離したら停止 → STT → 返答
+  const pttTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pttActiveRef = useRef(false);
+
+  const { startRecording, stopRecording } = useVoiceRecorder({
+    maxDurationMs: settings.maxRecordingMs,
+    onBlob: (blob) => void requestVoiceFromBlob(blob),
+    onError: (err) => voiceRecordingError(err),
+  });
 
   const handlePttDown = useCallback(() => {
     if (!settings.voiceInputEnabled || settings.voiceInputMode !== "pushToTalk") return;
     pttTimerRef.current = setTimeout(() => {
       pttActiveRef.current = true;
-      // Phase 6a: mock transcript で voice flow を起動
-      const mockTranscript = "ねえ、今何してる？";
-      void requestVoiceResponse(mockTranscript);
+      voiceListeningStart();   // UI: voiceListening へ
+      void startRecording();   // getUserMedia → 録音開始
     }, 500);
-  }, [settings.voiceInputEnabled, settings.voiceInputMode, requestVoiceResponse]);
+  }, [settings.voiceInputEnabled, settings.voiceInputMode, voiceListeningStart, startRecording]);
 
   const handlePttUp = useCallback(() => {
     if (pttTimerRef.current) {
       clearTimeout(pttTimerRef.current);
       pttTimerRef.current = null;
     }
-    pttActiveRef.current = false;
-  }, []);
+    if (pttActiveRef.current) {
+      pttActiveRef.current = false;
+      stopRecording(); // 録音停止 → onstop → onBlob → requestVoiceFromBlob
+    }
+  }, [stopRecording]);
 
   // ドラッグ開始時に PTT タイマーをキャンセルし、誤発火を防ぐ
   useEffect(() => {
