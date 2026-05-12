@@ -123,7 +123,7 @@ export class OllamaProvider implements AIProvider {
             { role: "system", content: system },
             { role: "user",   content: user   },
           ],
-          options: { temperature: 0.7, num_predict: 60 },
+          options: { temperature: 0.5, num_predict: 60 },
         }),
       });
       clearTimeout(timeId);
