@@ -62,6 +62,12 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
     contextLines.push(memorySummary.shortNaturalSummary);
   }
 
+  // 音声入力 (voice trigger の場合のみ追加。80文字で切り詰め)
+  if (ctx.voiceInput) {
+    const safe = ctx.voiceInput.trim().slice(0, 80);
+    contextLines.push(`ユーザーの声: ${safe}`);
+  }
+
   const userContent = contextLines.join("\n");
 
   return { system: SYSTEM_PROMPT, user: userContent };
