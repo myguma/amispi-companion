@@ -1,7 +1,8 @@
 // 設定ウィンドウのルートコンポーネント
 // ?page=settings で開かれる独立したウィンドウ
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { TransparencyPage } from "./pages/TransparencyPage";
 import { BehaviorPage } from "./pages/BehaviorPage";
 
