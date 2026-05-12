@@ -41,7 +41,7 @@ export class OllamaProvider implements AIProvider {
     }
   }
 
-  async respond(input: AIProviderInput): Promise<AIProviderOutput> {
+  async respond(_input: AIProviderInput): Promise<AIProviderOutput> {
     // AIProviderInput から CompanionContext を再構築してプロンプトを作る
     const s      = getSettings();
     const events = getRecentEvents(20);
