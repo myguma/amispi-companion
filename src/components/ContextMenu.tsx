@@ -26,6 +26,11 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
   const left = Math.min(x, 200 - MENU_W - 4);
   const top = Math.min(y, 300 - MENU_H - 4);
 
+  const handleSettings = () => {
+    invoke("open_settings_window").catch(() => {});
+    onClose();
+  };
+
   const handleAutostart = () => {
     const next = !autostart;
     invoke("set_autostart", { enabled: next })
