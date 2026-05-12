@@ -81,6 +81,7 @@ pub struct ObservationSnapshot {
     pub fullscreen_likely: bool,
     pub folders: FolderSnapshots,
     pub system: Option<SystemInfo>,
+    pub media: Option<MediaContext>,
     pub privacy: PrivacyMeta,
 }
 
