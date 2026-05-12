@@ -1,6 +1,5 @@
 // コンパニオン状態マシン
 // タイマー競合を防ぐため全タイマーをここで一元管理する
-// 状態遷移は docs/ARCHITECTURE.md の State Transition Table を参照
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CompanionState, StateConfig } from "../types/companion";
@@ -9,36 +8,47 @@ import { logEvent } from "../systems/memory/memoryStore";
 import { getAIResponse } from "../systems/ai/AIProvider";
 import { getRecentEvents } from "../systems/memory/memoryStore";
 import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
+import { selectReaction } from "../companion/reactions/selectReaction";
+import { recordReaction } from "../companion/reactions/reactionHistory";
+import { getTimeTag } from "../companion/reactions/reactionData";
+import { getSettings } from "../settings/store";
+import { cryEngine } from "../companion/audio/FileCryEngine";
+import type { ReactionTrigger } from "../companion/reactions/types";
 
 interface UseCompanionStateReturn {
   state: CompanionState;
   speechText: string | null;
   onCharacterClick: () => void;
   triggerSpeak: (text?: string) => void;
+  triggerDragReaction: () => void;
 }
 
 export function useCompanionState(
   config: StateConfig = DEFAULT_STATE_CONFIG,
-  autonomousSpeechEnabled = false
+  autonomousSpeechEnabled = false,
+  isFullscreen = false
 ): UseCompanionStateReturn {
   const [state, setState] = useState<CompanionState>("idle");
   const [speechText, setSpeechText] = useState<string | null>(null);
 
-  // 全タイマーをrefで管理し、アンマウント時に必ずクリアする
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const autonomousSpeechRef = useRef(autonomousSpeechEnabled);
+  useEffect(() => { autonomousSpeechRef.current = autonomousSpeechEnabled; }, [autonomousSpeechEnabled]);
+
+  const isFullscreenRef = useRef(isFullscreen);
+  useEffect(() => { isFullscreenRef.current = isFullscreen; }, [isFullscreen]);
+
+  const stateRef = useRef<CompanionState>("idle");
+  useEffect(() => { stateRef.current = state; }, [state]);
+
   const clearAllTimers = useCallback(() => {
-    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
-    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
-    if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
-    if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
-    sleepTimerRef.current = null;
-    transitionTimerRef.current = null;
-    speechTimerRef.current = null;
-    idleSpeechTimerRef.current = null;
+    [sleepTimerRef, transitionTimerRef, speechTimerRef, idleSpeechTimerRef].forEach((r) => {
+      if (r.current) { clearTimeout(r.current); r.current = null; }
+    });
   }, []);
 
   const resetSleepTimer = useCallback(() => {
@@ -53,6 +63,32 @@ export function useCompanionState(
       });
     }, config.sleepTimeoutMs);
   }, [config.sleepTimeoutMs]);
+
+  // ──────────────────────────────────────────
+  // Reaction System ヘルパー
+  // テキストを返す。reaction に cry があれば自動再生。
+  // ──────────────────────────────────────────
+  const fireReaction = useCallback((trigger: ReactionTrigger, tags?: string[]): string | null => {
+    const s = getSettings();
+    const r = selectReaction({
+      trigger,
+      tags,
+      isFullscreen: isFullscreenRef.current,
+      policy: {
+        autonomousSpeech: autonomousSpeechRef.current,
+        cryEnabled: s.cryEnabled,
+        maxAutonomousReactionsPerHour: s.maxAutonomousReactionsPerHour,
+        suppressWhenFullscreen: s.suppressWhenFullscreen,
+        suppressWhenFocus: s.focusMode,
+        quietMode: s.quietMode,
+        doNotDisturb: s.doNotDisturb,
+      },
+    });
+    if (!r) return null;
+    recordReaction(r.id);
+    if (r.cry && s.cryEnabled) void cryEngine.play(r.cry);
+    return r.text ?? null;
+  }, []);
 
   // ──────────────────────────────────────────
   // 吹き出し表示
@@ -75,27 +111,22 @@ export function useCompanionState(
   );
 
   // ──────────────────────────────────────────
-  // ランダム独り言 (2〜4分に1回、idle中のみ、autonomousSpeechEnabled=true の時のみ)
+  // ランダム独り言 (reaction system → fallback)
   // ──────────────────────────────────────────
-  const stateRef = useRef<CompanionState>("idle");
-  useEffect(() => { stateRef.current = state; }, [state]);
-
-  const autonomousSpeechRef = useRef(autonomousSpeechEnabled);
-  useEffect(() => { autonomousSpeechRef.current = autonomousSpeechEnabled; }, [autonomousSpeechEnabled]);
-
   const scheduleIdleSpeech = useCallback(() => {
     if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
-    const delay = 120_000 + Math.random() * 120_000; // 2〜4分
+    const delay = 120_000 + Math.random() * 120_000;
     idleSpeechTimerRef.current = setTimeout(() => {
       if (stateRef.current === "idle" && autonomousSpeechRef.current) {
-        triggerSpeak(pickDialogue("random_idle"));
+        const text = fireReaction("randomIdle") ?? pickDialogue("random_idle");
+        triggerSpeak(text);
       }
       scheduleIdleSpeech();
     }, delay);
-  }, [triggerSpeak]);
+  }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
-  // AI応答のリクエスト
+  // クリック → AI応答
   // ──────────────────────────────────────────
   const requestAIResponse = useCallback(async () => {
     setState("thinking");
@@ -104,10 +135,18 @@ export function useCompanionState(
     if (response) {
       triggerSpeak(response);
     } else {
-      // AIが応答しない場合はダイアログデータから選ぶ
-      triggerSpeak(pickDialogue("touch_reaction"));
+      const text = fireReaction("click") ?? pickDialogue("touch_reaction");
+      triggerSpeak(text);
     }
-  }, [triggerSpeak]);
+  }, [triggerSpeak, fireReaction]);
+
+  // ──────────────────────────────────────────
+  // ドラッグ反応
+  // ──────────────────────────────────────────
+  const triggerDragReaction = useCallback(() => {
+    const text = fireReaction("dragStart");
+    if (text) triggerSpeak(text);
+  }, [fireReaction, triggerSpeak]);
 
   // ──────────────────────────────────────────
   // クリック処理
@@ -117,34 +156,30 @@ export function useCompanionState(
       logEvent("character_clicked", { fromState: prev });
 
       if (prev === "sleep") {
-        // sleep → waking → idle
         clearAllTimers();
         transitionTimerRef.current = setTimeout(() => {
-          const line = pickDialogue("wake_reaction");
-          triggerSpeak(line);
+          const text = fireReaction("wake") ?? pickDialogue("wake_reaction");
+          triggerSpeak(text);
         }, config.wakingDurationMs);
         return "waking";
       }
 
       if (prev === "idle") {
-        // idle → touched → (AI request) → thinking → speaking → idle
         if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
         transitionTimerRef.current = setTimeout(() => {
           void requestAIResponse();
         }, config.touchedDurationMs);
-
         resetSleepTimer();
         return "touched";
       }
 
       if (prev === "speaking") {
-        // 吹き出し表示中のクリックはタッチ反応
-        setSpeechText(pickDialogue("touch_reaction"));
+        const text = fireReaction("click") ?? pickDialogue("touch_reaction");
+        setSpeechText(text);
         resetSleepTimer();
         return "speaking";
       }
 
-      // thinking中は操作を受け付けない
       return prev;
     });
   }, [
@@ -154,6 +189,7 @@ export function useCompanionState(
     triggerSpeak,
     requestAIResponse,
     resetSleepTimer,
+    fireReaction,
   ]);
 
   // ──────────────────────────────────────────
@@ -162,9 +198,9 @@ export function useCompanionState(
   useEffect(() => {
     logEvent("app_start");
 
-    // 少し遅らせて起動挨拶を表示
     const greetTimer = setTimeout(() => {
-      triggerSpeak(pickTimedGreeting());
+      const text = fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
+      triggerSpeak(text);
     }, 1500);
 
     resetSleepTimer();
@@ -176,5 +212,5 @@ export function useCompanionState(
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { state, speechText, onCharacterClick, triggerSpeak };
+  return { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction };
 }
