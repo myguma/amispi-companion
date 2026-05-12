@@ -110,6 +110,7 @@ export function useCompanionState(
       const line = text ?? pickDialogue("speaking_response");
       setSpeechText(line);
       setState("speaking");
+      lastSpeechAtRef.current = Date.now();
       logEvent("speech_shown", { text: line });
 
       if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
