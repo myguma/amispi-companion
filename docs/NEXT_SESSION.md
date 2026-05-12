@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.35)
-✅ cargo build  → Finished dev profile (v0.1.35)
-✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.35 は push 直後)
+✅ npm run build → ✓ built (v0.1.36)
+✅ cargo build  → Finished dev profile (v0.1.36)  ← ureq 2 追加 (初回 +14s)
+✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.36 は push 直後)
 ```
 
 ---
