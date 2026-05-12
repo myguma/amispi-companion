@@ -72,6 +72,7 @@ export function SettingsApp() {
         {tab === "transparency" && <TransparencyPage />}
         {tab === "behavior" && <BehaviorPage />}
         {tab === "ai" && <AIPage />}
+        {tab === "voice" && <VoicePage />}
       </div>
 
       {/* フッター */}
