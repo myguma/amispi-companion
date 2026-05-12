@@ -83,8 +83,20 @@ export function VoicePage() {
         label="音声入力を有効にする"
         note="デフォルト OFF — 有効にするとキャラクターに話しかけられる"
         checked={s.voiceInputEnabled}
-        onChange={(v) => update({ voiceInputEnabled: v })}
+        onChange={(v) => {
+          // 音声入力をONにしたとき、modeがoffのままだと録音されないため pushToTalk に自動設定
+          if (v && s.voiceInputMode === "off") {
+            update({ voiceInputEnabled: true, voiceInputMode: "pushToTalk" });
+          } else {
+            update({ voiceInputEnabled: v });
+          }
+        }}
       />
+      {s.voiceInputEnabled && s.voiceInputMode === "off" && (
+        <div style={{ fontSize: 11, color: "#e08030", padding: "4px 8px", background: "#fff8e8", borderRadius: 6, marginTop: 4, lineHeight: 1.6 }}>
+          ⚠ モードが OFF のため録音しません。下の「モード」でモードを選択してください。
+        </div>
+      )}
 
       {s.voiceInputEnabled && (
         <>
