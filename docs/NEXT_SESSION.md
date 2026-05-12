@@ -4,28 +4,29 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-12 (v0.1.34)**
+**最終更新: 2026-05-12 (v0.1.35)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.34
-**フェーズ:** Milestone B 第2段階完了
-**全体進捗:** 約 66%
+**バージョン:** v0.1.35
+**フェーズ:** Field QA Fixes 完了
+**全体進捗:** 約 68%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
 **記憶設計:** docs/MEMORY_AND_DATA_CONTROL.md 参照
+**QA 記録:** docs/FIELD_QA_NOTES.md 参照
 
 ---
 
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.34)
-✅ cargo build  → Finished dev profile (v0.1.34)
-✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.34 は push 直後)
+✅ npm run build → ✓ built (v0.1.35)
+✅ cargo build  → Finished dev profile (v0.1.35)
+✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.35 は push 直後)
 ```
 
 ---
@@ -40,41 +41,51 @@
 | Milestone A 第2段階 | RuleProvider文脈強化・autonomous speech精度向上・発話制御UI | ✅ v0.1.32 |
 | Milestone B 第1段階 | Memory Viewer UI・記憶削除機能・memoryStore拡張 | ✅ v0.1.33 |
 | Milestone B 第2段階 | Character State Expression・状態別CSSアニメーション・VoiceUIState統合 | ✅ v0.1.34 |
+| Field QA Fixes | Ollamaキャッシュバグ修正・classify_app拡充・当たり判定改善・デバッグUI | ✅ v0.1.35 |
 
 ---
 
-## Milestone B 第2段階 実装詳細 (v0.1.34)
+## Field QA Fixes 実装詳細 (v0.1.35)
 
-### 変更ファイル
+### 修正 A: OllamaProvider キャッシュバグ
 
-- `src/types/companion.ts`
-  - `VoiceUIState` 型を追加 (useCompanionState.ts から移動)
+- `AIProviderManager.ts`: モジュール変数 `_ollamaProvider` キャッシュを廃止
+- 毎回 `getSettings()` から現在値を読み `new OllamaProvider()` を生成
+- `LastAIResultDebug` pub/sub state を追加 (source / fallbackReason / latencyMs / responsePreview)
+- AIPage に「接続テスト」「テスト発話」「最後のAI応答パネル」を追加
+- デフォルト timeout: 8000ms → 20000ms
+- `isAvailable()` timeout: 2000ms → 4000ms
 
-- `src/hooks/useCompanionState.ts`
-  - `VoiceUIState` を companion.ts からインポートし、後方互換のため再エクスポート
+### 修正 B: Active app 観測の classify_app 拡充
 
-- `src/components/Character.tsx`
-  - `voiceUIState?: VoiceUIState` prop を追加
-  - 内部ラッパー `character-anim` div を追加 (scaleX flip と transform animation の競合を分離)
-  - `character-anim--sprite` クラス: スプライト使用時のみ状態アニメーションを適用
-  - `voice-dot` overlay: voiceListening/Transcribing/Responding 時に colored dot を表示
+- `src-tauri/src/observation/mod.rs`:
+  - `"self"` カテゴリ新設: `msedgewebview2.exe` / `amispi-companion.exe`
+  - `"communication"` カテゴリ新設: `discord.exe` / `slack.exe` / `teams.exe` / `zoom.exe` / `skype.exe` 等
+  - `"media"` 追加: `spotify.exe` / `musicbee.exe` / `foobar2000.exe` / `aimp.exe` / `tidal.exe` 等
+  - `"daw"` 追加: `"bitwig studio.exe"` / `fl64.exe` / `reaper64.exe` / `studioone.exe` / `cubase.exe`
+  - `"ide"` 追加: `notepad++.exe` / `sublime_text.exe`
+  - `"terminal"` 追加: `hyper.exe` / `mintty.exe`
+  - `"system"` 追加: `totalcmd.exe` / `freecommander.exe`
+- `src/observation/types.ts`: `AppCategory` に `"communication"` / `"self"` を追加
+- `src/companion/activity/inferActivity.ts`: `communication` / `self` カテゴリ処理追加
+- TransparencyPage: `processName` 表示・`unknownReason` 警告・10秒自動更新
 
-- `src/styles/index.css`
-  - `.character-anim--sprite[data-state]` アニメーション追加:
-    - `thinking`: 上下フロート + 紫グロー (1.8s)
-    - `speaking`: 上下ボブ + スケール (0.8s)
-    - `sleep`: 縮小ドリフト + dim (5s)
-    - `waking`: スケールアップ + 明度フラッシュ (1.5s ease-out)
-    - `touched`: バウンス (0.35s)
-  - `.voice-dot` スタイル追加: listening(赤)/transcribing(橙)/responding(緑) colored dot
+### 修正 C: 当たり判定 / pointer-events
 
-- `src/App.tsx`
-  - 旧来の voice dot 表示 div を削除
-  - `Character` に `voiceUIState` prop を渡す
+- `src/App.tsx`:
+  - 外側コンテナ: `pointer-events: none`
+  - `drag-handle` / 吹き出しコンテナ / UpdateBadge / ContextMenu: `pointer-events: auto`
+  - 吹き出し非表示時はコンテナ div を非レンダリング
+  - `onContextMenu` を `drag-handle` に移動
+
+### 修正 D: VoicePage ON/mode 連動
+
+- 音声入力 ON 時に mode が `"off"` なら `"pushToTalk"` へ自動設定
+- `mode=off` 状態で ON の時に警告メッセージを表示
 
 ---
 
-## 次のフェーズ候補 (v0.1.35)
+## 次のフェーズ候補 (v0.1.36)
 
 ### 優先候補 A: First-run Onboarding ← **推奨**
 
@@ -120,6 +131,7 @@
 - 長期RAG・ベクトルDB
 - 大規模UI刷新
 - クラウドAI追加
+- クラウドSTT
 
 ---
 
@@ -135,10 +147,14 @@
 ✅ CryEngine (sleep/wake/touch sounds)
 ✅ ウィンドウ位置の保存・復元
 ✅ MediaContext (Spotify等のバックグラウンド検出)
-✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル)
+✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル・10秒自動更新)
 ✅ Memory Viewer UI (MemoryPage) - 削除後も表示が壊れない
 ✅ Character State Expression - thinking/speaking/sleep/waking CSS アニメーション
 ✅ VoiceUIState dot インジケーター (Character 内部)
+✅ OllamaProvider: 毎回 getSettings() から new OllamaProvider() — キャッシュしない
+✅ LastAIResultDebug: AIPage でデバッグ情報が表示される
+✅ classify_app: self/communication カテゴリを含む拡充済みマッピング
+✅ pointer-events: none (外側コンテナ) — インタラクティブ要素のみ auto
 ✅ cargo build が通ること
 ✅ npm run build が通ること
 ✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
@@ -161,5 +177,5 @@
 8. npm run build / cargo build → 通ることを確認
 9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
 10. docs/NEXT_SESSION.md 更新 (このファイル)
-11. git add / commit / bump v0.1.35 / push
+11. git add / commit / bump v0.1.36 / push
 ```
