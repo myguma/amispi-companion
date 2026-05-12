@@ -172,8 +172,7 @@ export function useCompanionState(
     let text: string | null = null;
     if (policy.allowed) {
       try {
-        const input  = contextToProviderInput(ctx);
-        const output = await getNewAIResponse(input);
+        const output = await getNewAIResponse(ctx);
         if (output.shouldSpeak && output.text) text = output.text;
       } catch {
         // AI エラー → reaction fallback へ
