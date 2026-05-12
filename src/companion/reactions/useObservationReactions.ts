@@ -5,7 +5,6 @@
 import { useEffect, useRef, useState } from "react";
 import { EMPTY_SNAPSHOT } from "../../observation/types";
 import type { ObservationSnapshot } from "../../observation/types";
-import { inferActivity } from "../activity/inferActivity";
 import type { InferredActivity } from "../activity/inferActivity";
 import { computeDelta } from "./activityDelta";
 import { selectReaction } from "./selectReaction";
