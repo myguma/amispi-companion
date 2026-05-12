@@ -142,14 +142,19 @@ export function useCompanionState(
 
   // ──────────────────────────────────────────
   // ランダム独り言 (reaction system → fallback)
+  // deepFocus / gaming / watchingVideo 中は抑制
   // ──────────────────────────────────────────
   const scheduleIdleSpeech = useCallback(() => {
     if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
     const delay = 120_000 + Math.random() * 120_000;
     idleSpeechTimerRef.current = setTimeout(() => {
       if (stateRef.current === "idle" && autonomousSpeechRef.current) {
-        const text = fireReaction("randomIdle") ?? pickDialogue("random_idle");
-        triggerSpeak(text);
+        const { kind } = inferActivity(snapshotRef.current);
+        const isSilent = kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo";
+        if (!isSilent) {
+          const text = fireReaction("randomIdle") ?? pickDialogue("random_idle");
+          triggerSpeak(text);
+        }
       }
       scheduleIdleSpeech();
     }, delay);
