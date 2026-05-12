@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.15] — 2026-05-12
+
+### Fixed
+- 自動更新: `createUpdaterArtifacts: true` を bundle 設定に追加。
+  Tauri v2 はデフォルトでは .nsis.zip を生成しないため、自動更新に必要なアーカイブが作られていなかった。
+
 ## [0.1.14] — 2026-05-12
 
 ### Fixed
