@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.1.25] — 2026-05-12
+
+### Added
+- **観測→反応の接続** (`useObservationReactions.ts`): スナップショットのデルタを計算し、意味ある遷移があったときだけ反応を1回発火するフックを新設
+- **未実装トリガーの実装**: `fullscreenDetected` / `mediaDetected` / `gamingDetected` / `longIdle` を活性化 — 各状態への移行時のみ発火しポーリングごとの重複なし
+- **`activityDelta.ts`**: ObservationSnapshot 間の差分を計算する純粋モジュール（テスト可能）
+- **`tiny` displayMode** (`TinyWhisper.tsx`): 全画面・メディア・ゲーム中用のポインターイベントなし・小フォント・半透明の控えめ表示
+- **連打反応** (`overClicked` トリガー): 5秒以内に5回クリックで特別台詞を発火。クールダウン3分
+- **帰還反応** (`returnAfterBreak` / `returnAfterLongBreak`): 前回セッションからの経過時間をローカル記憶から判定し、起動挨拶を文脈に応じて切り替え
+- **`memorySummary.ts`**: 休憩種別を分類する純粋ヘルパー（short / hours / longDay）
+- **`clickPattern.ts`**: クリック連打検出の純粋モジュール
+- **`emotionToSpriteState()`** (`Character.tsx`): `shy` / `concerned` 感情を既存スプライトにマッピングするユーティリティ関数
+- 新反応台詞: `longIdle` 3件、`fullscreenDetected` 2件、`mediaDetected` 2件、`gamingDetected` 2件、`overClicked` 3件、`returnAfterBreak` 3件、`returnAfterLongBreak` 3件
+
+### Changed
+- App.tsx のインライン観測トリガー（Downloads/Desktop ハードコード）を削除 → `useObservationReactions` に移譲
+- `useCompanionState` 初期化: 休憩あけ判定を挟み、通常挨拶の前に `returnAfterBreak` / `returnAfterLongBreak` を優先
+
 ## [0.1.24] — 2026-05-12
 
 ### Added
