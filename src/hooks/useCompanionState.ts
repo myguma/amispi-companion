@@ -134,18 +134,31 @@ export function useCompanionState(
   );
 
   // ──────────────────────────────────────────
-  // ランダム独り言 (reaction system → fallback)
+  // ランダム独り言 (AI-first → reaction system → fallback)
   // deepFocus / gaming / watchingVideo 中は抑制
   // ──────────────────────────────────────────
   const scheduleIdleSpeech = useCallback(() => {
     if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
     const delay = 120_000 + Math.random() * 120_000;
-    idleSpeechTimerRef.current = setTimeout(() => {
+    idleSpeechTimerRef.current = setTimeout(async () => {
       if (stateRef.current === "idle" && autonomousSpeechRef.current) {
         const { kind } = inferActivity(snapshotRef.current);
         const isSilent = kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo";
         if (!isSilent) {
-          const text = fireReaction("randomIdle") ?? pickDialogue("random_idle");
+          let text: string | null = null;
+          const s      = getSettings();
+          const events = getRecentEvents(20);
+          const ctx    = buildCompanionContext("idle", snapshotRef.current, events, s);
+          const policy = canSpeak("autonomous", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+
+          if (policy.allowed) {
+            try {
+              const output = await getNewAIResponse(ctx);
+              if (output.shouldSpeak && output.text) text = output.text;
+            } catch { /* AI エラー → reaction fallback */ }
+          }
+
+          text ??= fireReaction("randomIdle") ?? pickDialogue("random_idle");
           triggerSpeak(text);
         }
       }
