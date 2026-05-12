@@ -10,16 +10,16 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.29
-**GitHub Actions / Windows Installer build:** v0.1.27 ✅ 成功済み (v0.1.28, v0.1.29 は push 直後)
-**フェーズ:** Phase 0〜6a.5 完了
+**バージョン:** v0.1.30
+**GitHub Actions / Windows Installer build:** v0.1.27 ✅ 成功済み (v0.1.28〜v0.1.30 は push 直後)
+**フェーズ:** Phase 0〜6b-real-1 完了
 
 ---
 
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.29)
+✅ npm run build → ✓ built (v0.1.30)
 ✅ cargo build  → Finished dev profile
 ✅ GitHub Actions / Windows Installer → v0.1.27 成功済み
 ```
@@ -38,103 +38,96 @@
 | Phase 5 | ウィンドウ位置の保存・復元 | ✅ 完了 |
 | Phase 6a | Voice Input Foundation / mock transcript | ✅ 完了 |
 | Phase 6a.5 | Context Wiring and Input Stabilization | ✅ 完了 |
-| Phase 6b | STTAdapter interface / MockSTTAdapter | ✅ 準備済み |
+| Phase 6b-real-1 | Local STT Recording Foundation (実録音 + STTAdapter + Whisper skeleton) | ✅ 完了 |
 
 ---
 
-## Phase 6a.5 実装詳細
+## Phase 6b-real-1 実装詳細
 
-### AIProvider インターフェース刷新
+### 新規追加ファイル
 
-- `src/companion/ai/types.ts`: `AIProvider.respond(input: AIProviderInput)` → `respond(ctx: CompanionContext)`
-- `src/companion/ai/OllamaProvider.ts`: `EMPTY_SNAPSHOT` 依存を完全除去。`respond(ctx)` で `buildPrompt(ctx)` を呼ぶだけ
-- `src/companion/ai/MockProvider.ts`: `respond(_ctx: CompanionContext)` に変更
-- `src/companion/ai/RuleProvider.ts`: `CompanionContext` フィールドで直接ルール判定
-- `src/companion/ai/AIProviderManager.ts`: `getAIResponse(ctx: CompanionContext)` に変更
+- `src/systems/voice/useVoiceRecorder.ts`
+  - Push-to-talk 中だけ getUserMedia → 録音 → Blob
+  - `maxDurationMs` で自動停止 (デフォルト 15000ms)
+  - 停止後に `stream.getTracks().stop()` でマイクを解放
+  - エラー: not_supported / permission_denied / no_microphone / recorder_error
+- `src/systems/voice/WhisperCliSTTAdapter.ts`
+  - executable path + model path が設定済みなら `isAvailable() = true`
+  - 現在 `transcribe()` は `{ ok: false, error: "unavailable" }` を返す (skeleton)
+  - Phase 6b-real-2 で Rust sidecar 統合予定
 
-### 変換ブリッジ除去
+### 変更ファイル
 
-- `src/systems/ai/buildCompanionContext.ts`: `contextToProviderInput()` を削除
-- `src/hooks/useCompanionState.ts`: `contextToProviderInput` import を削除、`ctx` を直接 `getNewAIResponse(ctx)` に渡す
+- `src/systems/voice/STTAdapter.ts`: `STTInput = Blob | ArrayBuffer` 追加
+- `src/systems/voice/MockSTTAdapter.ts`: STTInput 対応
+- `src/systems/voice/STTAdapterManager.ts`: `sttEngine` 設定でアダプター切替
+- `src/hooks/useCompanionState.ts`:
+  - `voiceListeningStart()` — 録音開始時に voiceUIState を "voiceListening" へ
+  - `requestVoiceFromBlob(blob)` — Blob → STT → AI パイプライン
+  - `voiceRecordingError(err)` — エラー→3秒後に voiceReady/Off
+- `src/App.tsx`: 実録音パイプラインへ切替 (`useVoiceRecorder` 使用)
+- `src/settings/types.ts`: STTEngine / sttEngine / whisper* / maxRecordingMs 追加
+- `src/settings/defaults.ts`: 対応デフォルト追加
+- `src/settings/pages/VoicePage.tsx`: STT エンジン選択 UI / whisper path 入力
 
-### VoiceUIState 安定化
+### 設定追加
 
-- `requestVoiceResponse` に try/finally を追加。例外時も `setVoiceUIState("voiceReady")` が必ず実行される
-
-### Push-to-talk / ドラッグ競合修正
-
-- `src/App.tsx`: `isDragging` が true になった瞬間に PTT タイマーをキャンセルする `useEffect` 追加
-
----
-
-## Phase 3〜5 実装詳細 (参考)
-
-### Phase 3 — MediaContext
-
-- `src-tauri/src/observation/mod.rs`: `detect_media()` 追加
-  - `sysinfo::System::new_with_specifics(RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()))`
-  - Spotify / MusicBee / foobar2000 / VLC / MPC-HC / PotPlayer 等を検出
-  - フォアグラウンド判定 → バックグラウンドスキャンの順
-- `src/observation/types.ts`: `MediaContext` 型追加、`ObservationSnapshot.media?: MediaContext`
-- `src/companion/activity/inferActivity.ts`: バックグラウンド音楽検出 `listeningMusic` ケース追加
-- `src/systems/ai/PromptBuilder.ts`: 音楽・動画再生中の情報をプロンプトに追加
-
-### Phase 4 — Transparency UI v2
-
-- `src/settings/pages/TransparencyPage.tsx`: 全面書き直し
-  - `LiveStatusPanel`: 現在の ActivityInsight をリアルタイム表示 (更新ボタン付き)
-  - `OllamaStatus`: `fetch /api/tags` で Ollama 接続確認
-  - AI エンジン状態セクション追加
-  - 「見ていないもの」に画面キャプチャ・マイク・クリップボードを明示
-
-### Phase 5 — ウィンドウ位置保存
-
-- `src-tauri/src/settings/mod.rs`: `window_x: Option<i32>`, `window_y: Option<i32>` 追加
-- `src-tauri/src/lib.rs`:
-  - `save_window_position(app, x, y)` コマンド追加
-  - 起動時: 保存位置があれば復元 (範囲チェックあり)、なければデフォルト右下
-- `src/App.tsx`: ドラッグ終了後 100ms で `outerPosition()` を取得し保存
+```ts
+sttEngine: "mock" | "whisperCli"  // デフォルト "mock"
+whisperExecutablePath: string      // デフォルト ""
+whisperModelPath: string           // デフォルト ""
+whisperTimeoutMs: number           // デフォルト 30000
+maxRecordingMs: number             // デフォルト 15000
+```
 
 ---
 
 ## 次のフェーズ (優先順)
 
-### Phase 6b-real — Local STT 統合 ← **次に実装**
+### Phase 6b-real-2 — WhisperCli Rust Sidecar Integration ← **次**
 
-現状: `STTAdapterManager` は常に `MockSTTAdapter` を返す。Phase 6b で whisper.cpp 等を統合する。
+**目的:** 実際の whisper.cpp CLI を呼んで transcript を得る。
 
 **実装すべき内容:**
-1. `WhisperCliSTTAdapter` の設計と実装 (whisper.cpp CLI を sidecar として呼び出す)
-2. `settings/types.ts`: `sttEngine: "mock" | "whisper_cli"` 追加
-3. `STTAdapterManager`: 設定に応じてアダプターを切替
-4. App.tsx: push-to-talk 中に実際の録音 (`navigator.mediaDevices.getUserMedia` or Tauri plugin)
-5. 録音完了後に `adapter.transcribe(blob)` → `requestVoiceResponse(transcript)`
-6. 録音データは処理後即破棄 (Blob URL revoke)
-7. `docs/VOICE_INTERACTION.md` に WhisperCliSTTAdapter の設計を追記
+1. `src-tauri/src/voice/mod.rs` 新規作成
+   - `write_temp_audio(bytes: Vec<u8>, suffix: String) -> Result<String, String>` コマンド
+   - `delete_temp_file(path: String) -> Result<(), String>` コマンド
+   - または一気通貫の `transcribe_with_whisper(bytes, mime_type) -> Result<String, String>`
+2. Rust 側の安全方針:
+   - `std::process::Command` (shell 経由でない)
+   - 引数は配列で渡す (shell injection なし)
+   - temp file は処理後に必ず削除
+   - タイムアウト (tokio::time::timeout 等)
+3. `WhisperCliSTTAdapter.transcribe()` を実装:
+   - Blob → ArrayBuffer → Vec<u8> 変換
+   - `invoke("transcribe_with_whisper", { bytes, mimeType })` を呼ぶ
+   - 返ってきた transcript テキストを STTAdapterOutput として返す
+4. WAV 変換:
+   - whisper.cpp は wav を期待することが多い
+   - Rust 側で webm → wav 変換、または ffmpeg sidecar (将来)
+   - まず webm をそのまま渡してみて、whisper CLI が対応するか確認
+5. docs 更新 / build 確認
 
 **完了条件:**
-- push-to-talk で実際に録音・STT が動く
-- transcript が正しく AI flow に入る
-- 録音データがメモリ外に残らない
-- `npm run build` が通る
+- whisper executable path + model path を設定すると実際に STT が動く
+- 録音→transcript→無明返答 が動く
+- 一時ファイルが残らない
+- mock STT も引き続き動く
+- `npm run build` / `cargo build` が通る
 
 ### Phase 6c — Voice UX Hardening
 
-- 録音中の視覚フィードバック強化
-- 長すぎる録音の自動停止 (30秒上限)
-- DND/Quiet/Focus との整合確認
-- 連続発話防止
+- 録音中のパルスアニメーション
+- DND / Quiet / Focus との整合確認
+- 連続録音防止
+- 無音録音の検出と fallback
 
 ### Phase 7a — Screen Understanding Planning Only
 
-- 実際のキャプチャはまだ実装しない
+- 実際のキャプチャ実装はまだしない
 - `screenUnderstandingEnabled` / `screenCaptureMode` 設定追加
 - Transparency UI に Screen / OCR 状態表示
 - `docs/SCREEN_UNDERSTANDING.md` 作成
-
-### Phase 7b — Optional Local Screen Capture Prototype
-
-- 明示許可時のみ / 生画像保存禁止 / local VLM のみ
 
 ### Phase 8 — Optional TTS
 
@@ -143,21 +136,18 @@
 
 ---
 
-## 次に触るファイル (Phase 6b-real)
+## 次に触るファイル (Phase 6b-real-2)
 
 **新規作成:**
 ```
-src/systems/voice/WhisperCliSTTAdapter.ts
+src-tauri/src/voice/mod.rs
 ```
 
 **変更:**
 ```
-src/systems/voice/STTAdapterManager.ts  ← sttEngine 設定に応じて切替
-src/settings/types.ts                   ← sttEngine 追加
-src/settings/defaults.ts                ← sttEngine: "mock"
-src/settings/pages/VoicePage.tsx        ← STT エンジン選択UI追加
-src/App.tsx                             ← push-to-talk で実際の録音を起動
-docs/VOICE_INTERACTION.md              ← WhisperCliSTTAdapter 設計追記
+src-tauri/src/lib.rs                    ← voice コマンドを登録
+src/systems/voice/WhisperCliSTTAdapter.ts ← transcribe() 実装
+docs/VOICE_INTERACTION.md              ← Phase 6b-real-2 実装詳細追記
 docs/NEXT_SESSION.md                   ← (このファイル更新)
 ```
 
@@ -165,31 +155,31 @@ docs/NEXT_SESSION.md                   ← (このファイル更新)
 
 ## 既知の注意事項・リスク
 
-1. **sysinfo "process" feature**: sysinfo 0.33 では `"process"` という feature 名は存在しない
-   - `"system"` feature に含まれる (ProcessRefreshKind が使える)
-   - Cargo.toml は `features = ["system"]` で正しい
+1. **WebView MediaRecorder 対応**: Tauri v2 の WebView (WebView2/Edge) は MediaRecorder / getUserMedia に対応しているはず。ただし Tauri のパーミッション設定 (capabilities) でマイクが許可されているか確認が必要。
 
-2. **push-to-talk と startDragging の競合**: Phase 6a.5 で基本的な競合は解消 (isDragging で PTT キャンセル)
-   - Phase 6b 以降で実際の録音を開始する場合は再確認
+2. **WebM → WAV 変換**: whisper.cpp は WAV を推奨するが、WebM でも動く場合がある。Phase 6b-real-2 で確認。
 
-3. **voiceInputEnabled フラグ**: 設定画面で ON にしないと push-to-talk が発火しない
-   - デフォルト: `voiceInputEnabled: false`、`voiceInputMode: "off"`
+3. **Tauri capabilities**: `src-tauri/capabilities/` に `microphone` パーミッションが含まれているか確認が必要かもしれない。
 
-4. **OllamaProvider の snapshot 参照**: Phase 6a.5 で修正済み。実際の `snapshotRef.current` が使われる
+4. **whisper.cpp のバイナリ・モデル同梱はまだしない**: ユーザーが自分で用意してパスを設定する。インストーラーサイズが大幅に増えるため。
+
+5. **OllamaProvider の snapshot 参照**: Phase 6a.5 で修正済み。実際の `snapshotRef.current` が使われる。
 
 ---
 
 ## 実機確認チェックリスト
 
-Phase 6a.5 完了後に確認すること:
-- [ ] クリックしたら反応する
-- [ ] Drag で位置が変わり、次回起動時に復元される
-- [ ] 設定ウィンドウの「AI エンジン」タブが表示される
-- [ ] 設定ウィンドウの「無明が見ているもの」タブでライブ状態が表示される
-- [ ] 設定ウィンドウの「音声」タブが表示される
-- [ ] voice input OFF でクリック反応が壊れない
-- [ ] Ollama 未起動でもクリック反応する (fallback)
-- [ ] 音声 ON + pushToTalk モードで長押し時に mock 返答が来る
+Phase 6b-real-1 完了後に確認すること:
+- [ ] voiceInputEnabled OFF でマイク許可要求が出ない
+- [ ] Voice Input ON + pushToTalk + Mock で長押し → マイク許可要求 → 録音中ドット表示
+- [ ] 離したら STT 処理 → 無明が返答する (Mock transcript)
+- [ ] 15秒を超えると自動停止する
+- [ ] whisperCli + path 未設定で壊れない (Mock fallback)
+- [ ] クリックしたら反応する (既存)
+- [ ] Drag で位置が変わり、次回起動時に復元される (既存)
+- [ ] 設定ウィンドウの全タブが表示される (既存)
+- [ ] Ollama 未起動でもクリック反応する (fallback) (既存)
+- [ ] MediaContext / Transparency UI が壊れていない (既存)
 
 ---
 
@@ -207,23 +197,23 @@ Phase 6a.5 完了後に確認すること:
 ✅ Transparency UI v2 (ライブパネル・Ollama 接続確認)
 ✅ cargo build が通ること
 ✅ npm run build が通ること
+✅ voiceInputEnabled = false では録音しない
+✅ STT 失敗時は fallback (固まらない)
 ```
 
 ---
 
-## Claude Code が次セッションで迷わないための作業順 (Phase 6b-real)
+## Claude Code が次セッションで迷わないための作業順 (Phase 6b-real-2)
 
 ```
 1. npm run build → 通ることを確認
 2. cargo build  → 通ることを確認
-3. settings/types.ts に sttEngine 追加
-4. settings/defaults.ts に sttEngine: "mock" 追加
-5. WhisperCliSTTAdapter.ts 新規作成 (whisper.cpp CLI wrapper)
-6. STTAdapterManager.ts: sttEngine 設定に応じて切替
-7. VoicePage.tsx: STT エンジン選択UI追加
-8. App.tsx: push-to-talk で実際の録音を呼ぶ (getUserMedia or Tauri plugin)
-9. npm run build → 通ることを確認
-10. docs/VOICE_INTERACTION.md 更新
-11. docs/NEXT_SESSION.md 更新
-12. git add / commit / bump v0.1.30 / push
+3. src-tauri/src/voice/mod.rs 新規作成 (transcribe_with_whisper コマンド)
+4. src-tauri/src/lib.rs に voice コマンドを invoke_handler に追加
+5. src/systems/voice/WhisperCliSTTAdapter.ts に transcribe() 実装
+6. npm run build → 通ることを確認
+7. cargo build  → 通ることを確認
+8. docs/VOICE_INTERACTION.md 更新
+9. docs/NEXT_SESSION.md 更新
+10. git add / commit / bump v0.1.31 / push
 ```
