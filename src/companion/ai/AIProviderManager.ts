@@ -35,7 +35,7 @@ function resolveProvider(engine: AIEngine): AIProvider {
   return STATIC_PROVIDERS[engine] ?? STATIC_PROVIDERS.rule;
 }
 
-export async function getAIResponse(input: AIProviderInput): Promise<AIProviderOutput> {
+export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOutput> {
   const s      = getSettings();
   const engine = ((s as { aiEngine?: AIEngine }).aiEngine) ?? "none";
 
@@ -49,7 +49,7 @@ export async function getAIResponse(input: AIProviderInput): Promise<AIProviderO
   }
 
   try {
-    return await provider.respond(input);
+    return await provider.respond(ctx);
   } catch (e) {
     console.warn("[AIProviderManager] error:", e);
     return { shouldSpeak: false, reason: "error" };
