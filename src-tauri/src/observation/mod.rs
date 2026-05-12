@@ -228,27 +228,69 @@ mod windows_impl {
     }
 
     fn classify_app(name: &str) -> String {
-        if ["code.exe", "cursor.exe", "idea64.exe", "devenv.exe", "rider64.exe", "clion64.exe", "pycharm64.exe", "webstorm64.exe", "phpstorm64.exe"].contains(&name) {
+        // 自アプリ (Tauri WebView / アプリ本体) — 設定画面が前面になる場合
+        if name.contains("msedgewebview2") || name == "amispi-companion.exe" || name == "amispi-companion" {
+            return "self".to_string();
+        }
+
+        // IDE / エディタ
+        if ["code.exe", "cursor.exe", "idea64.exe", "devenv.exe", "rider64.exe",
+            "clion64.exe", "pycharm64.exe", "webstorm64.exe", "phpstorm64.exe",
+            "notepad++.exe", "sublime_text.exe"].contains(&name) {
             return "ide".to_string();
         }
-        if ["chrome.exe", "firefox.exe", "msedge.exe", "brave.exe", "vivaldi.exe", "opera.exe", "arc.exe"].contains(&name) {
+
+        // ブラウザ
+        if ["chrome.exe", "firefox.exe", "msedge.exe", "brave.exe", "vivaldi.exe",
+            "opera.exe", "arc.exe", "librewolf.exe"].contains(&name) {
             return "browser".to_string();
         }
-        if ["vlc.exe", "mpc-hc.exe", "mpc-be.exe", "mpv.exe", "wmplayer.exe", "netflix.exe", "youtube.exe"].contains(&name) {
+
+        // メディアプレイヤー / 音楽 / 動画
+        if ["vlc.exe", "mpc-hc.exe", "mpc-be.exe", "mpv.exe", "wmplayer.exe",
+            "potplayermini64.exe", "potplayer.exe", "kmplayer.exe",
+            "spotify.exe", "musicbee.exe", "foobar2000.exe", "aimp.exe",
+            "tidal.exe", "itunes.exe", "applemusic.exe", "winamp.exe",
+            "mediamonkey.exe"].contains(&name) {
             return "media".to_string();
         }
-        if name.ends_with("game") || ["steam.exe", "epicgameslauncher.exe", "gog galaxy.exe"].contains(&name) {
+
+        // ゲーム
+        if name.ends_with("game") || ["steam.exe", "epicgameslauncher.exe", "gog galaxy.exe",
+            "playnite.desktop.exe"].contains(&name) {
             return "game".to_string();
         }
-        if ["ableton live.exe", "fl.exe", "bitwig.exe", "reaper.exe", "logic.exe"].contains(&name) {
+
+        // DAW / 音楽制作
+        if ["ableton live.exe", "fl64.exe", "fl.exe", "bitwig.exe",
+            "bitwig studio.exe", "reaper.exe", "reaper64.exe", "logic.exe",
+            "studioone.exe", "cubase.exe", "cubase12.exe"].contains(&name) {
             return "daw".to_string();
         }
-        if ["winword.exe", "excel.exe", "powerpnt.exe", "soffice.exe", "keynote.exe"].contains(&name) {
+
+        // オフィス
+        if ["winword.exe", "excel.exe", "powerpnt.exe", "soffice.exe",
+            "keynote.exe", "onenote.exe", "notion.exe"].contains(&name) {
             return "office".to_string();
         }
-        if ["cmd.exe", "powershell.exe", "pwsh.exe", "wt.exe", "windowsterminal.exe", "alacritty.exe"].contains(&name) {
+
+        // ターミナル
+        if ["cmd.exe", "powershell.exe", "pwsh.exe", "wt.exe", "windowsterminal.exe",
+            "alacritty.exe", "hyper.exe", "mintty.exe"].contains(&name) {
             return "terminal".to_string();
         }
+
+        // コミュニケーション
+        if ["discord.exe", "slack.exe", "teams.exe", "zoom.exe", "skype.exe",
+            "msteams.exe", "element.exe", "signal.exe"].contains(&name) {
+            return "communication".to_string();
+        }
+
+        // システム / ファイル管理
+        if ["explorer.exe", "totalcmd.exe", "freecommander.exe"].contains(&name) {
+            return "system".to_string();
+        }
+
         "unknown".to_string()
     }
 }
