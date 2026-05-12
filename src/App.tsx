@@ -183,7 +183,24 @@ export default function App() {
         )}
       </div>
 
-      <div className="drag-handle" onMouseDown={onDragStart} style={{ position: "relative" }}>
+      {/* voiceUIState インジケーター: listening 中に小さなリングを表示 */}
+      {(voiceUIState === "voiceListening" || voiceUIState === "voiceTranscribing" || voiceUIState === "voiceResponding") && (
+        <div style={{
+          position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)",
+          width: 8, height: 8, borderRadius: "50%",
+          background: voiceUIState === "voiceListening" ? "#e05050" : voiceUIState === "voiceTranscribing" ? "#f0a030" : "#4caf7d",
+          boxShadow: "0 0 6px 2px currentColor",
+          pointerEvents: "none",
+        }} />
+      )}
+
+      <div
+        className="drag-handle"
+        onMouseDown={(e) => { onDragStart(e); handlePttDown(); }}
+        onMouseUp={handlePttUp}
+        onMouseLeave={handlePttUp}
+        style={{ position: "relative" }}
+      >
         <Character
           state={state}
           config={DEFAULT_CHARACTER_CONFIG}
