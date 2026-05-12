@@ -180,11 +180,9 @@ export default function App() {
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 吹き出し表示状態に応じてウィンドウをリサイズ
-  // 非表示: 200×180 (キャラのみ) / 表示中: 200×310 (吹き出し+キャラ)
+  // 非表示: 200×220 (キャラのみ) / 表示中: 200×350 (吹き出し+キャラ)
   // キャラ底辺を固定してリサイズするため、画面上の位置は変わらない
   const hasSpeech = !!(tinyText || speechText);
-  const hasSpeechRef = useRef(hasSpeech);
-  useEffect(() => { hasSpeechRef.current = hasSpeech; }, [hasSpeech]);
 
   useEffect(() => {
     if (!isTauri) return;
