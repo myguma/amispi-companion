@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.41)**
+**最終更新: 2026-05-13 (v0.1.42)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.41
-**フェーズ:** Hotfix — Character Rendering Anchor 完了 (実機確認待ち)
-**全体進捗:** 約 77%
+**バージョン:** v0.1.42
+**フェーズ:** Hotfix — Speech Resize Bottom Anchor 完了 (実機確認待ち)
+**全体進捗:** 約 78%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.41)
-✅ cargo build  → Finished dev profile (v0.1.41)
-✅ GitHub Actions / Windows Installer → v0.1.40 成功済み。v0.1.41 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.42)
+✅ cargo build  → Finished dev profile (v0.1.42)
+✅ GitHub Actions / Windows Installer → v0.1.41 成功済み。v0.1.42 は tag push 後に確認
 ```
 
 ---
@@ -48,6 +48,7 @@
 | Hotfix: Character/Hit Area/Foreground Debug | 240px layout・楕円hit target・serde camelCase/raw JSON debug | ✅ v0.1.39 |
 | Hotfix: Character/ContextMenu | 280px layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp | ✅ v0.1.40 |
 | Hotfix: Character Rendering Anchor | Character実描画サイズをsizeScaleに同期・visual bottom anchor明確化 | ✅ v0.1.41 |
+| Hotfix: Speech Resize Bottom Anchor | rootをviewport基準化・character-stage absolute bottom anchor・resize拡大順序修正 | ✅ v0.1.42 |
 
 ---
 
@@ -245,9 +246,43 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.42)
+## v0.1.42 実装詳細
 
-### 優先候補 A: v0.1.41 実機確認 ← **最優先**
+### A: speech表示時の沈み込み修正
+
+- 実機確認で「通常表示では切れないが、吹き出し表示時に必ず下へ沈む」ことが判明
+- v0.1.41 の Character実描画 sizeScale 同期は正しい補修だったが、speech dynamic resize の競合までは解消していなかった
+- `src/App.tsx`:
+  - rootを予測 `windowH` 固定ではなく `100vw / 100vh` の実WebView viewport基準へ変更
+  - `character-stage` を flex-end 配置から absolute bottom anchor へ変更
+  - `bottom: bottomPad` で、吹き出し表示/非表示に関係なくキャラvisual bottomを固定
+- `src-tauri/src/lib.rs`:
+  - `resize_companion` の拡大時は `set_position → set_size`
+  - 縮小時は `set_size → set_position`
+  - compact→expanded の一瞬だけ window bottom が下へ伸びる挙動を避ける
+
+### B: drag中speech resize対策
+
+- drag reaction は drag開始時ではなく drag終了後160msに遅延
+- OSネイティブdrag中に speech が出て window resize が走る競合を避ける
+- drag保存座標は従来通り window top-left のまま
+
+### C: debug
+
+- React側: DEV限定で viewport / computed layout / `character-stage` / `character-wrapper` bbox を console log
+- Rust側: debug build限定で resize前後の outer/inner position/size、target size、bottom anchor計算を stderr log
+- 通常UIにdebug枠や表示は残していない
+
+### D: 維持したもの
+
+- ContextMenu / hit test / Active App / Transparency UI / Ollama / PromptBuilder / QualityFilter は大きく触らず維持
+- v0.1.41 の Character実描画 sizeScale 同期も維持
+
+---
+
+## 次のフェーズ候補 (v0.1.43)
+
+### 優先候補 A: v0.1.42 実機確認 ← **最優先**
 
 1. キャラが下にめり込まないか
 2. ドラッグしても画像が切れないか

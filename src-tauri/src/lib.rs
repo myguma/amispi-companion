@@ -59,6 +59,28 @@ fn clamp_position_to_work_area(
     (x.clamp(min_x, max_x), y.clamp(min_y, max_y))
 }
 
+#[cfg(debug_assertions)]
+fn log_resize_companion(
+    phase: &str,
+    window: &tauri::WebviewWindow,
+    speech_visible: bool,
+    size_scale: Option<f64>,
+    target_w: u32,
+    target_h: u32,
+    char_bottom: i32,
+    new_x: i32,
+    new_y: i32,
+) {
+    eprintln!(
+        "[resize_companion:{phase}] speech_visible={speech_visible} size_scale={size_scale:?} scale_factor={:?} outer_pos={:?} outer_size={:?} inner_pos={:?} inner_size={:?} target=({target_w},{target_h}) char_bottom={char_bottom} new=({new_x},{new_y})",
+        window.scale_factor(),
+        window.outer_position(),
+        window.outer_size(),
+        window.inner_position(),
+        window.inner_size(),
+    );
+}
+
 /// 吹き出し表示状態に応じてウィンドウをリサイズする
 /// scale_factor() で論理→物理ピクセルを変換してから設定するため DPI に対応する
 /// キャラクター底辺の位置を固定してリサイズするため、画面上の位置が維持される
@@ -97,18 +119,48 @@ async fn resize_companion(
         target_h,
     );
 
-    window
-        .set_size(tauri::Size::Physical(tauri::PhysicalSize {
-            width: target_w,
-            height: target_h,
-        }))
-        .map_err(|e| e.to_string())?;
-    window
-        .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-            x: new_x,
-            y: new_y,
-        }))
-        .map_err(|e| e.to_string())?;
+    #[cfg(debug_assertions)]
+    log_resize_companion(
+        "before",
+        &window,
+        speech_visible,
+        size_scale,
+        target_w,
+        target_h,
+        char_bottom,
+        new_x,
+        new_y,
+    );
+
+    let target_size = tauri::Size::Physical(tauri::PhysicalSize {
+        width: target_w,
+        height: target_h,
+    });
+    let target_pos = tauri::Position::Physical(tauri::PhysicalPosition { x: new_x, y: new_y });
+
+    if target_h > size.height {
+        // 拡大時に先に size を変えると、一瞬 window bottom が下へ伸びてキャラが沈む。
+        // top-left を先に上へ移動してから拡大し、visual bottom を固定する。
+        window.set_position(target_pos).map_err(|e| e.to_string())?;
+        window.set_size(target_size).map_err(|e| e.to_string())?;
+    } else {
+        // 縮小時は先に小さくしてから位置を戻す方が、上側の吹き出し領域を自然に畳める。
+        window.set_size(target_size).map_err(|e| e.to_string())?;
+        window.set_position(target_pos).map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(debug_assertions)]
+    log_resize_companion(
+        "after",
+        &window,
+        speech_visible,
+        size_scale,
+        target_w,
+        target_h,
+        char_bottom,
+        new_x,
+        new_y,
+    );
     Ok(())
 }
 

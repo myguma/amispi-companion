@@ -57,6 +57,7 @@ export default function App() {
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const characterStageRef = useRef<HTMLDivElement | null>(null);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -134,15 +135,12 @@ export default function App() {
     onCharacterClick();
   }, [onCharacterClick, settings.cryEnabled]);
 
-  // ドラッグ開始で reaction を発火 / ドラッグ終了後に位置を保存
+  // ドラッグ終了後に位置を保存し、drag reaction を少し遅らせて発火する。
+  // drag中に speech resize が走ると OS ネイティブドラッグと window resize が競合する。
   const prevIsDragging = useRef(false);
   useEffect(() => {
     const wasDragging = prevIsDragging.current;
     prevIsDragging.current = isDragging;
-
-    if (isDragging && !wasDragging) {
-      triggerDragReaction();
-    }
 
     // ドラッグ終了 → ウィンドウ位置を保存
     // resize_companion がキャラ底辺を固定して動的リサイズするため、
@@ -155,6 +153,10 @@ export default function App() {
           await invoke("save_window_position", { x: pos.x, y: pos.y });
         } catch { /* サイレント */ }
       }, 100);
+    }
+
+    if (!isDragging && wasDragging) {
+      setTimeout(() => triggerDragReaction(), 160);
     }
   }, [isDragging, triggerDragReaction]);
 
@@ -216,18 +218,46 @@ export default function App() {
     };
   }, [contextMenuVisible]);
 
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const logLayout = (phase: string) => {
+      const stageRect = characterStageRef.current?.getBoundingClientRect();
+      const wrapperRect = document.querySelector(".character-wrapper")?.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      console.log("[companion-layout-debug]", {
+        phase,
+        hasSpeech,
+        isDragging,
+        scale,
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        clientWidth: document.documentElement.clientWidth,
+        clientHeight: document.documentElement.clientHeight,
+        visualViewport: viewport ? { width: viewport.width, height: viewport.height } : null,
+        computed: { windowW, windowH, characterW, characterH, bottomPad },
+        stageRect,
+        wrapperRect,
+      });
+    };
+
+    const raf = requestAnimationFrame(() => logLayout("raf"));
+    const timer = setTimeout(() => logLayout("timeout-120ms"), 120);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+    };
+  }, [hasSpeech, isDragging, scale, windowW, windowH, characterW, characterH, bottomPad]);
+
   return (
     <div
+      className="companion-root"
       style={{
-        width: windowW,
-        height: windowH,
+        width: "100vw",
+        height: "100vh",
         background: "transparent",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        paddingBottom: bottomPad,
         position: "relative",
+        overflow: "hidden",
         // 透明領域がバックグラウンドクリックを奪わないよう none に設定。
         // インタラクティブな要素 (キャラ/吹き出し) だけ auto で上書きする。
         pointerEvents: "none",
@@ -251,14 +281,17 @@ export default function App() {
       )}
 
       <div
+        ref={characterStageRef}
         className="character-stage"
         style={{
           width: characterW,
           height: characterH,
-          position: "relative",
+          position: "absolute",
+          left: "50%",
+          bottom: bottomPad,
+          transform: "translateX(-50%)",
           pointerEvents: "none",
           overflow: "visible",
-          flex: "0 0 auto",
         }}
       >
         <Character
@@ -283,7 +316,13 @@ export default function App() {
       </div>
 
       {updateAvailable && (
-        <div style={{ pointerEvents: "auto" }}>
+        <div style={{
+          position: "absolute",
+          left: "50%",
+          bottom: bottomPad + characterH + 4,
+          transform: "translateX(-50%)",
+          pointerEvents: "auto",
+        }}>
           <UpdateBadge version={updateAvailable.version} installing={installing} onInstall={installUpdate} />
         </div>
       )}

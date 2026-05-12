@@ -5,8 +5,49 @@
 > v0.1.39 では v0.1.38 実機確認で残った character layout / hit area / foreground debug を hotfix。
 > v0.1.40 では v0.1.39 実機確認で残った character clipping / ContextMenu clipping を hotfix。
 > v0.1.41 では v0.1.40 実機確認で残った character rendering anchor / scale 不一致を hotfix。
+> v0.1.42 では v0.1.41 実機確認で残った speech表示時の沈み込みを hotfix。
 
-**更新: 2026-05-13 (v0.1.41)**
+**更新: 2026-05-13 (v0.1.42)**
+
+---
+
+## v0.1.42 での修正内容 (実機確認待ち)
+
+### 問題K: 通常表示は切れないが、吹き出し表示時にキャラが沈んで切れる
+
+**v0.1.41 の状態:**
+- 通常idle表示ではキャラ下端が切れない
+- 再起動後の位置復元でも切れない
+- ただし吹き出し表示時にキャラが下へ沈む
+- drag中/drag後も、drag reaction の speech 表示により resize が走って見切れる可能性が高い
+- ContextMenu と上部透明領域 click-through は維持されている
+
+**原因:**
+1. React root が `hasSpeech=true` になった瞬間に予測 `windowH` を使って flex-end 配置していた
+2. Tauri window / WebView viewport の実resizeは `resize_companion` の後に反映されるため、React layout と実viewportが短時間ずれていた
+3. Rust `resize_companion` は expanded への拡大時も `set_size → set_position` の順だったため、一瞬 window bottom が下方向へ伸びる可能性があった
+4. drag開始時の `triggerDragReaction()` が speech を出し、OSネイティブdrag中に resize を発火していた可能性があった
+
+**v0.1.42 での修正:**
+- `src/App.tsx`:
+  - rootを `width/height: windowW/windowH` から `100vw/100vh` へ変更
+  - flex-end / column layout をやめ、`character-stage` を absolute bottom anchor に変更
+  - `character-stage` は `bottom: bottomPad` で固定し、speech表示でもキャラvisual bottomを動かさない
+  - drag reaction を drag終了後160msに遅延し、drag中の speech resize 競合を抑制
+  - DEV限定で viewport / bbox debug log を追加
+- `src-tauri/src/lib.rs`:
+  - `resize_companion` の拡大時は `set_position → set_size`
+  - 縮小時は `set_size → set_position`
+  - debug build限定で resize 前後の outer/inner position/size と bottom anchor計算を記録
+- v0.1.41 の Character実描画 sizeScale 同期は維持
+- ContextMenu / hit test / Active App / Ollama / Transparency UI は大きく変更なし
+
+**実機確認手順:**
+1. 通常表示でキャラ下部が切れないか確認
+2. 吹き出し表示時にキャラが下へ沈まないか確認
+3. 吹き出しが消えてもキャラ位置が跳ねないか確認
+4. drag中/drag後にキャラ下部が見切れないか確認
+5. ContextMenu / 上部透明領域click-through / PNG透明余白 / Active App / Ollama が維持されているか確認
 
 ---
 

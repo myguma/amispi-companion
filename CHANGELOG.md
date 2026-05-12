@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.1.42] — 2026-05-13
+
+### Fixed (Hotfix: Speech Resize Bottom Anchor)
+
+#### A: 吹き出し表示時のキャラ沈み込みを修正
+
+- **実機確認結果**: v0.1.41 で通常idle表示と再起動後の位置復元は改善したが、吹き出し表示時にキャラが下へ沈んで切れる問題が残った
+- **原因**: React root が `hasSpeech=true` になった瞬間に予測 `windowH` を使って flex-end 配置していた
+  - Tauri window / WebView viewport の実リサイズは `resize_companion` invoke 後に起きるため、React layout と実viewportの間に短い不一致が発生していた
+  - Rust 側も expanded へ拡大する際に `set_size → set_position` の順だったため、一瞬 window bottom が下へ伸びてキャラが沈む可能性があった
+- **App.tsx**: root を `100vw / 100vh` の実viewport基準に変更
+- **App.tsx**: `character-stage` を flex layout から `position:absolute; bottom: bottomPad; left:50%` の bottom anchor に変更
+  - 吹き出し表示/非表示で stage の bottom が変わらない
+  - v0.1.41 の `Character` 実描画 sizeScale 同期は維持
+- **lib.rs**: `resize_companion` の拡大/縮小順序を分岐
+  - 拡大時: `set_position → set_size`
+  - 縮小時: `set_size → set_position`
+  - compact→expanded 移行時に window bottom が一瞬下へ伸びないようにした
+
+#### B: drag中の speech resize 競合を抑制
+
+- drag reaction を drag開始時ではなく、drag終了後に短く遅延して発火するよう変更
+- OSネイティブdrag中に `triggerSpeak()` → `hasSpeech=true` → `resize_companion` が走る競合を避けた
+- drag保存座標は従来通り window top-left を保存し、work area clamp / bottom anchor resize に任せる
+
+#### C: DEV debug を追加
+
+- **App.tsx**: DEV限定で viewport / computed layout / character-stage bbox / character-wrapper bbox を console log
+- **lib.rs**: debug build限定で `resize_companion` 前後の outer/inner position/size、target size、computed bottom anchor を stderr log
+- 通常UIにdebug表示や枠線は出さない
+
+#### D: v0.1.40 / v0.1.41 の成功部分は維持
+
+- ContextMenu の上方向 clamp / `アプリ終了` / context menu中全域interactive は変更なし
+- Active App取得 / Bitwig `daw` 認識 / Transparency UI は変更なし
+- PromptBuilder / QualityFilter / Ollama default URL / `source: ollama` は変更なし
+- 上部透明領域 click-through、PNG透明余白クリック改善、Character実描画 sizeScale 同期は維持
+
 ## [0.1.41] — 2026-05-13
 
 ### Fixed (Hotfix: Character Rendering Anchor)
