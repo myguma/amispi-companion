@@ -2,14 +2,9 @@
 // http://localhost:11434 に接続し、ローカルで発話テキストを生成する
 // クラウド送信なし・外部サーバー送信なし
 
-import type { AIProvider, AIProviderInput, AIProviderOutput } from "./types";
-import type { CompanionContext } from "./types";
+import type { AIProvider, AIProviderOutput, CompanionContext } from "./types";
 import { buildPrompt } from "../../systems/ai/PromptBuilder";
 import { filterGeneratedText } from "../../systems/ai/QualityFilter";
-import { buildCompanionContext } from "../../systems/ai/buildCompanionContext";
-import { getRecentEvents } from "../../systems/memory/memoryStore";
-import { getSettings } from "../../settings/store";
-import { EMPTY_SNAPSHOT } from "../../observation/types";
 
 const DEFAULT_BASE_URL = "http://localhost:11434";
 const DEFAULT_MODEL    = "llama3.2:3b";
