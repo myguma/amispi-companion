@@ -569,6 +569,24 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
     }
 }
 
+/// フォアグラウンドプロセス取得デバッグ — TransparencyPage から invoke 経由で呼ばれる
+pub fn get_active_app_debug_info() -> ActiveAppDebugInfo {
+    #[cfg(target_os = "windows")]
+    { windows_impl::get_active_app_debug() }
+    #[cfg(not(target_os = "windows"))]
+    {
+        ActiveAppDebugInfo {
+            platform: "non-windows".to_string(),
+            hwnd_available: false, pid: 0, pid_available: false,
+            open_process_ok: false, query_name_ok: false,
+            process_name: String::new(), process_path_len: 0,
+            category: "unknown".to_string(),
+            error_stage: "unsupported_platform".to_string(),
+            error_code: 0, is_self_app: false,
+        }
+    }
+}
+
 /// 起動中のメディアアプリを検出してメディアコンテキストを返す
 /// active_category: 現在フォアグラウンドのアプリ種別
 /// fullscreen: 全画面中か
