@@ -43,74 +43,72 @@
 
 ---
 
-## Milestone B 第1段階 実装詳細 (v0.1.33)
+## Milestone B 第2段階 実装詳細 (v0.1.34)
 
 ### 変更ファイル
 
-- `src/systems/memory/memoryStore.ts`
-  - `getAllEvents()`: 全イベント取得 (古い順)
-  - `getEventsByType(type)`: タイプ別取得
-  - `clearEventsByType(type)`: タイプ別削除
-  - `getMemoryStats()`: `MemoryStats` 型で統計集計
+- `src/types/companion.ts`
+  - `VoiceUIState` 型を追加 (useCompanionState.ts から移動)
 
-- `src/settings/SettingsApp.tsx`
-  - 「記憶」タブを追加 (Tab型に `"memory"` 追加)
-  - `MemoryPage` をインポート・レンダリング
+- `src/hooks/useCompanionState.ts`
+  - `VoiceUIState` を companion.ts からインポートし、後方互換のため再エクスポート
 
-- `src/settings/pages/TransparencyPage.tsx`
-  - フッターに「記憶タブへの案内」を追加
+- `src/components/Character.tsx`
+  - `voiceUIState?: VoiceUIState` prop を追加
+  - 内部ラッパー `character-anim` div を追加 (scaleX flip と transform animation の競合を分離)
+  - `character-anim--sprite` クラス: スプライト使用時のみ状態アニメーションを適用
+  - `voice-dot` overlay: voiceListening/Transcribing/Responding 時に colored dot を表示
 
-### 新規追加ファイル
+- `src/styles/index.css`
+  - `.character-anim--sprite[data-state]` アニメーション追加:
+    - `thinking`: 上下フロート + 紫グロー (1.8s)
+    - `speaking`: 上下ボブ + スケール (0.8s)
+    - `sleep`: 縮小ドリフト + dim (5s)
+    - `waking`: スケールアップ + 明度フラッシュ (1.5s ease-out)
+    - `touched`: バウンス (0.35s)
+  - `.voice-dot` スタイル追加: listening(赤)/transcribing(橙)/responding(緑) colored dot
 
-- `src/settings/pages/MemoryPage.tsx`
-  - 説明テキスト (ローカル保存のみ・外部送信なし)
-  - Memory Stats Card (総件数・今日のクリック/発話/起動)
-  - DailySummary Panel (自然文・時刻・統計)
-  - Event Log Panel (最新50件・タイプ別フィルタ)
-  - 削除コントロール (確認付き・発話のみ/全削除)
-  - 更新ボタン
-
-- `docs/MEMORY_AND_DATA_CONTROL.md`
-  - 保存内容・保存されないもの・削除方法・アーキテクチャ・安全性
+- `src/App.tsx`
+  - 旧来の voice dot 表示 div を削除
+  - `Character` に `voiceUIState` prop を渡す
 
 ---
 
-## 次のフェーズ候補 (v0.1.34)
+## 次のフェーズ候補 (v0.1.35)
 
-### 優先候補 A: Character State Expression ← **推奨**
-
-**目的:** 状態変化 (speaking/thinking/sleeping/deepFocus) が視覚的に伝わる最小表現。
-
-**実装すべき内容:**
-1. 現在のスプライト構造を確認 (`public/characters/` など)
-2. `CompanionState` (idle/touched/thinking/speaking/sleep/waking) の見た目を分ける
-3. 最小限: CSS クラス切り替え or スプライトフレーム変更
-4. voiceListening / voiceTranscribing / voiceResponding の状態も反映できれば理想
-
-**完了条件:**
-- thinking 中にキャラが「考えてる感」を出す
-- speaking 中に明確な変化がある
-- sleep 中と waking が視覚的に区別できる
-- build が通る
-
-### 優先候補 B: First-run Onboarding
+### 優先候補 A: First-run Onboarding ← **推奨**
 
 **目的:** 初回起動時の権限・機能・記憶・安全性の説明。
 
 **実装すべき内容:**
 1. localStorage に `hasCompletedOnboarding` フラグ
-2. 初回のみ表示されるオンボーディング画面
+2. 初回のみ表示されるオンボーディング画面 (メインウィンドウに overlay or 別ウィンドウ)
 3. 主な項目: ローカル動作・観測内容・Ollama設定方法・記憶について
 4. 「設定を開く」ボタンで設定画面に誘導
 
-### 優先候補 C: Memory Retention Policy
+**完了条件:**
+- 初回起動時に表示される
+- 2回目以降は表示されない
+- 「設定を開く」が機能する
+- build が通る
+
+### 優先候補 B: Memory Retention Policy
 
 **目的:** 古いイベントを自動的に整理する仕組み。
 
 **実装すべき内容:**
 1. 設定: `memoryRetentionDays` (デフォルト30日)
 2. 起動時に古い speech_shown / state_changed を削除
-3. BehaviorPage または MemoryPage に設定UI
+3. MemoryPage に設定UI追加
+
+### 優先候補 C: Emotion Sprite Set
+
+**目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
+
+**実装すべき内容:**
+1. `public/characters/default/` に shy.png / concerned.png を追加
+2. `emotionToSpriteState()` マッピングを更新
+3. CryEngine sound との連動
 
 ---
 
