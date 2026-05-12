@@ -1,8 +1,65 @@
-# Field QA Notes — v0.1.34 実機確認で見つかった問題
+# Field QA Notes
 
-> v0.1.35 Field QA Fixes で修正済み。次回 QA 時の再確認項目も記載。
+> v0.1.35 Field QA Fixes で修正を試みたが、実機では一部問題が残存。
+> v0.1.36 Field QA Root Cause Fixes でさらに根本原因に対処した。
 
-**作成: 2026-05-12**
+**更新: 2026-05-12 (v0.1.36)**
+
+---
+
+## v0.1.36 での修正内容 (実機確認待ち)
+
+### 問題A': OllamaがWebView2からfetchできない (CORS)
+
+**v0.1.35 の状態:** `isAvailable()` が `fetch('/api/tags')` で失敗 → `source: fallback, fallbackReason: unavailable`
+
+**v0.1.35 での修正が不十分だった理由:**
+- キャッシュバグは修正された (毎回 `new OllamaProvider()` を生成)
+- しかし `fetch()` 自体が Tauri WebView2 環境で CORS エラーになる可能性があった
+- Tauri WebView2 の Origin は `tauri://localhost` → Ollama のデフォルト CORS が拒否する場合がある
+- この場合、接続テストでも接続失敗が出る
+
+**v0.1.36 での修正:**
+- `OllamaProvider` の `/api/tags` と `/api/chat` を `fetch()` から `invoke("ollama_list_models")` / `invoke("ollama_chat")` に変更
+- Rust バックエンド (ureq) が HTTP リクエストを送る → CORS の問題が完全に消える
+- AIPage のテストパネルも Rust 経由で実行
+
+### 問題B': Active App が全部 None (HWND 取得段階が不明)
+
+**v0.1.35 の状態:** `前面アプリを取得できませんでした` — どの段階で失敗しているか不明
+
+**v0.1.36 での修正:**
+- `get_active_app_debug` Tauri コマンドを追加
+- hwnd → pid → OpenProcess → QueryFullProcessImageNameW の各段階で成功/失敗を個別記録
+- Win32 `GetLastError()` のエラーコードを記録
+- TransparencyPage に詳細デバッグパネルを追加
+
+**実機確認手順 (v0.1.36):**
+1. 設定 → 透明性タブを開く
+2. 「アクティブアプリ取得 デバッグ」セクションを確認
+3. Chrome / VSCode を前面にして「再取得」をクリック
+4. errorStage が「成功 (ok)」になれば OK
+5. 「open_process_failed」なら errorCode (Win32エラー) を報告してください
+
+### 問題C': 上部透明空白が背面クリックを奪う
+
+**v0.1.35 の状態:** `pointer-events: none` を CSS に設定したが、OS レベルでは効果がなかった
+
+**v0.1.36 での修正:**
+- Rust の `start_hit_test_thread` を改良
+- `SPEECH_VISIBLE=false` (吹き出し非表示): 有効判定領域をウィンドウ下部 190px のみに制限
+- `SPEECH_VISIBLE=true` (吹き出し表示中): 従来通り全高さを有効
+- JS → Rust へ吹き出し表示状態を `set_speech_visible` コマンドで通知
+
+**実機確認手順 (v0.1.36):**
+1. キャラクター表示中、吹き出しが消えた状態でキャラ上部の透明空白をクリック
+2. 背面のウィンドウ/URLが選択されれば OK
+3. キャラ本体クリックが正常に動くことを確認
+4. ドラッグが正常に動くことを確認
+
+---
+
+## 実機QAで見つかった問題一覧 (v0.1.34 → v0.1.35)
 
 ---
 
