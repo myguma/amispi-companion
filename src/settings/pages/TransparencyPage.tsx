@@ -1,7 +1,7 @@
 // 無明が見ているもの — 透明性ページ (v2)
 // ユーザーが「何を観測されているか」「今どう認識しているか」を確認できる
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useSettings } from "../store";
 import type { PermissionSettings } from "../../privacy/permissions";
