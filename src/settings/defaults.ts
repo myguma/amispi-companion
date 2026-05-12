@@ -33,6 +33,12 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
 
   voiceInputEnabled: false,
   voiceInputMode: "off",
+  maxRecordingMs: 15_000,
+
+  sttEngine: "mock",
+  whisperExecutablePath: "",
+  whisperModelPath: "",
+  whisperTimeoutMs: 30_000,
 
   mediaAwarenessEnabled: false,
   screenUnderstandingEnabled: false,
