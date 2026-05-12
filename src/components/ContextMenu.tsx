@@ -76,6 +76,15 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
         }}
       >
         <button
+          onClick={handleSettings}
+          style={menuItemStyle}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(168,144,240,0.15)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+        >
+          設定...
+        </button>
+        <div style={{ height: 1, background: "rgba(168,144,240,0.2)", margin: "3px 8px" }} />
+        <button
           onClick={handleAutostart}
           style={menuItemStyle}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(168,144,240,0.15)"; }}
