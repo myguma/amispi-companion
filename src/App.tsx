@@ -152,6 +152,7 @@ export default function App() {
           config={DEFAULT_CHARACTER_CONFIG}
           onClick={onCharacterClick}
           isDragging={isDragging}
+          facingRight={facingRight}
         />
       </div>
 
