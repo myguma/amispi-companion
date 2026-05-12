@@ -29,6 +29,15 @@ function persist(s: CompanionSettings): void {
 let _current: CompanionSettings = load();
 const _subs = new Set<() => void>();
 
+// 設定ウィンドウ → 本体ウィンドウへのリアルタイム同期
+// localStorage の storage イベントは別ウィンドウで発火する
+window.addEventListener("storage", (e) => {
+  if (e.key === STORAGE_KEY) {
+    _current = load();
+    _subs.forEach((fn) => fn());
+  }
+});
+
 export function getSettings(): CompanionSettings { return _current; }
 
 export function updateSettings(patch: Partial<CompanionSettings>): void {
