@@ -2,7 +2,7 @@
 // idle / sleep 状態のときのみ移動。タッチ・発話中は停止する。
 // 参考: Shimeji (java.simmi.org) の random-walk アプローチを TypeScript で再実装
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { CompanionState } from "../types/companion";
