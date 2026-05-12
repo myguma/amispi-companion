@@ -56,6 +56,7 @@ impl Default for PersistedSettings {
 }
 
 fn settings_path(app: &tauri::AppHandle) -> Option<PathBuf> {
+    use tauri::Manager;
     app.path().app_config_dir().ok().map(|d| d.join("settings.json"))
 }
 
