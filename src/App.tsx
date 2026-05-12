@@ -25,10 +25,13 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 const OBSERVE_INTERVAL_MS = 30_000;
 
 export default function App() {
-  const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState();
-  const { onDragStart, isDragging, mouseDownRef } = useDrag();
   const [settings] = useSettings();
-  useWander(state, mouseDownRef);
+  const { state, speechText, onCharacterClick, triggerSpeak } = useCompanionState(
+    undefined,
+    settings.autonomousSpeechEnabled
+  );
+  const { onDragStart, isDragging, mouseDownRef } = useDrag();
+  const { facingRight } = useWander(state, mouseDownRef);
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
