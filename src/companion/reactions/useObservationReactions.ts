@@ -5,6 +5,8 @@
 import { useEffect, useRef, useState } from "react";
 import { EMPTY_SNAPSHOT } from "../../observation/types";
 import type { ObservationSnapshot } from "../../observation/types";
+import { inferActivity } from "../activity/inferActivity";
+import type { InferredActivity } from "../activity/inferActivity";
 import { computeDelta } from "./activityDelta";
 import { selectReaction } from "./selectReaction";
 import { recordReaction } from "./reactionHistory";
@@ -12,12 +14,21 @@ import { cryEngine } from "../audio/FileCryEngine";
 import { getSettings } from "../../settings/store";
 import type { ReactionTrigger } from "./types";
 
+// deepFocus / gaming / watchingVideo 中は自律発話を抑制する
+const SILENT_KINDS: readonly InferredActivity[] = ["deepFocus", "gaming", "watchingVideo"];
+
+// 直前の InferredActivity から遷移としてふさわしいかを判定するヘルパー
+function isValidTransitionFrom(prev: InferredActivity): boolean {
+  // 既に同じカテゴリにいた / away からの復帰は別トリガーで処理済みのためスキップ
+  return prev !== "away" && prev !== "deepFocus";
+}
+
 export function useObservationReactions(
   snapshot: ObservationSnapshot,
   triggerSpeak: (text: string) => void
 ): { tinyText: string | null } {
-  const prevSnapshotRef  = useRef<ObservationSnapshot>(EMPTY_SNAPSHOT);
-  const hasInitialized   = useRef(false);
+  const prevSnapshotRef = useRef<ObservationSnapshot>(EMPTY_SNAPSHOT);
+  const hasInitialized  = useRef(false);
   const [tinyText, setTinyText] = useState<string | null>(null);
   const tinyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -36,7 +47,7 @@ export function useObservationReactions(
     }
 
     const s = getSettings();
-    // 自立発話OFF時は観測トリガーを一切発火しない
+    // 自律発話 OFF 時は観測トリガーを一切発火しない
     if (!s.autonomousSpeechEnabled) {
       prevSnapshotRef.current = snapshot;
       return;
@@ -46,9 +57,12 @@ export function useObservationReactions(
     const delta = computeDelta(prev, snapshot);
     prevSnapshotRef.current = snapshot;
 
-    const fire = (trigger: ReactionTrigger): boolean => {
+    const currentKind = delta.nextInferredKind;
+
+    const fire = (trigger: ReactionTrigger, tags?: string[]): boolean => {
       const r = selectReaction({
         trigger,
+        tags,
         isFullscreen: snapshot.fullscreenLikely,
         policy: {
           autonomousSpeech:              s.autonomousSpeechEnabled,
@@ -71,24 +85,23 @@ export function useObservationReactions(
         } else if (r.displayMode === "bubble") {
           triggerSpeak(r.text);
         }
-        // displayMode: "none" はサウンドのみで表示なし
       }
       return true;
     };
 
-    // 優先度の高い遷移イベントから順に判定し、最初にマッチしたもので終了
-    // （同一ポーリングで複数の反応が重複しないよう1トリガーのみ発火）
-
+    // ── 1. 全画面遷移 (最優先) ───────────────────────────────────────
     if (delta.fullscreenChanged && snapshot.fullscreenLikely) {
       fire("fullscreenDetected");
       return;
     }
 
+    // ── 2. メディア / ゲーム遷移 ─────────────────────────────────────
     if (delta.activityChanged) {
       if (delta.nextActivity === "mediaWatching") { fire("mediaDetected"); return; }
       if (delta.nextActivity === "gamingLikely")  { fire("gamingDetected"); return; }
     }
 
+    // ── 3. 長時間 idle ───────────────────────────────────────────────
     if (
       delta.idleBucketChanged &&
       (delta.nextIdleBucket === "long" || delta.nextIdleBucket === "veryLong") &&
@@ -98,6 +111,7 @@ export function useObservationReactions(
       return;
     }
 
+    // ── 4. Downloads / Desktop pile ──────────────────────────────────
     if (delta.downloadsPileChanged && (snapshot.folders.downloads?.fileCount ?? 0) > 20) {
       fire("downloadsPile");
       return;
@@ -105,6 +119,55 @@ export function useObservationReactions(
 
     if (delta.desktopPileChanged && (snapshot.folders.desktop?.fileCount ?? 0) > 15) {
       fire("desktopPile");
+      return;
+    }
+
+    // ── 5. InferredActivity 遷移 ─────────────────────────────────────
+    // deepFocus / gaming / watchingVideo 中は以降の遷移通知を抑制
+    if (SILENT_KINDS.includes(currentKind)) return;
+    // DND / quiet 時も抑制
+    if (s.doNotDisturb || s.quietMode) return;
+    // 全画面中も抑制
+    if (snapshot.fullscreenLikely && s.suppressWhenFullscreen) return;
+
+    if (delta.inferredKindChanged) {
+      const { prevInferredKind, nextInferredKind } = delta;
+
+      // 音楽制作開始: * → composing (deepFocusからの遷移を除く)
+      if (nextInferredKind === "composing" && prevInferredKind !== "composing") {
+        fire("activityTransition", ["composing_start"]);
+        return;
+      }
+
+      // コーディング開始: 非coding/非deepFocus → coding (awayからの復帰を除く)
+      if (
+        (nextInferredKind === "coding") &&
+        prevInferredKind !== "coding" &&
+        prevInferredKind !== "deepFocus" &&
+        isValidTransitionFrom(prevInferredKind)
+      ) {
+        fire("activityTransition", ["coding_start"]);
+        return;
+      }
+
+      // 音楽再生開始: * → listeningMusic (watchingVideoからの連続変化を除く)
+      if (
+        nextInferredKind === "listeningMusic" &&
+        prevInferredKind !== "listeningMusic" &&
+        prevInferredKind !== "watchingVideo"
+      ) {
+        fire("activityTransition", ["music_start"]);
+        return;
+      }
+
+      // 離席から復帰: away/idle(long) → active系 (coding/browsing/composing等)
+      if (
+        (prevInferredKind === "away" || delta.prevIdleBucket === "long" || delta.prevIdleBucket === "veryLong") &&
+        nextInferredKind !== "away" && nextInferredKind !== "idle" && nextInferredKind !== "unknown"
+      ) {
+        fire("activityTransition", ["return_from_away"]);
+        return;
+      }
     }
   }, [snapshot]); // eslint-disable-line react-hooks/exhaustive-deps
 
