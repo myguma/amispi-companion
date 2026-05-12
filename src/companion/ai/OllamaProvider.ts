@@ -27,7 +27,7 @@ export class OllamaProvider implements AIProvider {
   async isAvailable(): Promise<boolean> {
     try {
       const ctrl = new AbortController();
-      const id   = setTimeout(() => ctrl.abort(), 2_000);
+      const id   = setTimeout(() => ctrl.abort(), 4_000);
       const res  = await fetch(`${this.baseUrl}/api/tags`, { signal: ctrl.signal });
       clearTimeout(id);
       return res.ok;
