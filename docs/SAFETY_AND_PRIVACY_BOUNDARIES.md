@@ -86,6 +86,48 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 
 ---
 
+## 音声入力の安全境界 (Phase 6+)
+
+**許可される動作:**
+- Push-to-talk のみ: ユーザーが明示的にボタンを押している間のみ録音
+- voiceInputEnabled: false がデフォルト
+- 音声データ (Blob/ArrayBuffer) は STT 処理後に即破棄
+- transcript テキストは CompanionContext.voiceInput として一時保持のみ
+- transcript は long-term memory に保存しない (speech_shown には source を記録可)
+- 録音データを一時ファイルに書く場合は処理完了後に即削除
+
+**禁止事項:**
+- 常時マイク監視 (Push-to-talk 以外の常時起動)
+- 生音声データの永続保存
+- クラウド STT (Google / Azure / OpenAI Whisper API 等) への送信
+- マイク許可なしの録音
+- transcript のクラウド送信
+
+**transcript の扱い:**
+```
+録音 (一時) → ローカル STT → transcript (テキスト) → CompanionContext.voiceInput
+                  ↑ ここまでで音声データ破棄
+```
+
+---
+
+## 画面理解の安全境界 (Phase 7+)
+
+**許可される動作:**
+- screenUnderstandingEnabled: false がデフォルト
+- ユーザーが明示 ON にした場合のみ動作
+- キャプチャ画像は処理後に即破棄 (保存禁止)
+- local VLM のみ (クラウド Vision API 禁止)
+- VLM からは abstracted summary のみ取得
+
+**禁止事項:**
+- 生スクリーンショットの永続保存
+- クラウドへの画像送信
+- OCR 全文の保存 (abstracted summary のみ可)
+- 常時キャプチャ (明示トリガーのみ)
+
+---
+
 ## データ保存ポリシー
 
 | データ種別 | 保存可否 |
@@ -97,8 +139,10 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 | ファイル名・パス | ❌ 不可 |
 | 生スクリーンショット | ❌ 不可 |
 | OCR全文 | ❌ 不可 |
-| 音声データ | ❌ 不可 |
-| マイク録音 | ❌ 不可 |
+| 音声データ (生録音) | ❌ 不可 |
+| マイク録音 (常時) | ❌ 不可 |
+| transcript テキスト (長期) | ❌ 不可 |
+| transcript テキスト (セッション一時) | ✅ 可 (CompanionContext.voiceInput として) |
 
 ---
 
