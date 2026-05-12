@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.1.35] — 2026-05-12
+
+### Fixed (Field QA Fixes before Onboarding)
+
+#### 最優先A: AI Provider デバッグ可視化 / Ollama 実使用経路
+- **OllamaProvider キャッシュバグ修正** (`src/companion/ai/AIProviderManager.ts`):
+  - `_ollamaProvider` のキャッシュを廃止。毎回現在の設定 (ollamaModel, ollamaBaseUrl, ollamaTimeoutMs) で生成。
+  - 旧バグ: 起動時に `llama3.2:3b` (デフォルト) でキャッシュされ、ユーザーがモデルを変更しても古いモデルが使われ続けていた。
+- **LastAIResultDebug 状態追加** (`src/companion/ai/AIProviderManager.ts`):
+  - `source: "ollama" | "rule" | "mock" | "fallback" | "none"` を毎回更新。
+  - `fallbackReason`, `latencyMs`, `responsePreview`, `errorMessage` を記録。
+  - `getLastAIResult()` / `subscribeLastAIResult()` でどこからでも参照可能。
+- **LastAIResultDebug 型追加** (`src/companion/ai/types.ts`)
+- **AIPage に接続テスト・モデル一覧・テスト発話・デバッグパネル追加** (`src/settings/pages/AIPage.tsx`):
+  - 「接続テスト」ボタン: `/api/tags` を叩いて OK/NG を表示
+  - モデル一覧: 取得済みモデルを一覧表示 (設定中のモデルをハイライト)
+  - 「テスト発話」ボタン: 現在の AI engine 設定でテスト発話を実行
+  - 最後のAI応答パネル: source / fallbackReason / latency / preview を表示
+- **デフォルトタイムアウトを 8000ms → 20000ms に変更** (`src/settings/defaults.ts`)
+- **OllamaProvider isAvailable タイムアウト 2000ms → 4000ms** (`src/companion/ai/OllamaProvider.ts`)
+
+#### 最優先B: Active App 観測 / ActivityInsight 不明問題
+- **classify_app 大幅拡充** (`src-tauri/src/observation/mod.rs`):
+  - 自アプリ検出: `msedgewebview2.exe`, `amispi-companion.exe` → `"self"` カテゴリ
+  - Spotify / MusicBee / foobar2000 / AIMP → `"media"` に追加
+  - Bitwig Studio / FL64 / REAPER64 → DAW に追加・修正
+  - Discord / Slack / Teams / Zoom → `"communication"` カテゴリ追加
+  - explorer.exe → `"system"` 追加
+  - メディアプレイヤー追加 (PotPlayer, KMPlayer等)
+- **AppCategory 型に `"communication"` / `"self"` 追加** (`src/observation/types.ts`)
+- **inferActivity で communication / self カテゴリを処理** (`src/companion/activity/inferActivity.ts`)
+- **TransparencyPage デバッグ情報拡充** (`src/settings/pages/TransparencyPage.tsx`):
+  - processName を表示
+  - unknownReason を表示 (設定画面が前面 / プロセス名取得失敗 / 分類未登録)
+  - アプリ種別を日本語ラベルで表示
+  - **自動更新 (10秒ごと)** 追加。手動更新ボタンも維持。
+
+#### 最優先C: キャラクター/吹き出しの当たり判定改善
+- **App.tsx 外側コンテナを `pointer-events: none` に変更**:
+  - 透明余白領域がバックグラウンドクリックを奪わなくなった
+  - インタラクティブな要素 (drag-handle, 吹き出し, badges) のみ `pointer-events: auto`
+- **吹き出し非表示時はコンテナ自体をレンダリングしない** (`src/App.tsx`):
+  - `(tinyText || speechText)` がある時だけ吹き出しコンテナを表示
+- **contextMenu イベントを drag-handle に移動** (pointer-events: none 親では受け取れないため)
+
+#### 低優先D: VoicePage UI 改善
+- **音声入力 ON 時に mode=off なら自動的に pushToTalk に設定** (`src/settings/pages/VoicePage.tsx`)
+- **mode=off 状態の警告メッセージを追加**
+
+### Changed
+- `docs/PROGRESS_TRACKER.md`: v0.1.35 で ~68% に更新
+- `docs/NEXT_SESSION.md`: 次フェーズ候補を更新
+- `docs/FIELD_QA_NOTES.md`: 新規作成
+
 ## [0.1.34] — 2026-05-12
 
 ### Added (Milestone B 第2段階 — Character State Expression)
