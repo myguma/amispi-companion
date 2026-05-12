@@ -34,7 +34,8 @@ export default function App() {
   const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction } = useCompanionState(
     undefined,
     settings.autonomousSpeechEnabled,
-    isFullscreen
+    isFullscreen,
+    snapshot
   );
   const { onDragStart, isDragging, mouseDownRef } = useDrag();
   const { facingRight } = useWander(state, mouseDownRef);
