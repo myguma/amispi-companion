@@ -208,7 +208,7 @@ pub fn run() {
             window.open_devtools();
 
             // 初期位置: 保存済み位置があれば復元、なければ右下隅
-            let saved = settings::load_settings(app);
+            let saved = settings::load_settings(&app.handle());
             let restored = if let (Some(sx), Some(sy)) = (saved.window_x, saved.window_y) {
                 // 画面外補正: 明らかにおかしな値は無視
                 if sx > -500 && sy > -500 && sx < 10_000 && sy < 10_000 {
