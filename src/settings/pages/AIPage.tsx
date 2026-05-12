@@ -2,6 +2,7 @@
 // ローカル LLM (Ollama) の接続設定・テスト・デバッグ情報を表示する
 
 import { useState, useEffect, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { useSettings, getSettings } from "../store";
 import { getLastAIResult, subscribeLastAIResult, getAIResponse } from "../../companion/ai/AIProviderManager";
 import type { AIEngine } from "../types";
@@ -9,6 +10,8 @@ import type { LastAIResultDebug } from "../../companion/ai/types";
 import { buildCompanionContext } from "../../systems/ai/buildCompanionContext";
 import { getRecentEvents } from "../../systems/memory/memoryStore";
 import { EMPTY_SNAPSHOT } from "../../observation/types";
+
+const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -65,7 +68,7 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
         <span style={{ color: "#bbb", fontSize: 11 }}>{ago}</span>
       </div>
       {result.fallbackReason && (
-        <div style={{ color: "#e05050" }}>fallback reason: {result.fallbackReason}</div>
+        <div style={{ color: "#e05050" }}>reason: {result.fallbackReason}</div>
       )}
       {result.model && (
         <div style={{ color: "#666" }}>model: {result.model}</div>
@@ -93,7 +96,12 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
   timeoutMs: number;
 }) {
   const [connStatus, setConnStatus] = useState<"idle" | "checking" | "ok" | "ng">("idle");
+  const [connError, setConnError] = useState<string>("");
   const [models, setModels] = useState<OllamaModel[] | null>(null);
+
+  const [rawStatus, setRawStatus] = useState<"idle" | "running" | "ok" | "err">("idle");
+  const [rawOutput, setRawOutput] = useState<string>("");
+
   const [testStatus, setTestStatus] = useState<"idle" | "running" | "done" | "err">("idle");
   const [testOutput, setTestOutput] = useState<string>("");
   const [lastResult, setLastResult] = useState<LastAIResultDebug>(getLastAIResult());
@@ -103,23 +111,56 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
     return unsub;
   }, []);
 
+  // 接続テスト: /api/tags を Rust 経由で叩く
   const runConnectionTest = useCallback(async () => {
     setConnStatus("checking");
+    setConnError("");
     setModels(null);
     try {
-      const ctrl = new AbortController();
-      const id = setTimeout(() => ctrl.abort(), 5_000);
-      const res = await fetch(`${baseUrl}/api/tags`, { signal: ctrl.signal });
-      clearTimeout(id);
-      if (!res.ok) { setConnStatus("ng"); return; }
-      const json = await res.json() as { models?: OllamaModel[] };
-      setModels(json.models ?? []);
+      const json = isTauri
+        ? await invoke<string>("ollama_list_models", { baseUrl })
+        : await fetch(`${baseUrl}/api/tags`).then((r) => r.text());
+      const data = JSON.parse(json) as { models?: OllamaModel[] };
+      setModels(data.models ?? []);
       setConnStatus("ok");
-    } catch {
+    } catch (e) {
+      setConnError((e instanceof Error ? e.message : String(e)).slice(0, 200));
       setConnStatus("ng");
     }
   }, [baseUrl]);
 
+  // Raw Chat テスト: 固定 ASCII プロンプトで Ollama が実際に応答するか確認
+  const runRawChatTest = useCallback(async () => {
+    setRawStatus("running");
+    setRawOutput("");
+    const t0 = Date.now();
+    try {
+      const json = isTauri
+        ? await invoke<string>("ollama_chat", {
+            baseUrl, model,
+            system: "You are a test assistant. Follow instructions exactly.",
+            user: "Reply with exactly this text and nothing else: OLLAMA_OK_123",
+            timeoutMs: 15_000,
+          })
+        : await fetch(`${baseUrl}/api/chat`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ model, stream: false, messages: [
+              { role: "system", content: "You are a test assistant. Follow instructions exactly." },
+              { role: "user",   content: "Reply with exactly this text and nothing else: OLLAMA_OK_123" },
+            ], options: { temperature: 0, num_predict: 20 } }),
+          }).then((r) => r.text());
+      const data = JSON.parse(json) as { message?: { content?: string } };
+      const content = data?.message?.content ?? "(empty)";
+      const latency = Date.now() - t0;
+      setRawOutput(`${latency}ms → "${content.trim()}"`);
+      setRawStatus("ok");
+    } catch (e) {
+      setRawOutput((e instanceof Error ? e.message : String(e)).slice(0, 200));
+      setRawStatus("err");
+    }
+  }, [baseUrl, model]);
+
+  // Companion 発話テスト: 実際の AI パイプライン経由
   const runTestResponse = useCallback(async () => {
     setTestStatus("running");
     setTestOutput("");
@@ -147,9 +188,17 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
     connStatus === "ng" ? "#e05050" :
     connStatus === "checking" ? "#f0a030" : "#888";
 
+  const rawColor =
+    rawStatus === "ok" ? "#4caf7d" :
+    rawStatus === "err" ? "#e05050" :
+    rawStatus === "running" ? "#f0a030" : "#888";
+
   return (
     <>
       <SectionHead title="接続テスト" />
+      <div style={{ fontSize: 11, color: "#aaa", marginBottom: 4 }}>
+        ※ アプリは Rust 経由で Ollama にアクセスします (WebView CORS 回避)
+      </div>
 
       <div style={{ display: "flex", gap: 8, padding: "6px 0", borderBottom: "1px solid #f0f0f0", flexWrap: "wrap" }}>
         <button
@@ -160,7 +209,17 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
             borderRadius: 6, background: "white", color: connColor, cursor: "pointer",
           }}
         >
-          {connStatus === "checking" ? "確認中…" : "接続テスト"}
+          {connStatus === "checking" ? "確認中…" : "①モデル一覧取得"}
+        </button>
+        <button
+          onClick={() => void runRawChatTest()}
+          disabled={rawStatus === "running"}
+          style={{
+            fontSize: 12, padding: "4px 12px", border: `1px solid ${rawColor}`,
+            borderRadius: 6, background: "white", color: rawColor, cursor: "pointer",
+          }}
+        >
+          {rawStatus === "running" ? "テスト中…" : "②Raw Chat テスト"}
         </button>
         <button
           onClick={() => void runTestResponse()}
@@ -170,57 +229,80 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
             borderRadius: 6, background: "white", color: "#6a40d0", cursor: "pointer",
           }}
         >
-          {testStatus === "running" ? "テスト中…" : "テスト発話"}
+          {testStatus === "running" ? "テスト中…" : "③コンパニオン発話テスト"}
         </button>
       </div>
 
-      {/* 接続結果 */}
+      {/* ① 接続結果 */}
       {connStatus !== "idle" && (
-        <div style={{ padding: "6px 0", fontSize: 12 }}>
-          <span style={{ color: connColor }}>
-            {connStatus === "ok" ? "✓ 接続OK" :
-             connStatus === "ng" ? "× 接続失敗 (Ollama未起動 or URL誤り)" :
+        <div style={{ padding: "6px 0", fontSize: 12, borderBottom: "1px solid #f0f0f0" }}>
+          <div style={{ color: connColor, marginBottom: 2 }}>
+            {connStatus === "ok" ? "✓ /api/tags 取得成功" :
+             connStatus === "ng" ? "× 接続失敗" :
              "確認中…"}
-          </span>
+          </div>
+          {connError && (
+            <div style={{ color: "#e05050", fontSize: 11, wordBreak: "break-all" }}>
+              エラー: {connError}
+            </div>
+          )}
           {models !== null && models.length === 0 && (
-            <span style={{ marginLeft: 8, color: "#e08030" }}>モデルなし (ollama pull でモデルを取得してください)</span>
+            <div style={{ color: "#e08030", fontSize: 11 }}>
+              モデルなし — ollama pull でモデルを取得してください
+            </div>
+          )}
+          {models && models.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 2 }}>
+                取得済みモデル (設定中: <strong>{model}</strong>):
+              </div>
+              {models.map((m) => (
+                <div key={m.name} style={{
+                  fontSize: 11, padding: "1px 6px", borderRadius: 4, marginBottom: 1,
+                  background: m.name === model ? "#e8f0ff" : "#f8f8f8",
+                  color: m.name === model ? "#3a70d0" : "#555",
+                  fontFamily: "monospace",
+                }}>
+                  {m.name === model ? "▶ " : "  "}{m.name}
+                </div>
+              ))}
+              {!models.some((m) => m.name === model) && (
+                <div style={{ color: "#e05050", fontSize: 11, marginTop: 4 }}>
+                  ⚠ 設定中のモデル「{model}」がリストにありません。モデル名を確認してください。
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
 
-      {/* モデル一覧 */}
-      {models && models.length > 0 && (
-        <div style={{ padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-          <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>
-            取得済みモデル (設定中: <strong>{model}</strong>):
+      {/* ② Raw Chat テスト結果 */}
+      {rawStatus !== "idle" && (
+        <div style={{ padding: "6px 0", fontSize: 12, borderBottom: "1px solid #f0f0f0" }}>
+          <div style={{ color: rawColor, marginBottom: 2 }}>
+            {rawStatus === "ok" ? "✓ Raw Chat 成功" :
+             rawStatus === "err" ? "× Raw Chat 失敗" : "テスト中…"}
           </div>
-          {models.map((m) => (
-            <div key={m.name} style={{
-              fontSize: 12, padding: "2px 6px", borderRadius: 4, marginBottom: 2,
-              background: m.name === model ? "#e8f0ff" : "#f8f8f8",
-              color: m.name === model ? "#3a70d0" : "#444",
-              fontFamily: "monospace",
-            }}>
-              {m.name === model ? "▶ " : "  "}{m.name}
-              {m.name !== model && (
-                <span style={{ color: "#aaa", fontSize: 11, marginLeft: 8 }}>
-                  ← 設定で変更可能
-                </span>
-              )}
+          {rawOutput && (
+            <div style={{ color: rawStatus === "ok" ? "#444" : "#e05050", fontSize: 11, wordBreak: "break-all" }}>
+              {rawOutput}
             </div>
-          ))}
+          )}
+          <div style={{ fontSize: 10, color: "#bbb", marginTop: 2 }}>
+            期待値: 「OLLAMA_OK_123」が含まれていれば OK
+          </div>
         </div>
       )}
 
-      {/* テスト発話結果 */}
+      {/* ③ コンパニオン発話テスト結果 */}
       {testStatus !== "idle" && (
         <div style={{ padding: "6px 0", fontSize: 12, borderBottom: "1px solid #f0f0f0" }}>
           <div style={{ color: testStatus === "done" ? "#4caf7d" : testStatus === "err" ? "#e05050" : "#f0a030", marginBottom: 2 }}>
             {testStatus === "running" ? "AI 応答待ち中…" :
-             testStatus === "done" ? "✓ 発話テスト成功" : "× 発話テスト失敗"}
+             testStatus === "done" ? "✓ コンパニオン発話テスト成功" : "× コンパニオン発話テスト失敗"}
           </div>
           {testOutput && (
-            <div style={{ color: "#444", fontStyle: testStatus === "done" ? "italic" : "normal" }}>
+            <div style={{ color: testStatus === "done" ? "#444" : "#e05050", fontStyle: testStatus === "done" ? "italic" : "normal" }}>
               {testStatus === "done" ? `「${testOutput}」` : testOutput}
             </div>
           )}
