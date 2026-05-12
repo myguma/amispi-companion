@@ -49,6 +49,11 @@ export function useCompanionState(
   const isFullscreenRef = useRef(isFullscreen);
   useEffect(() => { isFullscreenRef.current = isFullscreen; }, [isFullscreen]);
 
+  const snapshotRef = useRef<ObservationSnapshot>(snapshot);
+  useEffect(() => { snapshotRef.current = snapshot; }, [snapshot]);
+
+  const lastSpeechAtRef = useRef<number | null>(null);
+
   const stateRef = useRef<CompanionState>("idle");
   useEffect(() => { stateRef.current = state; }, [state]);
 
