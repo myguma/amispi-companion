@@ -105,7 +105,36 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.38)
+## v0.1.38 実装詳細
+
+### A: 設定画面の白画面クラッシュ修正
+
+- `src/settings/SettingsApp.tsx`: `TabErrorBoundary` クラスコンポーネントを追加
+- `src/settings/pages/TransparencyPage.tsx`: `ActiveAppDebugPanel` を防御的に書き直し
+  - `useRef` ベースの `fetchingRef` / `intervalRef` で二重fetch防止・クリーンアップ
+  - `fmtHwnd()` で hwndRaw が null/undefined/0 の場合も安全に表示
+
+### B: キャラクタークリッピング修正 (DPI対応)
+
+- `src-tauri/tauri.conf.json`: height 180 → 220 (論理ピクセル)
+- `src-tauri/src/lib.rs`: `CHAR_WINDOW_H_LOGICAL = 220.0` / `BUBBLE_WINDOW_H_LOGICAL = 130.0`
+  - `window.scale_factor()` で DPI スケールを取得し、論理→物理ピクセル変換
+- `src/App.tsx`: `CHAR_H` 180 → 220、`hasSpeechRef` 補正を削除 (ドラッグ位置保存の簡素化)
+
+### C: AI 返答単調化・時刻偏重の修正
+
+- `src/systems/ai/PromptBuilder.ts`:
+  - `triggerHint()` 関数追加 (trigger 別ヒント、時刻言及不要を click 時に明示)
+  - 時刻帯を後方へ移動・「参考」ラベルに変更
+  - 直近3件の `speech_shown` 発話を「繰り返し厳禁」として context に追加
+  - click 良い例を追加: 「ここにいる」「うん、聞こえてる」「少しだけ起きた」等
+  - 「時刻帯に毎回言及しない」をシステムプロンプトに明記
+- `src/systems/ai/QualityFilter.ts`:
+  - `TRUNCATED_PATTERN` を `[はがをへ]$` に緩和 (「にでも」等の自然な終止を許容)
+
+---
+
+## 次のフェーズ候補 (v0.1.39)
 
 ### 優先候補 A: First-run Onboarding ← **推奨**
 
