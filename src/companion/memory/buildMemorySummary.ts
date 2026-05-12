@@ -2,6 +2,7 @@
 
 import type { MemoryEvent } from "../../types/companion";
 import { classifyBreak } from "./memorySummary";
+import { buildDailySummary } from "./dailySummary";
 
 export type CompanionMemorySummary = {
   todayClickCount: number;
@@ -29,11 +30,15 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
   const recentSpeechCount = events.slice(-50).filter((e) => e.type === "speech_shown").length;
   const lastSessionBreak  = classifyBreak();
 
+  const daily = buildDailySummary(events);
+
   const summary = buildNaturalSummary({
     todayClickCount,
     sessionCountToday,
     recentSpeechCount,
     lastSessionBreak,
+    dailyNatural: daily.naturalSummary,
+    activeHoursToday: daily.activeHoursToday,
   });
 
   return { todayClickCount, recentSpeechCount, sessionCountToday, lastSessionBreak, shortNaturalSummary: summary };
@@ -44,15 +49,24 @@ function buildNaturalSummary(s: {
   sessionCountToday: number;
   recentSpeechCount: number;
   lastSessionBreak: string;
+  dailyNatural: string;
+  activeHoursToday: number;
 }): string {
   const parts: string[] = [];
 
-  if (s.lastSessionBreak === "longDay") parts.push("前回から日が明けた");
+  // セッション間隔
+  if (s.lastSessionBreak === "longDay")  parts.push("前回から日が明けた");
   else if (s.lastSessionBreak === "hours") parts.push("少し時間が空いてから再開した");
   else if (s.lastSessionBreak === "short") parts.push("短い休憩のあと戻ってきた");
 
-  if (s.sessionCountToday > 1) parts.push(`今日は${s.sessionCountToday}回目の起動`);
-  if (s.todayClickCount > 5) parts.push("今日は何度か無明に触れた");
+  // 今日の活動概要 (dailySummary の情報を優先)
+  if (s.dailyNatural) {
+    parts.push(s.dailyNatural.replace(/。$/, ""));
+  } else {
+    // フォールバック: 旧ロジック
+    if (s.sessionCountToday > 1) parts.push(`今日は${s.sessionCountToday}回目の起動`);
+    if (s.todayClickCount > 5)   parts.push("今日は何度か無明に触れた");
+  }
 
   return parts.length > 0 ? parts.join("。") + "。" : "";
 }
