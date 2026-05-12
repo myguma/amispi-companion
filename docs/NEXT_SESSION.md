@@ -240,5 +240,5 @@
 8. npm run build / cargo build → 通ることを確認
 9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
 10. docs/NEXT_SESSION.md 更新 (このファイル)
-11. git add / commit / bump v0.1.38 / push
+11. git add / commit / bump v0.1.39 / push
 ```
