@@ -1,0 +1,26 @@
+name: Rust Check — Windows Target
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src-tauri/**'
+
+jobs:
+  check:
+    name: cargo check (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: cargo check
+        working-directory: src-tauri
+        run: cargo check --target x86_64-pc-windows-msvc
