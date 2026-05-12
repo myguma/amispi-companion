@@ -113,78 +113,103 @@ SpeechBubble / TinyWhisper / Cry
 
 ## 5. Implementation Phases
 
-### Phase 0 — Planning and Guardrails ✅
+### Phase 0 — Planning and Guardrails ✅ 完了
 - docs/IMPLEMENTATION_PLAN.md
 - docs/SAFETY_AND_PRIVACY_BOUNDARIES.md
 - docs/LOCAL_OBSERVATION_ARCHITECTURE.md
 - docs/NEXT_SESSION.md
 
-### Phase 1 — Core Context and Speech Control
-新規:
-- `src/companion/activity/inferActivity.ts` — ActivityInsight
+### Phase 1 — Core Context and Speech Control ✅ 完了 (v0.1.26)
+- `src/companion/activity/inferActivity.ts` — InferredActivity / ActivityInsight
 - `src/companion/memory/buildMemorySummary.ts` — CompanionMemorySummary
 - `src/companion/speech/SpeechPolicy.ts` — canSpeak()
 - `src/companion/speech/SpeechQueue.ts` — 優先度・重複排除
 - `src/systems/ai/buildCompanionContext.ts` — CompanionContext 構築
-
-変更:
 - `src/companion/ai/types.ts` — AIEngine / AITrigger / CompanionContext / CompanionUtterance 追加
-- `src/hooks/useCompanionState.ts` — snapshot 受け取り・新 AI フロー接続
-- `src/App.tsx` — snapshot を useCompanionState に渡す
+- `src/hooks/useCompanionState.ts` — 新 AI フロー接続
 
-完了条件:
-- npm run build が通る
-- クリック反応が壊れていない
-- thinking で固まらない
-- AI engine none で fallback が動く
-
-### Phase 2 — PromptBuilder and Local LLM
-新規:
+### Phase 2 — PromptBuilder and Local LLM ✅ 完了 (v0.1.26)
 - `src/systems/ai/PromptBuilder.ts`
 - `src/systems/ai/QualityFilter.ts`
 - `src/companion/ai/OllamaProvider.ts`
+- `src/companion/ai/AIProviderManager.ts` 書き直し
 - `src/settings/pages/AIPage.tsx`
+- settings に aiEngine / ollamaBaseUrl / ollamaModel / ollamaTimeoutMs 追加
+
+### Phase 3 — Media Awareness ✅ 完了 (v0.1.27)
+- `MediaContext` を ObservationSnapshot に追加 (Rust / TypeScript)
+- `detect_media()`: sysinfo でバックグラウンドの音楽・動画アプリを検出
+- `inferActivity.ts`: バックグラウンド音楽検出ケース追加
+- `PromptBuilder.ts`: 音楽・動画再生情報をプロンプトに追加
+
+### Phase 4 — Transparency UI v2 ✅ 完了 (v0.1.27)
+- `TransparencyPage.tsx` 全面書き直し
+- `LiveStatusPanel`: 活動状態リアルタイム表示・更新ボタン
+- `OllamaStatus`: Ollama 接続確認コンポーネント
+- AI エンジン状態セクション
+- 「見ていないもの」に画面キャプチャ・マイク・クリップボードを明示
+
+### Phase 5 — Window Position Persistence ✅ 完了 (v0.1.27)
+- `PersistedSettings` に `window_x / window_y` 追加
+- `save_window_position` Tauri コマンド追加
+- 起動時に保存位置を復元 (範囲チェックあり)
+- ドラッグ終了後 100ms で位置を保存
+
+### Phase 6a — Voice Input Foundation ← **次に実装**
+
+目的: 本物の STT 統合はまだしない。設定・状態・導線・mock transcript まで。
+
+新規:
+- `src/settings/pages/VoicePage.tsx` — Voice ON/OFF / mode / プライバシー説明
+- `docs/VOICE_INTERACTION.md`
 
 変更:
-- `src/companion/ai/AIProviderManager.ts` — ollama 追加
-- `src/settings/types.ts` — aiEngine / ollama* 追加
-- `src/settings/defaults.ts`
-- `src/settings/SettingsApp.tsx` — AI タブ追加
+- `src/settings/types.ts` — `voiceInputMode: "off" | "pushToTalk"` 追加
+- `src/settings/defaults.ts` — `voiceInputMode: "off"`
+- `src/settings/SettingsApp.tsx` — "音声" タブ追加
+- `src/hooks/useCompanionState.ts` — `requestVoiceResponse(transcript)` 追加
+- `src/App.tsx` — push-to-talk エントリポイント (長押し)
+- `src/systems/ai/PromptBuilder.ts` — voiceInput をプロンプトに追加
 
 完了条件:
-- Ollama 未起動 → fallback
-- Ollama 起動 → 短い日本語発話
-- 発話 80 文字以内
-- アシスタント文が抑制される
-- cloud AI なし・外部送信なし
+- 設定から Voice Input ON/OFF / mode 変更できる
+- キャラクター長押しで mock transcript → voice trigger → 返答が出る
+- 既存クリック反応・Ollama fallback・MediaContext が壊れない
+- `npm run build` が通る
 
-### Phase 3 — Media Awareness
-- MediaContext / MediaSessionObserver (Rust)
-- ObservationSnapshot に統合
-- Transparency UI 更新
+### Phase 6b — Local STT Adapter
 
-### Phase 4 — Transparency UI v2
-- 現在観測状態パネル
-- AI engine / Ollama 状態表示
-- screen/mic/cloud の OFF 明示
+- STTAdapter interface 設計
+- MockSTTAdapter 実装
+- WhisperCliSTTAdapter 設計 (Tauri sidecar または CLI 経由)
+- 録音データは処理後即削除
+- `docs/VOICE_INTERACTION.md` に STT 候補比較
 
-### Phase 5 — Window Position Persistence
-- ウィンドウ位置保存・復元
-- 画面外補正
+### Phase 6c — Voice UX Hardening
 
-### Phase 6 — Voice Input (Push-to-talk)
-- 常時マイク監視なし
-- 操作中のみ録音
-- local STT → CompanionContext
+- 録音中の視覚フィードバック・鳴き声
+- 長すぎる録音の自動停止
+- DND / Quiet / Focus との整合
+- 連続録音防止
 
-### Phase 7 — Optional Screen Understanding
-- デフォルト OFF
-- raw screenshot 保存禁止
-- local VLM のみ
+### Phase 7a — Screen Understanding Planning Only
 
-### Phase 8 — Optional TTS
-- TTS OFF で既存挙動維持
-- 短文のみ読み上げ
+- 実際のキャプチャ実装はまだしない
+- `screenCaptureMode: "off" | "selectedWindow" | "fullScreen"` 設定
+- Transparency UI に Screen / OCR 状態表示
+- `docs/SCREEN_UNDERSTANDING.md` 作成
+
+### Phase 7b — Optional Local Screen Capture Prototype
+
+- 明示許可時のみ / 生画像保存禁止 / local VLM のみ
+- abstracted summary のみ CompanionContext に渡す
+
+### Phase 8 — Optional TTS / Voice Output
+
+- `ttsEnabled` デフォルト OFF
+- TTS adapter interface
+- Windows TTS / Piper / VOICEVOX 候補
+- 短文のみ読み上げ / テキスト表示は必ず残す
 
 ---
 
