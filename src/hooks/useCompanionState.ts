@@ -193,6 +193,44 @@ export function useCompanionState(
   }, [fireReaction, triggerSpeak]);
 
   // ──────────────────────────────────────────
+  // Voice Input: transcript → AI → 返答
+  // 常時マイク監視なし。呼び出し元が録音・STT を担当し
+  // transcript テキストのみをここに渡す。
+  // ──────────────────────────────────────────
+  const requestVoiceResponse = useCallback(async (transcript: string) => {
+    if (!transcript.trim()) {
+      setVoiceUIState("voiceReady");
+      return;
+    }
+
+    setVoiceUIState("voiceTranscribing");
+    setState("thinking");
+
+    const s      = getSettings();
+    const events = getRecentEvents(20);
+    const ctx    = buildCompanionContext("voice", snapshotRef.current, events, s, transcript);
+
+    const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+
+    let text: string | null = null;
+    setVoiceUIState("voiceResponding");
+
+    if (policy.allowed) {
+      try {
+        const input  = contextToProviderInput(ctx);
+        const output = await getNewAIResponse(input);
+        if (output.shouldSpeak && output.text) text = output.text;
+      } catch {
+        // AI エラー → reaction fallback
+      }
+    }
+
+    text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+    triggerSpeak(text);
+    setVoiceUIState("voiceReady");
+  }, [triggerSpeak, fireReaction]);
+
+  // ──────────────────────────────────────────
   // クリック処理
   // ──────────────────────────────────────────
   const onCharacterClick = useCallback(() => {
