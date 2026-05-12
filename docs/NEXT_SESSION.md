@@ -10,9 +10,9 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.37
-**フェーズ:** Companion Intelligence & Window Architecture Fixes 完了 (実機確認待ち)
-**全体進捗:** 約 73%
+**バージョン:** v0.1.38
+**フェーズ:** Hotfix — Settings Crash / Character Clipping / AI Reply Repetition 完了 (実機確認待ち)
+**全体進捗:** 約 76%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
