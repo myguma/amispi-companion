@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.1.36] — 2026-05-12
+
+### Fixed (Field QA Root Cause Fixes — Round 2)
+
+#### A: Ollama CORS 根本修正 — Rust 経由 HTTP でWebView CORS を回避
+
+- **OllamaProvider.ts を Tauri invoke 経由に書き換え** (`src/companion/ai/OllamaProvider.ts`):
+  - `fetch()` → `invoke("ollama_list_models")` / `invoke("ollama_chat")` に変更
+  - Tauri WebView2 から `fetch()` で `http://localhost:11434` を叩くと Origin `tauri://localhost` に対して CORS が失敗することがある
+  - Rust サイドから HTTP リクエストすることで CORS を完全に回避
+  - `checkAvailability()` で model_not_found / timeout / network_error など詳細な失敗理由を返す
+  - dev (ブラウザ) 環境では従来の `fetch()` にフォールバック
+- **ollama_list_models / ollama_chat Tauri コマンド追加** (`src-tauri/src/lib.rs`):
+  - ureq を使用した synchronous HTTP (spawn_blocking でラップ)
+  - `/api/tags` → JSON 応答をそのまま返す
+  - `/api/chat` → system / user メッセージを POST し応答 JSON を返す
+- **ureq 2 依存関係追加** (`src-tauri/Cargo.toml`): `ureq = { version = "2", features = ["json"] }`
+- **AIProviderManager: checkAvailability() 使用** (`src/companion/ai/AIProviderManager.ts`):
+  - `isAvailable()` (boolean) から `checkAvailability()` (詳細 reason) に変更
+  - `fallbackReason` に `model_not_found:X` / `exception:X` など具体的な原因が入る
+- **AIPage にテストパネル追加** (`src/settings/pages/AIPage.tsx`):
+  - ①モデル一覧取得: `/api/tags` を Rust 経由で叩く
+  - ②Raw Chat テスト: 「OLLAMA_OK_123」プロンプトで実際の `/api/chat` を確認
+  - ③コンパニオン発話テスト: 実際の AI パイプライン経由でテスト
+  - エラー時にエラーメッセージを表示 (これまでは "接続失敗" のみ)
+
+#### B: Active App 取得デバッグパネル追加
+
+- **get_active_app_debug Tauri コマンド追加** (`src-tauri/src/lib.rs`):
+  - フォアグラウンドプロセス取得の各段階 (hwnd→pid→OpenProcess→QueryName) を詳細に返す
+  - `errorStage` / `errorCode` (Win32 GetLastError) を含む
+- **ActiveAppDebugInfo 構造体追加** (`src-tauri/src/observation/mod.rs`):
+  - `hwndAvailable` / `pidAvailable` / `openProcessOk` / `queryNameOk` の段階別フラグ
+  - `processName` / `category` / `isSelfApp`
+- **TransparencyPage にデバッグパネル追加** (`src/settings/pages/TransparencyPage.tsx`):
+  - 各段階の成功/失敗を可視化
+  - Win32 エラーコードを表示
+  - 「設定画面が前面です」の警告
+
+#### C: Hit Area 改善 — SPEECH_VISIBLE フラグによる動的 hit test
+
+- **SPEECH_VISIBLE AtomicBool を lib.rs に追加**:
+  - 吹き出し / TinyWhisper 表示中かどうかをスレッドセーフに保持
+- **set_speech_visible Tauri コマンド追加** (`src-tauri/src/lib.rs`):
+  - JS から吹き出し表示状態を Rust に通知
+- **start_hit_test_thread 改善** (`src-tauri/src/lib.rs`):
+  - `SPEECH_VISIBLE=false` (吹き出し非表示): ウィンドウ下部 190px のみを有効領域とする
+  - `SPEECH_VISIBLE=true` (吹き出し表示中): 従来通り全高さを有効
+  - キャラ上部の透明空白領域が背面クリックを奪わなくなる
+- **App.tsx: tinyText/speechText 変化時に invoke("set_speech_visible") を呼ぶ** (`src/App.tsx`)
+
+### Changed
+- バージョン: 0.1.35 → 0.1.36
+
 ## [0.1.35] — 2026-05-12
 
 ### Fixed (Field QA Fixes before Onboarding)
