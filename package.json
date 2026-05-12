@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "check:win": "cargo check --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
