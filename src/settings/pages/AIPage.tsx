@@ -124,9 +124,6 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
     setTestStatus("running");
     setTestOutput("");
     try {
-      const [s] = [getLastAIResult()]; // 現在の settings は getSettings() 経由
-      void s; // suppress unused warning
-      const { getSettings } = await import("../../settings/store");
       const settings = getSettings();
       const events = getRecentEvents(10);
       const ctx = buildCompanionContext("click", EMPTY_SNAPSHOT, events, settings);
