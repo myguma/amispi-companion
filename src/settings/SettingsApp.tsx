@@ -69,6 +69,7 @@ export function SettingsApp() {
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
         {tab === "transparency" && <TransparencyPage />}
         {tab === "behavior" && <BehaviorPage />}
+        {tab === "ai" && <AIPage />}
       </div>
 
       {/* フッター */}
