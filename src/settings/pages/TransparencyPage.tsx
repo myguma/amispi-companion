@@ -126,6 +126,7 @@ function errorStageLabel(stage: string, code: number): string {
 function ActiveAppDebugPanel() {
   const [info, setInfo] = useState<ActiveAppDebugInfo | null>(null);
   const [fetching, setFetching] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const fetchDebug = async () => {
     if (fetching) return;
@@ -137,38 +138,71 @@ function ActiveAppDebugPanel() {
     setFetching(false);
   };
 
+  const fetchDelayed = () => {
+    if (fetching || countdown !== null) return;
+    setCountdown(3);
+    const tick = (n: number) => {
+      if (n <= 0) {
+        setCountdown(null);
+        void fetchDebug();
+      } else {
+        setTimeout(() => { setCountdown(n - 1); tick(n - 1); }, 1000);
+      }
+    };
+    setTimeout(() => { setCountdown(2); tick(2); }, 1000);
+  };
+
   useEffect(() => {
     void fetchDebug();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!info) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
+  if (!info && countdown === null) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
 
-  const stageOk = info.errorStage === "ok";
+  const stageOk = info?.errorStage === "ok";
   const stageColor = stageOk ? "#4caf7d" : "#e05050";
 
   return (
     <div style={{ background: "#fff8f0", borderRadius: 8, padding: "10px 12px", fontSize: 11, lineHeight: 1.9, fontFamily: "monospace" }}>
-      <div style={{ color: stageColor, fontWeight: 700, marginBottom: 4 }}>
-        [{info.platform}] {errorStageLabel(info.errorStage, info.errorCode)}
+      {info && (
+        <>
+          <div style={{ color: stageColor, fontWeight: 700, marginBottom: 4 }}>
+            [{info.platform}] {errorStageLabel(info.errorStage, info.errorCode)}
+          </div>
+          <div>hwnd: {info.hwndAvailable ? "✓" : "✗"}  (raw={info.hwndRaw === 0 ? "NULL(0)" : `0x${info.hwndRaw.toString(16)}`})</div>
+          <div>pid: {info.pidAvailable ? `✓ (${info.pid})` : "✗"}</div>
+          <div>OpenProcess: {info.openProcessOk ? "✓" : "✗"}</div>
+          <div>QueryName: {info.queryNameOk ? "✓" : "✗"}</div>
+          {info.lastErrorBefore > 0 && <div style={{ color: "#e08030" }}>pre-call LastError: {info.lastErrorBefore}</div>}
+          {info.processName && <div>processName: <strong>{info.processName}</strong></div>}
+          {info.queryNameOk && <div>category: <strong>{info.category}</strong></div>}
+          {info.isSelfApp && (
+            <div style={{ color: "#e08030", marginTop: 4 }}>
+              ⚠ 設定画面自身が前面です。他のアプリを前面にして再取得してください。
+            </div>
+          )}
+        </>
+      )}
+      <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+        <button
+          onClick={() => void fetchDebug()}
+          disabled={fetching || countdown !== null}
+          style={{ fontSize: 11, padding: "2px 10px", border: "1px solid #ddd", borderRadius: 4, background: "white", cursor: "pointer" }}
+        >
+          {fetching ? "取得中…" : "今すぐ再取得"}
+        </button>
+        <button
+          onClick={fetchDelayed}
+          disabled={fetching || countdown !== null}
+          style={{ fontSize: 11, padding: "2px 10px", border: "1px solid #f0a030", borderRadius: 4, background: "#fffbe8", cursor: "pointer", color: "#a06010" }}
+        >
+          {countdown !== null ? `${countdown}秒後にキャプチャ…` : "3秒後にキャプチャ"}
+        </button>
       </div>
-      <div>hwnd: {info.hwndAvailable ? "✓" : "✗"}</div>
-      <div>pid: {info.pidAvailable ? `✓ (${info.pid})` : "✗"}</div>
-      <div>OpenProcess: {info.openProcessOk ? "✓" : "✗"}</div>
-      <div>QueryName: {info.queryNameOk ? "✓" : "✗"}</div>
-      {info.processName && <div>processName: <strong>{info.processName}</strong></div>}
-      {info.queryNameOk && <div>category: <strong>{info.category}</strong></div>}
-      {info.isSelfApp && (
-        <div style={{ color: "#e08030", marginTop: 4 }}>
-          ⚠ 設定画面自身が前面です。他のアプリを前面にして再取得してください。
+      {countdown !== null && (
+        <div style={{ color: "#f0a030", marginTop: 4 }}>
+          他のウィンドウに切り替えてください…
         </div>
       )}
-      <button
-        onClick={() => void fetchDebug()}
-        disabled={fetching}
-        style={{ marginTop: 6, fontSize: 11, padding: "2px 10px", border: "1px solid #ddd", borderRadius: 4, background: "white", cursor: "pointer" }}
-      >
-        {fetching ? "取得中…" : "再取得"}
-      </button>
     </div>
   );
 }
