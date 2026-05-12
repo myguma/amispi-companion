@@ -145,14 +145,14 @@ mod windows_impl {
     pub fn get_active_app() -> Option<(String, String)> {
         unsafe {
             let hwnd = GetForegroundWindow();
-            if hwnd == 0 { return None; }
+            if hwnd.is_null() { return None; }
 
             let mut pid: u32 = 0;
             GetWindowThreadProcessId(hwnd, &mut pid);
             if pid == 0 { return None; }
 
             let handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
-            if handle == 0 { return None; }
+            if handle.is_null() { return None; }
 
             let mut buf = vec![0u16; MAX_PATH as usize];
             let mut size = buf.len() as u32;
