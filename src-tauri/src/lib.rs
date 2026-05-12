@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -9,6 +10,81 @@ use tauri_plugin_updater::UpdaterExt;
 
 mod observation;
 mod settings;
+
+// ──────────────────────────────────────────────────────────
+// 吹き出し表示状態 (hit test スレッドで参照)
+// ──────────────────────────────────────────────────────────
+
+/// 吹き出し / TinyWhisper が表示中かどうか
+/// JS から invoke("set_speech_visible") で更新される
+static SPEECH_VISIBLE: AtomicBool = AtomicBool::new(false);
+
+#[tauri::command]
+fn set_speech_visible(visible: bool) {
+    SPEECH_VISIBLE.store(visible, Ordering::Relaxed);
+}
+
+// ──────────────────────────────────────────────────────────
+// Ollama ローカルAPI プロキシ (CORS回避のため Rust 側から HTTP)
+// ──────────────────────────────────────────────────────────
+
+/// Ollama /api/tags を Rust 側から叩いてモデル一覧 JSON を返す
+/// WebView2 の CORS 制限を回避するためにサーバーサイドリクエストとして実行する
+#[tauri::command]
+async fn ollama_list_models(base_url: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        let url = format!("{}/api/tags", base_url.trim_end_matches('/'));
+        let resp = ureq::get(&url)
+            .timeout(std::time::Duration::from_secs(6))
+            .call()
+            .map_err(|e| e.to_string())?;
+        resp.into_string().map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Ollama /api/chat を Rust 側から叩いてレスポンス JSON を返す
+/// system / user メッセージと model を受け取り、stream=false で POST する
+#[tauri::command]
+async fn ollama_chat(
+    base_url: String,
+    model: String,
+    system: String,
+    user: String,
+    timeout_ms: u64,
+) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        let url = format!("{}/api/chat", base_url.trim_end_matches('/'));
+        let body = serde_json::json!({
+            "model": model,
+            "stream": false,
+            "messages": [
+                { "role": "system", "content": system },
+                { "role": "user",   "content": user   }
+            ],
+            "options": { "temperature": 0.7, "num_predict": 60 }
+        });
+        let resp = ureq::post(&url)
+            .timeout(std::time::Duration::from_millis(timeout_ms))
+            .send_json(body)
+            .map_err(|e| e.to_string())?;
+        resp.into_string().map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+// ──────────────────────────────────────────────────────────
+// Active App デバッグ
+// ──────────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn get_active_app_debug() -> observation::ActiveAppDebugInfo {
+    tokio::task::spawn_blocking(observation::get_active_app_debug_info)
+        .await
+        .unwrap_or_else(|_| observation::get_active_app_debug_info())
+}
 
 // ──────────────────────────────────────────────────────────
 // クリックスルー制御
