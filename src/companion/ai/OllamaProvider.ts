@@ -36,20 +36,7 @@ export class OllamaProvider implements AIProvider {
     }
   }
 
-  async respond(_input: AIProviderInput): Promise<AIProviderOutput> {
-    // AIProviderInput から CompanionContext を再構築してプロンプトを作る
-    const s      = getSettings();
-    const events = getRecentEvents(20);
-
-    // snapshotRef が渡されていない場合は空スナップショットで代替
-    // (Phase 2 では contextToProviderInput のリバース)
-    const ctx: CompanionContext = buildCompanionContext(
-      "click",
-      EMPTY_SNAPSHOT, // 実際の snapshot は Phase 3 以降で渡せるようにする
-      events,
-      s
-    );
-
+  async respond(ctx: CompanionContext): Promise<AIProviderOutput> {
     const { system, user } = buildPrompt(ctx);
 
     const ctrl   = new AbortController();
