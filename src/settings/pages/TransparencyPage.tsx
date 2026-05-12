@@ -314,6 +314,15 @@ export function TransparencyPage() {
         </div>
       </Section>
 
+      {/* ── 発話制御 ── */}
+      <Section title="発話制御">
+        <SpeechControlPanel
+          snap={snap}
+          autonomousSpeechEnabled={autonomousSpeechEnabled}
+          settings={settings}
+        />
+      </Section>
+
       {/* ── 今日の記憶 ── */}
       <Section title="今日の記憶">
         <MemorySummaryPanel />
