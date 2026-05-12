@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.20] — 2026-05-12
+
+### Fixed
+- 設定ウィンドウが 200px 幅に潰れる: `index.html` の `#root` 固定サイズを設定ページでは解除
+- 鳴き声がまったく鳴らない: `cryEngine.play()` が未接続だった。状態遷移時 (touched/speaking/waking/sleep) に再生するよう追加
+
+### Changed
+- 自立発話のランダム独り言が「設定OFF」でも動いていた: `autonomousSpeechEnabled` 設定を正しく反映
+- 移動方向に応じてスプライトを水平反転 (右移動時は `scaleX(-1)`)
+
 ## [0.1.19] — 2026-05-12
 
 ### Fixed
