@@ -334,7 +334,7 @@ pub fn run() {
             if !restored {
                 if let Some(monitor) = window.current_monitor().ok().flatten() {
                     let screen = monitor.size();
-                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 300 });
+                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 180 });
                     let margin = 20i32;
                     let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                         x: screen.width as i32 - win.width as i32 - margin,
