@@ -4,14 +4,11 @@
 
 set -euo pipefail
 
-echo "=== Windows ターゲット追加 ==="
-rustup target add x86_64-pc-windows-msvc
-
 echo "=== git hook を有効化 ==="
 git config core.hooksPath .githooks
 chmod +x .githooks/pre-push
 
 echo ""
 echo "セットアップ完了"
-echo "  タグ push 時に自動で Windows コンパイルチェックが走ります"
-echo "  手動チェック: npm run check:win"
+echo "  main push → CI が自動で Windows cargo check を実行 (check.yml)"
+echo "  タグ push 時 → hook が直近 check の結果を確認してから通過"
