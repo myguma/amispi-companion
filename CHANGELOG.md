@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.34] — 2026-05-12
+
+### Added (Milestone B 第2段階 — Character State Expression)
+- **キャラクター状態アニメーション** (`src/styles/index.css`):
+  - `character-anim--sprite[data-state]` セレクター: スプライト使用時のみ適用し SVG との二重アニメーションを防止
+  - `thinking`: 上下フロート + 紫グロー pulse (1.8s cycle)
+  - `speaking`: 上下ボブ + わずかなスケール変化 (0.8s cycle)
+  - `sleep`: 縮小+下方向ドリフト + 低彩度・低輝度 dim (5s cycle)
+  - `waking`: スケールアップ + 明度・彩度フラッシュ (1.5s ease-out)
+  - `touched`: バウンス (0.35s ease-out)
+- **音声インジケーター統合** (`src/components/Character.tsx`):
+  - `voiceUIState` prop を新規追加
+  - `voiceListening` / `voiceTranscribing` / `voiceResponding` 中にキャラクター内部へ colored dot を表示
+  - リスニング: 赤い pulse dot / 変換中: オレンジの blink dot / 応答中: 緑の pulse dot
+- **`VoiceUIState` 型を共有型に移動** (`src/types/companion.ts`):
+  - `useCompanionState.ts` から `companion.ts` へ移動し後方互換のため再エクスポート
+- **`character-anim` 内部ラッパー div**: `character-wrapper` の `scaleX(-1)` flip と CSS アニメーション `transform` の競合を分離
+
+### Changed
+- `src/App.tsx`: 旧来の voice dot 表示を削除し Character コンポーネントへ統合
+- `docs/PROGRESS_TRACKER.md`: v0.1.34 で ~66% に更新
+- `docs/NEXT_SESSION.md`: 次フェーズ候補を更新
+
 ## [0.1.33] — 2026-05-12
 
 ### Added (Milestone B 第1段階 — Memory Viewer and Local Data Control)
