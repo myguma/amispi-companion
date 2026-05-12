@@ -12,7 +12,7 @@
 | 領域 | 進捗 | 備考 |
 |------|------|------|
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
-| 観測システム (Rust) | 90% | classify_app 大幅拡充。Spotify/Bitwig/Discord/self 対応済み |
+| 観測システム (Rust) | 88% | ActiveAppDebugInfo追加。classify_app拡充済み。取得失敗原因を実機確認中 |
 | 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
 | AI コンテキスト構築 | 82% | CompanionContext・PromptBuilder改善済み |
 | AI プロバイダー (Ollama) | 90% | CORS根本修正 (Rust経由HTTP)・Raw Chat テスト追加 |
