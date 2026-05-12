@@ -10,8 +10,8 @@ interface ContextMenuProps {
   onClose: () => void;
 }
 
-const MENU_W = 140;
-const MENU_H = 72;
+const MENU_W = 150;
+const MENU_H = 96;
 
 export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
   const [autostart, setAutostart] = useState<boolean | null>(null);
