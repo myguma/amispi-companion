@@ -12,6 +12,21 @@ import { buildDailySummary } from "../../companion/memory/dailySummary";
 import { getRecentEvents } from "../../systems/memory/memoryStore";
 import { canSpeak } from "../../companion/speech/SpeechPolicy";
 
+type ActiveAppDebugInfo = {
+  platform: string;
+  hwndAvailable: boolean;
+  pid: number;
+  pidAvailable: boolean;
+  openProcessOk: boolean;
+  queryNameOk: boolean;
+  processName: string;
+  processPathLen: number;
+  category: string;
+  errorStage: string;
+  errorCode: number;
+  isSelfApp: boolean;
+};
+
 const YES = "✓";
 const NO  = "×";
 
