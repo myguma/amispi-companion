@@ -21,8 +21,8 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a | 設定・状態・導線・mock transcript | ✅ 完了 (v0.1.28) |
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
-| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | 🔜 次 |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | 📋 予定 |
+| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | ⏸ 凍結中 (Milestone A 完了後に再開) |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | ⏸ 凍結中 |
 
 ---
 
