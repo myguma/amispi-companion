@@ -176,7 +176,7 @@ mod windows_impl {
     pub fn get_window_title() -> Option<String> {
         unsafe {
             let hwnd = GetForegroundWindow();
-            if hwnd == 0 { return None; }
+            if hwnd.is_null() { return None; }
             let len = GetWindowTextLengthW(hwnd);
             if len <= 0 { return None; }
             let mut buf = vec![0u16; (len + 1) as usize];
