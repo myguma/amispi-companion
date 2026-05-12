@@ -15,6 +15,7 @@ import { canSpeak } from "../../companion/speech/SpeechPolicy";
 type ActiveAppDebugInfo = {
   platform: string;
   hwndAvailable: boolean;
+  hwndRaw: number;
   pid: number;
   pidAvailable: boolean;
   openProcessOk: boolean;
@@ -24,6 +25,7 @@ type ActiveAppDebugInfo = {
   category: string;
   errorStage: string;
   errorCode: number;
+  lastErrorBefore: number;
   isSelfApp: boolean;
 };
 
