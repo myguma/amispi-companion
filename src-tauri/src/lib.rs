@@ -304,6 +304,7 @@ pub fn run() {
             open_settings_window,
             load_settings,
             save_settings_cmd,
+            save_window_position,
         ])
         .run(tauri::generate_context!())
         .expect("AmitySpirit Companion startup failed");
