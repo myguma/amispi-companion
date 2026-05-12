@@ -19,7 +19,8 @@ export class WhisperCliSTTAdapter implements STTAdapter {
   constructor(
     private readonly executablePath: string,
     private readonly modelPath: string,
-    private readonly _timeoutMs: number = 30_000
+    // Phase 6b-real-2 で whisper CLI タイムアウトに使用
+    private readonly timeoutMs: number = 30_000
   ) {}
 
   async isAvailable(): Promise<boolean> {
