@@ -21,12 +21,23 @@ import { countInLastHour } from "../companion/reactions/reactionHistory";
 import type { ObservationSnapshot } from "../observation/types";
 import { EMPTY_SNAPSHOT } from "../observation/types";
 
+/** 音声入力の UI 状態 */
+export type VoiceUIState =
+  | "voiceOff"          // 音声入力無効
+  | "voiceReady"        // 待機中 (enabled だが操作していない)
+  | "voiceListening"    // 長押し中 (mock: すぐ transcribing へ)
+  | "voiceTranscribing" // STT 処理中
+  | "voiceResponding"   // AI 返答中
+  | "voiceError";       // エラー
+
 interface UseCompanionStateReturn {
   state: CompanionState;
   speechText: string | null;
   onCharacterClick: () => void;
   triggerSpeak: (text?: string) => void;
   triggerDragReaction: () => void;
+  requestVoiceResponse: (transcript: string) => Promise<void>;
+  voiceUIState: VoiceUIState;
 }
 
 export function useCompanionState(
