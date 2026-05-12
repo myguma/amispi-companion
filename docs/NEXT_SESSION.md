@@ -10,9 +10,9 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.35
-**フェーズ:** Field QA Fixes 完了
-**全体進捗:** 約 68%
+**バージョン:** v0.1.36
+**フェーズ:** Field QA Root Cause Fixes 完了 (実機確認待ち)
+**全体進捗:** 約 69%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
