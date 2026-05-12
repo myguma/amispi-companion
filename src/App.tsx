@@ -114,15 +114,6 @@ export default function App() {
     return () => clearInterval(timer);
   }, [settings.permissions]);
 
-  // フォルダ観測トリガー
-  useEffect(() => {
-    if (!isTauri || shouldSuppress || !settings.autonomousSpeechEnabled) return;
-    const dl = snapshot.folders.downloads?.fileCount ?? 0;
-    const dt = snapshot.folders.desktop?.fileCount ?? 0;
-    if (dl > 20) triggerSpeak("Downloads、あとで見るものが増えてるかも");
-    else if (dt > 15) triggerSpeak("Desktopに色々たまってきてる");
-  }, [snapshot, shouldSuppress, settings.autonomousSpeechEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // 更新通知
   useEffect(() => {
     if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
