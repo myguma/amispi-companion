@@ -94,7 +94,6 @@ export default function App() {
       // startDragging() は OS ネイティブなので少し待ってから位置を取得する
       setTimeout(async () => {
         try {
-          const { getCurrentWindow } = await import("@tauri-apps/api/window");
           const pos = await getCurrentWindow().outerPosition();
           await invoke("save_window_position", { x: pos.x, y: pos.y });
         } catch { /* サイレント */ }
