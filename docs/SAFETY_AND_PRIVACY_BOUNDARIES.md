@@ -89,24 +89,50 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 ## 音声入力の安全境界 (Phase 6+)
 
 **許可される動作:**
-- Push-to-talk のみ: ユーザーが明示的にボタンを押している間のみ録音
-- voiceInputEnabled: false がデフォルト
-- 音声データ (Blob/ArrayBuffer) は STT 処理後に即破棄
-- transcript テキストは CompanionContext.voiceInput として一時保持のみ
+- Push-to-talk のみ: キャラクター長押し 500ms 以上のみ録音開始
+- `voiceInputEnabled: false` がデフォルト
+- `getUserMedia()` は push-to-talk 操作時のみ呼ぶ
+- 録音終了後に `stream.getTracks().forEach(t => t.stop())` でマイクを必ず解放
+- 音声データ (Blob) は STTAdapter.transcribe() 内で使い捨て — 永続保存禁止
+- transcript テキストは `CompanionContext.voiceInput` として一時保持のみ
 - transcript は long-term memory に保存しない (speech_shown には source を記録可)
-- 録音データを一時ファイルに書く場合は処理完了後に即削除
+- 一時ファイルを使う場合 (Phase 6b-real-2 以降): 処理完了後に必ず削除
+- whisper.cpp はユーザー指定のローカル executable のみ — クラウド API 禁止
+- STT 処理失敗時はフォールバック (発話しないか reaction fallback)
 
 **禁止事項:**
-- 常時マイク監視 (Push-to-talk 以外の常時起動)
+- 常時マイク監視 (voiceInputEnabled = true でも長押し操作なしに録音しない)
 - 生音声データの永続保存
 - クラウド STT (Google / Azure / OpenAI Whisper API 等) への送信
 - マイク許可なしの録音
 - transcript のクラウド送信
+- 任意コマンド実行 API の作成 (whisper CLI は引数配列で安全に呼ぶ)
+- shell 文字列連結による command injection
 
-**transcript の扱い:**
+**マイク許可のフロー:**
 ```
-録音 (一時) → ローカル STT → transcript (テキスト) → CompanionContext.voiceInput
-                  ↑ ここまでで音声データ破棄
+voiceInputEnabled = false → getUserMedia() を呼ばない → 許可要求なし
+voiceInputEnabled = true + long press 500ms → getUserMedia() 呼ぶ → OS が許可ダイアログ
+許可拒否 → RecorderError("permission_denied") → voiceRecordingError() → 3秒後 voiceReady
+```
+
+**transcript のフロー:**
+```
+録音 Blob (一時) → STTAdapter.transcribe(blob) → transcript (テキスト)
+    ↑ Blob はここで参照を手放す (GC に委ねる)
+transcript → CompanionContext.voiceInput → AI → QualityFilter → SpeechBubble
+    ↑ transcript は同 tick 内で使用、長期保持しない
+```
+
+**STT エンジンの安全方針 (Phase 6b-real-2 以降):**
+```
+Rust: std::process::Command (shell 経由でない)
+引数: [executable_path, "--model", model_path, "--output-txt", audio_path]
+      — 文字列連結でなく配列で渡す
+temp_file: app_local_temp に書き、処理後 Drop impl で削除
+stdout: transcript テキストのみ取得
+stderr: ログのみ (外部送信なし)
+timeout: 設定の whisperTimeoutMs (デフォルト 30s)
 ```
 
 ---
