@@ -164,6 +164,7 @@ export function Character({
   config = DEFAULT_CHARACTER_CONFIG,
   onClick,
   isDragging = false,
+  facingRight = false,
 }: CharacterProps) {
   const [useFallback, setUseFallback] = useState(false);
 
@@ -179,6 +180,8 @@ export function Character({
         height: config.height,
         cursor: "pointer",
         position: "relative",
+        transform: facingRight ? "scaleX(-1)" : undefined,
+        transition: "transform 0.1s ease",
       }}
     >
       {!useFallback ? (
