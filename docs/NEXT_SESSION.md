@@ -10,19 +10,18 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.28
-**GitHub Actions / Windows Installer build:** v0.1.27 ✅ 成功済み (v0.1.28 は push 直後)
-**フェーズ:** Phase 0〜6a 完了、Phase 6b 準備済み
+**バージョン:** v0.1.29
+**GitHub Actions / Windows Installer build:** v0.1.27 ✅ 成功済み (v0.1.28, v0.1.29 は push 直後)
+**フェーズ:** Phase 0〜6a.5 完了
 
 ---
 
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.28)
+✅ npm run build → ✓ built (v0.1.29)
 ✅ cargo build  → Finished dev profile
 ✅ GitHub Actions / Windows Installer → v0.1.27 成功済み
-✅ v0.1.28 タグ push 済み
 ```
 
 ---
@@ -38,7 +37,33 @@
 | Phase 4 | Transparency UI v2 — 観測状態ライブパネル | ✅ 完了 |
 | Phase 5 | ウィンドウ位置の保存・復元 | ✅ 完了 |
 | Phase 6a | Voice Input Foundation / mock transcript | ✅ 完了 |
+| Phase 6a.5 | Context Wiring and Input Stabilization | ✅ 完了 |
 | Phase 6b | STTAdapter interface / MockSTTAdapter | ✅ 準備済み |
+
+---
+
+## Phase 6a.5 実装詳細
+
+### AIProvider インターフェース刷新
+
+- `src/companion/ai/types.ts`: `AIProvider.respond(input: AIProviderInput)` → `respond(ctx: CompanionContext)`
+- `src/companion/ai/OllamaProvider.ts`: `EMPTY_SNAPSHOT` 依存を完全除去。`respond(ctx)` で `buildPrompt(ctx)` を呼ぶだけ
+- `src/companion/ai/MockProvider.ts`: `respond(_ctx: CompanionContext)` に変更
+- `src/companion/ai/RuleProvider.ts`: `CompanionContext` フィールドで直接ルール判定
+- `src/companion/ai/AIProviderManager.ts`: `getAIResponse(ctx: CompanionContext)` に変更
+
+### 変換ブリッジ除去
+
+- `src/systems/ai/buildCompanionContext.ts`: `contextToProviderInput()` を削除
+- `src/hooks/useCompanionState.ts`: `contextToProviderInput` import を削除、`ctx` を直接 `getNewAIResponse(ctx)` に渡す
+
+### VoiceUIState 安定化
+
+- `requestVoiceResponse` に try/finally を追加。例外時も `setVoiceUIState("voiceReady")` が必ず実行される
+
+### Push-to-talk / ドラッグ競合修正
+
+- `src/App.tsx`: `isDragging` が true になった瞬間に PTT タイマーをキャンセルする `useEffect` 追加
 
 ---
 
@@ -76,41 +101,28 @@
 
 ### Phase 6b-real — Local STT 統合 ← **次に実装**
 
-目的: 本物の STT 統合はまだ行わない。設定・状態・導線・mock transcript まで。
+現状: `STTAdapterManager` は常に `MockSTTAdapter` を返す。Phase 6b で whisper.cpp 等を統合する。
 
 **実装すべき内容:**
-1. `settings/types.ts`: `voiceInputMode: "off" | "pushToTalk"` 追加 (voiceInputEnabled は既存)
-2. `settings/defaults.ts`: `voiceInputMode: "off"` 追加
-3. `settings/pages/VoicePage.tsx` 新規作成 (Voice Input ON/OFF / mode / 説明文)
-4. `settings/SettingsApp.tsx`: "音声" タブ追加
-5. `useCompanionState.ts`: `requestVoiceResponse(transcript: string)` 追加
-6. `App.tsx`: push-to-talk 長押しエントリポイント (キャラクター長押し or キーショートカット)
-7. UI 状態: voiceOff / voiceReady / voiceListening / voiceTranscribing / voiceResponding
-8. Mock transcript を CompanionContext.voiceInput に入れて trigger: "voice" で AI flow を通す
-9. `docs/VOICE_INTERACTION.md` 新規作成
-10. `npm run build`
+1. `WhisperCliSTTAdapter` の設計と実装 (whisper.cpp CLI を sidecar として呼び出す)
+2. `settings/types.ts`: `sttEngine: "mock" | "whisper_cli"` 追加
+3. `STTAdapterManager`: 設定に応じてアダプターを切替
+4. App.tsx: push-to-talk 中に実際の録音 (`navigator.mediaDevices.getUserMedia` or Tauri plugin)
+5. 録音完了後に `adapter.transcribe(blob)` → `requestVoiceResponse(transcript)`
+6. 録音データは処理後即破棄 (Blob URL revoke)
+7. `docs/VOICE_INTERACTION.md` に WhisperCliSTTAdapter の設計を追記
 
 **完了条件:**
-- 設定画面から Voice Input ON/OFF できる
-- push-to-talk mode が選べる
-- キャラクター長押し or ショートカットで mock transcript が発火する
-- voice trigger で無明が返答する
-- 既存クリック反応・Ollama fallback・MediaContext が壊れない
+- push-to-talk で実際に録音・STT が動く
+- transcript が正しく AI flow に入る
+- 録音データがメモリ外に残らない
 - `npm run build` が通る
-
-### Phase 6b — Local STT Adapter
-
-- STTAdapter interface 設計
-- MockSTTAdapter 実装
-- WhisperCliSTTAdapter 設計 (実体統合は慎重に)
-- 録音データは処理後即削除
-- `docs/VOICE_INTERACTION.md` に STT 候補比較を追記
 
 ### Phase 6c — Voice UX Hardening
 
-- 録音中の視覚フィードバック
-- 長すぎる録音の自動停止
-- DND/Quiet/Focus との整合
+- 録音中の視覚フィードバック強化
+- 長すぎる録音の自動停止 (30秒上限)
+- DND/Quiet/Focus との整合確認
 - 連続発話防止
 
 ### Phase 7a — Screen Understanding Planning Only
@@ -131,57 +143,53 @@
 
 ---
 
-## 次に触るファイル (Phase 6a)
+## 次に触るファイル (Phase 6b-real)
 
 **新規作成:**
 ```
-src/settings/pages/VoicePage.tsx
-docs/VOICE_INTERACTION.md
+src/systems/voice/WhisperCliSTTAdapter.ts
 ```
 
 **変更:**
 ```
-src/settings/types.ts          ← voiceInputMode 追加
-src/settings/defaults.ts       ← voiceInputMode: "off"
-src/settings/SettingsApp.tsx   ← "音声" タブ追加
-src/hooks/useCompanionState.ts ← requestVoiceResponse() 追加
-src/App.tsx                    ← push-to-talk エントリポイント
-src/systems/ai/PromptBuilder.ts ← voiceInput をプロンプトに追加 (確認)
-docs/NEXT_SESSION.md           ← (このファイル更新)
-docs/SAFETY_AND_PRIVACY_BOUNDARIES.md ← 音声入力境界を追記
+src/systems/voice/STTAdapterManager.ts  ← sttEngine 設定に応じて切替
+src/settings/types.ts                   ← sttEngine 追加
+src/settings/defaults.ts                ← sttEngine: "mock"
+src/settings/pages/VoicePage.tsx        ← STT エンジン選択UI追加
+src/App.tsx                             ← push-to-talk で実際の録音を起動
+docs/VOICE_INTERACTION.md              ← WhisperCliSTTAdapter 設計追記
+docs/NEXT_SESSION.md                   ← (このファイル更新)
 ```
 
 ---
 
 ## 既知の注意事項・リスク
 
-1. **OllamaProvider の snapshot 参照**: `respond(_input)` が `EMPTY_SNAPSHOT` を使用している
-   - Phase 6b 以降で実際の snapshot を渡せるようにする
-   - 現状の動作には影響なし
-
-2. **sysinfo "process" feature**: sysinfo 0.33 では `"process"` という feature 名は存在しない
+1. **sysinfo "process" feature**: sysinfo 0.33 では `"process"` という feature 名は存在しない
    - `"system"` feature に含まれる (ProcessRefreshKind が使える)
    - Cargo.toml は `features = ["system"]` で正しい
 
-3. **push-to-talk と startDragging の競合**: キャラクター長押しで録音を開始する場合、
-   `startDragging()` と競合する可能性がある
-   - 長押し判定 (500ms) と ドラッグ判定 (5px 移動閾値) を明確に分離すること
+2. **push-to-talk と startDragging の競合**: Phase 6a.5 で基本的な競合は解消 (isDragging で PTT キャンセル)
+   - Phase 6b 以降で実際の録音を開始する場合は再確認
 
-4. **voiceInputEnabled フラグ**: Phase 1 の時点で `settings/types.ts` に追加済みだが
-   `voiceInputMode` はまだない。Phase 6a で追加する。
+3. **voiceInputEnabled フラグ**: 設定画面で ON にしないと push-to-talk が発火しない
+   - デフォルト: `voiceInputEnabled: false`、`voiceInputMode: "off"`
+
+4. **OllamaProvider の snapshot 参照**: Phase 6a.5 で修正済み。実際の `snapshotRef.current` が使われる
 
 ---
 
 ## 実機確認チェックリスト
 
-Phase 6a 完了後に確認すること:
+Phase 6a.5 完了後に確認すること:
 - [ ] クリックしたら反応する
 - [ ] Drag で位置が変わり、次回起動時に復元される
 - [ ] 設定ウィンドウの「AI エンジン」タブが表示される
 - [ ] 設定ウィンドウの「無明が見ているもの」タブでライブ状態が表示される
-- [ ] 設定ウィンドウの「音声」タブが表示される (Phase 6a 後)
+- [ ] 設定ウィンドウの「音声」タブが表示される
 - [ ] voice input OFF でクリック反応が壊れない
 - [ ] Ollama 未起動でもクリック反応する (fallback)
+- [ ] 音声 ON + pushToTalk モードで長押し時に mock 返答が来る
 
 ---
 
@@ -203,20 +211,19 @@ Phase 6a 完了後に確認すること:
 
 ---
 
-## Claude Code が次セッションで迷わないための作業順
+## Claude Code が次セッションで迷わないための作業順 (Phase 6b-real)
 
 ```
 1. npm run build → 通ることを確認
 2. cargo build  → 通ることを確認
-3. settings/types.ts に voiceInputMode 追加
-4. settings/defaults.ts に voiceInputMode: "off" 追加
-5. settings/pages/VoicePage.tsx 新規作成 (Voice ON/OFF / mode / プライバシー説明)
-6. settings/SettingsApp.tsx に "音声" タブ追加
-7. useCompanionState.ts に requestVoiceResponse(transcript) 追加
-8. App.tsx に push-to-talk エントリポイント追加 (長押し)
+3. settings/types.ts に sttEngine 追加
+4. settings/defaults.ts に sttEngine: "mock" 追加
+5. WhisperCliSTTAdapter.ts 新規作成 (whisper.cpp CLI wrapper)
+6. STTAdapterManager.ts: sttEngine 設定に応じて切替
+7. VoicePage.tsx: STT エンジン選択UI追加
+8. App.tsx: push-to-talk で実際の録音を呼ぶ (getUserMedia or Tauri plugin)
 9. npm run build → 通ることを確認
-10. docs/VOICE_INTERACTION.md 作成
-11. docs/SAFETY_AND_PRIVACY_BOUNDARIES.md に音声境界追記
-12. docs/NEXT_SESSION.md 更新
-13. git add / commit / bump v0.1.28 / push
+10. docs/VOICE_INTERACTION.md 更新
+11. docs/NEXT_SESSION.md 更新
+12. git add / commit / bump v0.1.30 / push
 ```
