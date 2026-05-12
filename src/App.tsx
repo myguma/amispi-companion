@@ -191,7 +191,7 @@ export default function App() {
     void invoke("resize_companion", { speechVisible: hasSpeech });
   }, [hasSpeech]);
 
-  const CHAR_H = 180;
+  const CHAR_H = 220;
   const BUBBLE_H = 130;
   const scale = settings.sizeScale ?? 1;
   const windowW = Math.round(200 * scale);
