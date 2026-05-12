@@ -35,7 +35,7 @@
         "label": "companion",
         "title": "AmitySpirit",
         "width": 200,
-        "height": 180,
+        "height": 220,
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
