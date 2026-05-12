@@ -24,6 +24,12 @@ export type FolderSummary = {
   imagePileLikely: boolean;
 };
 
+export type MediaContext = {
+  audioLikelyActive: boolean;
+  mediaKind: "music" | "video" | "none";
+  sourceCategory: "music_app" | "video_app" | "daw" | "browser" | "none";
+};
+
 export type ObservationSnapshot = {
   timestamp: string;
   idle: {
@@ -47,6 +53,7 @@ export type ObservationSnapshot = {
     cpuLoad?: number;
     memoryLoad?: number;
   };
+  media?: MediaContext;
   privacy: {
     permissionLevel: number;
     titleIncluded: boolean;
