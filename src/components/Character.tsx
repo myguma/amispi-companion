@@ -11,6 +11,7 @@ interface CharacterProps {
   config?: CharacterConfig;
   onClick: () => void;
   isDragging?: boolean;
+  facingRight?: boolean;
 }
 
 /** 状態に対応するスプライトURLを返す（なければフォールバック順で試みる） */
