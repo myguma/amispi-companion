@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.29] — 2026-05-12
+
+### Changed (Phase 6a.5 — Context Wiring and Input Stabilization)
+- **AIProvider インターフェース刷新**: `respond(input: AIProviderInput)` → `respond(ctx: CompanionContext)`
+  - `OllamaProvider`: `EMPTY_SNAPSHOT` 依存を完全除去。実際の `CompanionContext` をそのまま使用
+  - `MockProvider` / `RuleProvider`: シグネチャ変更、`CompanionContext` を直接参照
+  - `AIProviderManager.getAIResponse`: 引数を `AIProviderInput` → `CompanionContext` に変更
+- **変換ブリッジ除去**: `contextToProviderInput()` を削除。`useCompanionState` が `CompanionContext` を直接 provider に渡す
+- **RuleProvider**: `CompanionContext` フィールドに合わせてルールロジックを更新
+- **VoiceUIState 安定化**: `requestVoiceResponse` に finally ブロックを追加、例外時も `voiceReady` に戻る
+- **Push-to-talk / ドラッグ競合修正**: `isDragging` が true になった時点で PTT タイマーをキャンセル
+
+### Fixed
+- Ollama がクリック・音声入力時に常に空の observation を使っていたバグを修正
+  - `snapshotRef.current` の実際の状態が LLM プロンプトに反映されるようになった
+
 ## [0.1.28] — 2026-05-12
 
 ### Added
