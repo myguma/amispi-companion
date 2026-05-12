@@ -26,6 +26,11 @@ pub struct PersistedSettings {
     pub speech_frequency: String,
     pub max_autonomous_reactions_per_hour: u32,
     pub show_on_startup: bool,
+    // ウィンドウ位置 (Option で旧バージョンとの互換性を保つ)
+    #[serde(default)]
+    pub window_x: Option<i32>,
+    #[serde(default)]
+    pub window_y: Option<i32>,
 }
 
 impl Default for PersistedSettings {
