@@ -157,7 +157,7 @@ export default function App() {
         <Character
           state={state}
           config={DEFAULT_CHARACTER_CONFIG}
-          onClick={onCharacterClick}
+          onClick={handleCharacterClick}
           isDragging={isDragging}
           facingRight={facingRight}
         />
