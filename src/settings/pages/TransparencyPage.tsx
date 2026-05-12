@@ -163,6 +163,84 @@ function MemorySummaryPanel() {
   );
 }
 
+function SpeechControlPanel({
+  snap,
+  autonomousSpeechEnabled,
+  settings,
+}: {
+  snap: ObservationSnapshot | null;
+  autonomousSpeechEnabled: boolean;
+  settings: ReturnType<typeof useSettings>[0];
+}) {
+  if (!snap) return <div style={{ fontSize: 12, color: "#bbb" }}>取得中…</div>;
+
+  const insight = inferActivity(snap);
+
+  // SpeechPolicy による抑制理由を計算 (近似: lastSpeechAt=null, count=0 で楽観的)
+  const policyResult = canSpeak(
+    "observation",
+    settings,
+    snap,
+    null,
+    0
+  );
+
+  // activity-based 抑制 (deepFocus / gaming / watchingVideo)
+  const silentKinds = ["deepFocus", "gaming", "watchingVideo"] as const;
+  const isSilentActivity = (silentKinds as readonly string[]).includes(insight.kind);
+
+  const suppressReasons: string[] = [];
+  if (!autonomousSpeechEnabled)              suppressReasons.push("自律発話: OFF");
+  if (isSilentActivity)                      suppressReasons.push(`${insight.summary}中は抑制`);
+  if (!policyResult.allowed) {
+    const reasonMap: Record<string, string> = {
+      dnd:           "DND モード",
+      quiet:         "Quiet モード",
+      focus:         "Focus モード",
+      fullscreen:    "全画面中",
+      rateLimit:     "発話上限に達した",
+      recentlySpoke: "直前に発話した",
+    };
+    suppressReasons.push(reasonMap[policyResult.reason ?? ""] ?? policyResult.reason ?? "抑制中");
+  }
+
+  const nextBehavior =
+    !autonomousSpeechEnabled
+      ? "自律発話なし (クリックで反応)"
+      : suppressReasons.length > 0
+        ? "今は黙る"
+        : snap.fullscreenLikely
+          ? "全画面中なので抑制"
+          : insight.kind === "deepFocus"
+            ? "集中中なので抑制"
+            : "状態変化があれば小さく反応";
+
+  const statusColor = suppressReasons.length > 0 ? "#aaa" : "#4caf7d";
+
+  return (
+    <div style={{
+      background: "#f8f8ff", borderRadius: 8, padding: "10px 12px",
+      fontSize: 12, lineHeight: 1.8,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <StatusBadge
+          color={autonomousSpeechEnabled ? "#4a90d9" : "#aaa"}
+          label={autonomousSpeechEnabled ? "自律発話: ON" : "自律発話: OFF"}
+        />
+        <StatusBadge color={statusColor} label={nextBehavior} />
+      </div>
+      {suppressReasons.length > 0 && (
+        <div style={{ color: "#999", fontSize: 11, marginTop: 2 }}>
+          抑制中: {suppressReasons.join(" / ")}
+        </div>
+      )}
+      <div style={{ color: "#888", fontSize: 11, marginTop: 4 }}>
+        推定状態: {insight.summary} ({Math.round(insight.confidence * 100)}%)
+      </div>
+    </div>
+  );
+}
+
 function OllamaStatus({ baseUrl }: { baseUrl: string }) {
   const [status, setStatus] = useState<"checking" | "ok" | "ng">("checking");
 
