@@ -209,11 +209,15 @@
 ✅ hwnd_raw / last_error_before: ActiveAppDebugInfo に追加済み
 ✅ AI-first startup greeting / idle speech / activity transitions
 ✅ QualityFilter: too_long → reject (truncate しない)
-✅ QualityFilter: continued / 英単語4文字超 / 壊れた句読点 / 途中切れ を拒否
+✅ QualityFilter: continued / 英単語4文字超 / 壊れた句読点 / [はがをへ]$ 途中切れ を拒否
+✅ PromptBuilder: trigger別ヒント・時刻帯を後方・直近発話context・click良い例追加
 ✅ PromptBuilder: 理想20〜60文字・最大80文字・英語禁止・例文追加
 ✅ ollamaBaseUrl default: http://127.0.0.1:11434
 ✅ get_active_app_debug: フォアグラウンドプロセス取得の段階別デバッグ情報
-✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示
+✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示 (防御的・useRef対応)
+✅ TabErrorBoundary: SettingsApp の各タブを ErrorBoundary で保護
+✅ resize_companion: scale_factor() で DPI 対応・logical 220px → physical 変換
+✅ tauri.conf.json: 初期ウィンドウ高さ 220px (論理ピクセル)
 ✅ cargo build が通ること
 ✅ npm run build が通ること
 ✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
