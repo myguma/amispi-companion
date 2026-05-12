@@ -32,6 +32,7 @@ interface CharacterProps {
   onClick: () => void;
   isDragging?: boolean;
   facingRight?: boolean;
+  voiceUIState?: VoiceUIState;
 }
 
 /** 状態に対応するスプライトURLを返す（なければフォールバック順で試みる） */
