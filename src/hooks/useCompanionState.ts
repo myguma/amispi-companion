@@ -14,6 +14,8 @@ import { getTimeTag } from "../companion/reactions/reactionData";
 import { getSettings } from "../settings/store";
 import { cryEngine } from "../companion/audio/FileCryEngine";
 import type { ReactionTrigger } from "../companion/reactions/types";
+import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
+import { classifyBreak } from "../companion/memory/memorySummary";
 
 interface UseCompanionStateReturn {
   state: CompanionState;
