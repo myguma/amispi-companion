@@ -70,19 +70,42 @@ function formatReasons(reasons: string[]): string {
   return readable.join(", ");
 }
 
+/** トリガー別の発話ヒントを返す */
+function triggerHint(trigger: CompanionContext["trigger"]): string {
+  switch (trigger) {
+    case "click":
+      return "クリックされた。短く自然に反応する。時刻への言及は不要。";
+    case "idle":
+      return "しばらく静かだった。独り言のように、ひとこと。";
+    case "observation":
+      return "観察した変化を静かに述べる。一文で。";
+    case "wake":
+      return "ユーザーが戻ってきた。再会のひとこと。";
+    case "return":
+      return "久しぶりに会った。短く自然に挨拶する。";
+    case "voice":
+      return "ユーザーが声で話しかけてきた。自然に短く返す。";
+    case "manual":
+      return "観察したことを静かに述べる。";
+  }
+}
+
 export function buildPrompt(ctx: CompanionContext): { system: string; user: string } {
-  const { activityInsight, memorySummary, observation } = ctx;
+  const { activityInsight, memorySummary, observation, recentEvents, trigger } = ctx;
 
   const contextLines: string[] = [];
 
-  // 時刻
+  // トリガー種別ヒント (時刻より先に置いて LLM の注意を引く)
+  contextLines.push(`状況: ${triggerHint(trigger)}`);
+
+  // 時刻 (参考情報として後方に置く)
   const hour = new Date().getHours();
   const timeLabel =
     hour < 5  ? "深夜" :
     hour < 11 ? "朝" :
     hour < 17 ? "昼" :
     hour < 22 ? "夕方" : "夜";
-  contextLines.push(`時刻帯: ${timeLabel}`);
+  contextLines.push(`時刻帯 (参考): ${timeLabel}`);
 
   // 活動状態 (confidence に応じて確信度を修飾)
   const qualifier = confidenceQualifier(activityInsight.confidence);
