@@ -135,12 +135,14 @@ export default function App() {
     }
 
     // ドラッグ終了 → ウィンドウ位置を保存
+    // 吹き出し表示中は window.y がキャラより上にずれているため補正して保存する
     if (!isDragging && wasDragging && isTauri) {
       // startDragging() は OS ネイティブなので少し待ってから位置を取得する
       setTimeout(async () => {
         try {
-          const pos = await getCurrentWindow().outerPosition();
-          await invoke("save_window_position", { x: pos.x, y: pos.y });
+          const pos  = await getCurrentWindow().outerPosition();
+          const charY = hasSpeechRef.current ? pos.y + 130 : pos.y;
+          await invoke("save_window_position", { x: pos.x, y: charY });
         } catch { /* サイレント */ }
       }, 100);
     }
