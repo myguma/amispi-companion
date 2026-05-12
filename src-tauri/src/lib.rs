@@ -12,16 +12,46 @@ mod observation;
 mod settings;
 
 // ──────────────────────────────────────────────────────────
-// 吹き出し表示状態 (hit test スレッドで参照)
+// ウィンドウリサイズ (吹き出し表示/非表示で動的変更)
 // ──────────────────────────────────────────────────────────
 
-/// 吹き出し / TinyWhisper が表示中かどうか
-/// JS から invoke("set_speech_visible") で更新される
-static SPEECH_VISIBLE: AtomicBool = AtomicBool::new(false);
+/// キャラクター領域の高さ (吹き出し非表示時のウィンドウ高さ)
+const CHAR_WINDOW_H: u32 = 180;
+/// 吹き出し領域の高さ
+const BUBBLE_WINDOW_H: u32 = 130;
 
+/// 吹き出し表示状態に応じてウィンドウをリサイズする
+/// キャラクター底辺の位置を固定してリサイズするため、画面上の位置が維持される
 #[tauri::command]
-fn set_speech_visible(visible: bool) {
-    SPEECH_VISIBLE.store(visible, Ordering::Relaxed);
+async fn resize_companion(app: tauri::AppHandle, speech_visible: bool) -> Result<(), String> {
+    let window = app
+        .get_webview_window("companion")
+        .ok_or_else(|| "companion window not found".to_string())?;
+    let pos  = window.outer_position().map_err(|e| e.to_string())?;
+    let size = window.outer_size().map_err(|e| e.to_string())?;
+
+    let target_h = if speech_visible {
+        CHAR_WINDOW_H + BUBBLE_WINDOW_H
+    } else {
+        CHAR_WINDOW_H
+    };
+    // キャラクター底辺 (= ウィンドウ下端) を画面上で固定する
+    let char_bottom = pos.y + size.height as i32;
+    let new_y = (char_bottom - target_h as i32).max(0);
+
+    window
+        .set_size(tauri::Size::Physical(tauri::PhysicalSize {
+            width: size.width,
+            height: target_h,
+        }))
+        .map_err(|e| e.to_string())?;
+    window
+        .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x: pos.x,
+            y: new_y,
+        }))
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 // ──────────────────────────────────────────────────────────
