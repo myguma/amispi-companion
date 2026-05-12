@@ -31,7 +31,7 @@ export default function App() {
   const [snapshot, setSnapshot] = useState<ObservationSnapshot>(EMPTY_SNAPSHOT);
   const isFullscreen = snapshot.fullscreenLikely;
 
-  const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction } = useCompanionState(
+  const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction, requestVoiceResponse, voiceUIState } = useCompanionState(
     undefined,
     settings.autonomousSpeechEnabled,
     isFullscreen,
