@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.28] — 2026-05-12
+
+### Added
+- **Phase 6a — Voice Input Foundation**: 音声入力の設定・状態・導線・mock transcript を実装
+  - `voiceInputEnabled / voiceInputMode: "off" | "pushToTalk"` 設定追加
+  - 設定ウィンドウに「音声」タブ追加 (`VoicePage.tsx`)
+  - キャラクター長押し 500ms で push-to-talk 発火 (Phase 6a は mock transcript)
+  - `requestVoiceResponse(transcript)` — transcript → CompanionContext.voiceInput → AI flow
+  - Voice UI 状態: voiceOff / voiceReady / voiceListening / voiceTranscribing / voiceResponding
+  - 録音中インジケーター (赤/橙/緑の小ドット)
+- **Phase 6b 準備**: STTAdapter interface / MockSTTAdapter / STTAdapterManager 追加
+  - `src/systems/voice/STTAdapter.ts` — interface と STTAdapterOutput 型
+  - `src/systems/voice/MockSTTAdapter.ts` — 開発用ダミー
+  - `src/systems/voice/STTAdapterManager.ts` — アダプター選択 (Phase 6b でエンジン切替)
+  - `docs/VOICE_INTERACTION.md` — STT 候補比較・設計・プライバシーフロー
+
+### Changed
+- `PromptBuilder.ts`: voice trigger 時に `ユーザーの声: ...` をプロンプトに追加 (80文字上限)
+- システムプロンプト: 「汎用 AI アシスタントとして振る舞わない」を明示追加
+- ドキュメント同期: IMPLEMENTATION_PLAN.md / NEXT_SESSION.md / SAFETY_AND_PRIVACY_BOUNDARIES.md / LOCAL_LLM.md (新規) を v0.1.27 状態に更新
+
+### Design
+- **常時マイク監視なし**: Push-to-talk 操作中のみ録音 (Phase 6b 以降で実際の録音)
+- **音声データ非保存**: transcript はセッション一時保持のみ、永続保存しない
+- **クラウド STT 禁止**: すべてローカル処理 (whisper.cpp 等を Phase 6b で統合予定)
+
 ## [0.1.27] — 2026-05-12
 
 ### Added
