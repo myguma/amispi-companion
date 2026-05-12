@@ -1,7 +1,8 @@
 // LLM 出力のサニタイズ・品質チェック
-// 禁止表現・長文・アシスタント文を排除する
+// 禁止表現・長文・アシスタント文・英語混入を排除する
 
 const MAX_LENGTH = 80;
+const MIN_LENGTH = 2;
 
 const FORBIDDEN_PATTERNS = [
   /私はAI/,
@@ -21,7 +22,16 @@ const FORBIDDEN_PATTERNS = [
   /http/,
   /www\./,
   /\.com/,
+  /continued/i,          // 英語続く表現
+  /\.\.\./,              // 省略記号 (文章が途切れている)
+  /。。/,                // 壊れた句読点
 ];
+
+// 英単語 (3文字超の連続ASCII英字) が含まれているか検出
+const ENGLISH_WORD_PATTERN = /[A-Za-z]{4,}/;
+
+// 文章の途中切れパターン (吹き出しが途切れた感じ)
+const TRUNCATED_PATTERN = /[ーはがをにでも]$/;
 
 export type FilterResult =
   | { ok: true; text: string }
@@ -32,17 +42,31 @@ export function filterGeneratedText(raw: string): FilterResult {
 
   if (!text) return { ok: false, reason: "empty" };
 
+  // 長すぎる → 拒否 (v0.1.37〜: truncate しない)
   if (text.length > MAX_LENGTH) {
-    // 80文字で切り詰めて返す（完全拒否より優先）
-    const trimmed = text.slice(0, MAX_LENGTH).replace(/[。、]?$/, "");
-    if (!trimmed) return { ok: false, reason: "too_long_and_untrimable" };
-    return { ok: true, text: trimmed };
+    return { ok: false, reason: "too_long" };
   }
 
+  // 短すぎる
+  if (text.length < MIN_LENGTH) {
+    return { ok: false, reason: "too_short" };
+  }
+
+  // 禁止パターン
   for (const pattern of FORBIDDEN_PATTERNS) {
     if (pattern.test(text)) {
       return { ok: false, reason: `forbidden_pattern:${pattern.source}` };
     }
+  }
+
+  // 英単語混入
+  if (ENGLISH_WORD_PATTERN.test(text)) {
+    return { ok: false, reason: "english_word_detected" };
+  }
+
+  // 途中切れ (助詞・助動詞で終わる)
+  if (TRUNCATED_PATTERN.test(text)) {
+    return { ok: false, reason: "truncated_sentence" };
   }
 
   return { ok: true, text };
