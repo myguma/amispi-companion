@@ -17,9 +17,11 @@ Windows API / OS (Rust backend)
 
           ↓  invoke("get_observation_snapshot")  ↓
 
-ObservationSnapshot (src/observation/types.ts)
+ObservationSnapshot (src/observation/types.ts)  ✅ v0.1.27
   timestamp, idle, activeApp, activeWindow,
-  fullscreenLikely, folders, system, privacy
+  fullscreenLikely, folders, system,
+  media (MediaContext: audioLikelyActive, mediaKind, sourceCategory), ← Phase 3 追加
+  privacy
 
           ↓
 
