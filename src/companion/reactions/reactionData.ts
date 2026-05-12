@@ -75,6 +75,22 @@ export const REACTIONS: Reaction[] = [
   { id: "ralb_01", trigger: "returnAfterLongBreak", text: "……おかえり。久しぶり。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 6000, displayMode: "bubble", interruptibility: "safe" },
   { id: "ralb_02", trigger: "returnAfterLongBreak", text: "昨日ぶり、かな。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
   { id: "ralb_03", trigger: "returnAfterLongBreak", text: "また来た。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+
+  // ──── 活動遷移 (composing 開始) ──────────────────────
+  { id: "at_composing_01", trigger: "activityTransition", text: "音の方に入ったみたい。少し静かにしてる。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 4500, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["composing_start"] },
+  { id: "at_composing_02", trigger: "activityTransition", text: "制作に入った気配。邪魔しない。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 4000, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["composing_start"] },
+
+  // ──── 活動遷移 (coding 開始) ─────────────────────────
+  { id: "at_coding_01", trigger: "activityTransition", text: "コードに入った。流れを切らないでおく。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 4500, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["coding_start"] },
+  { id: "at_coding_02", trigger: "activityTransition", text: "作業に戻ったみたい。黙ってる。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 4000, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["coding_start"] },
+
+  // ──── 活動遷移 (音楽再生 開始) ───────────────────────
+  { id: "at_music_01", trigger: "activityTransition", text: "音楽が始まった。", emotion: "idle", priority: 0, cooldownMs: 20 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["music_start"] },
+  { id: "at_music_02", trigger: "activityTransition", text: "音が流れてる。", emotion: "idle", priority: 0, cooldownMs: 20 * M, durationMs: 3000, displayMode: "tiny", interruptibility: "avoidDuringFocus", tags: ["music_start"] },
+
+  // ──── 活動遷移 (離席から復帰) ────────────────────────
+  { id: "at_return_01", trigger: "activityTransition", text: "戻ってきた。小さく始めればいい。", emotion: "idle", priority: 1, cooldownMs: 20 * M, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["return_from_away"] },
+  { id: "at_return_02", trigger: "activityTransition", text: "……おかえり。", emotion: "idle", priority: 1, cooldownMs: 20 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "safe", tags: ["return_from_away"] },
 ];
 
 export function getTimeTag(): string {
