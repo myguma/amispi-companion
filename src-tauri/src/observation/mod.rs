@@ -189,20 +189,20 @@ mod windows_impl {
     pub fn is_fullscreen_likely() -> bool {
         unsafe {
             let hwnd = GetForegroundWindow();
-            if hwnd == 0 { return false; }
+            if hwnd.is_null() { return false; }
 
             let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-            if monitor == 0 { return false; }
+            if monitor.is_null() { return false; }
 
             let mut mi = MONITORINFO {
                 cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-                rcMonitor: Default::default(),
-                rcWork: Default::default(),
+                rcMonitor: RECT { left: 0, top: 0, right: 0, bottom: 0 },
+                rcWork: RECT { left: 0, top: 0, right: 0, bottom: 0 },
                 dwFlags: 0,
             };
             if GetMonitorInfoW(monitor, &mut mi) == 0 { return false; }
 
-            let mut rect: windows_sys::Win32::Foundation::RECT = Default::default();
+            let mut rect = RECT { left: 0, top: 0, right: 0, bottom: 0 };
             if GetWindowRect(hwnd, &mut rect) == 0 { return false; }
 
             let mon = mi.rcMonitor;
