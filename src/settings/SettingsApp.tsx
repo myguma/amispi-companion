@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { TransparencyPage } from "./pages/TransparencyPage";
 import { BehaviorPage } from "./pages/BehaviorPage";
+import { AIPage } from "./pages/AIPage";
 
-type Tab = "transparency" | "behavior";
+type Tab = "transparency" | "behavior" | "ai";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "transparency", label: "無明が見ているもの" },
   { id: "behavior", label: "動作設定" },
+  { id: "ai", label: "AI エンジン" },
 ];
 
 export function SettingsApp() {
