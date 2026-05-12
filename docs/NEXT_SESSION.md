@@ -10,20 +10,21 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.31
-**フェーズ:** Milestone A 第1段階完了
-**全体進捗:** 約 50%
+**バージョン:** v0.1.32
+**フェーズ:** Milestone A 第2段階完了
+**全体進捗:** 約 57%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
+**発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
 
 ---
 
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.31)
-✅ cargo build  → Finished dev profile (v0.1.31)
-✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.31 は push 直後)
+✅ npm run build → ✓ built (v0.1.32)
+✅ cargo build  → Finished dev profile (v0.1.32)
+✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.32 は push 直後)
 ```
 
 ---
@@ -32,142 +33,127 @@
 
 | Phase / Milestone | 内容 | 状態 |
 |---|---|---|
-| Phase 0 | Planning and Guardrails (docs) | ✅ 完了 |
-| Phase 1 | CompanionContext / SpeechPolicy / SpeechQueue / inferActivity | ✅ 完了 |
-| Phase 2 | PromptBuilder / QualityFilter / OllamaProvider / AI設定UI | ✅ 完了 |
-| Phase 3 | MediaContext — バックグラウンドメディアアプリ検出 | ✅ 完了 |
-| Phase 4 | Transparency UI v2 — 観測状態ライブパネル | ✅ 完了 |
-| Phase 5 | ウィンドウ位置の保存・復元 | ✅ 完了 |
-| Phase 6a | Voice Input Foundation / mock transcript | ✅ 完了 |
-| Phase 6a.5 | Context Wiring and Input Stabilization | ✅ 完了 |
-| Phase 6b-real-1 | Local STT Recording Foundation (実録音 + STTAdapter + Whisper skeleton) | ✅ 完了 |
-| Milestone A 第1段階 | ActivityInsight精度向上・DailySummary・PromptBuilder改善・TransparencyUI改善 | ✅ 完了 (v0.1.31) |
+| Phase 0–5 | 土台・観測・PromptBuilder・MediaContext・ウィンドウ位置 | ✅ 完了 |
+| Phase 6a / 6a.5 / 6b-real-1 | Voice Foundation・実録音・STTAdapter基盤 | ✅ 完了 |
+| Milestone A 第1段階 | ActivityInsight精度・DailySummary・PromptBuilder改善・TransparencyUI | ✅ v0.1.31 |
+| Milestone A 第2段階 | RuleProvider文脈強化・autonomous speech精度向上・発話制御UI | ✅ v0.1.32 |
 
 ---
 
-## Milestone A 第1段階 実装詳細 (v0.1.31)
+## Milestone A 第2段階 実装詳細 (v0.1.32)
 
 ### 変更ファイル
 
-- `src/companion/activity/inferActivity.ts`
-  - "reading" 種別を追加 (browser + 30秒以上無入力 + 非全画面)
-  - `inputActiveRecently` を活用 (deepFocus の confidence 向上)
-  - `system.cpuLoad` を推定根拠に追加 (high_cpu → ビルド中の可能性)
-  - reasons の粒度向上 (idle時間・入力状態を含む)
-  - confidence を状況別に精緻化
+- `src/companion/ai/RuleProvider.ts` (全面刷新)
+  - 12 InferredActivity × 3 trigger (click/voice/observation) のテキストプール
+  - rolling history で直近2発話を避ける重複防止
+  - confidence < 0.5 のとき fallback
+  - deepFocus / gaming / watchingVideo 中の idle trigger 自動抑制
 
-- `src/companion/memory/buildMemorySummary.ts`
-  - `buildDailySummary` を統合して `shortNaturalSummary` を改善
+- `src/companion/reactions/activityDelta.ts`
+  - `InferredActivity` ベースの `inferredKindChanged`, `prevInferredKind`, `nextInferredKind` 追加
 
-- `src/systems/ai/PromptBuilder.ts`
-  - confidence に応じた確信度修飾語 (「おそらく」「もしかしたら」)
-  - confidence < 0.7 のとき reasons を自然文に変換して追加
-  - cpuLoad シグナルをプロンプトに反映
+- `src/companion/reactions/useObservationReactions.ts`
+  - InferredActivity 遷移での発火 (composing開始・coding開始・音楽開始・離席復帰)
+  - deepFocus / gaming / watchingVideo 中は全自律発話を抑制
+
+- `src/hooks/useCompanionState.ts`
+  - scheduleIdleSpeech: deepFocus / gaming / watchingVideo 中は randomIdle 抑制
+
+- `src/companion/reactions/types.ts`
+  - `activityTransition` トリガー追加
+
+- `src/companion/reactions/reactionData.ts`
+  - activity transition 反応 8 件追加 (composing_start / coding_start / music_start / return_from_away)
 
 - `src/settings/pages/TransparencyPage.tsx`
-  - LiveStatusPanel: reasons タグ表示・CPU表示追加
-  - "今日の記憶" セクション追加 (MemorySummaryPanel)
-  - "reading" 状態のカラー追加
+  - `SpeechControlPanel` 追加: 自律発話状態・抑制理由・次の挙動表示
 
 ### 新規追加ファイル
 
-- `src/companion/memory/dailySummary.ts`
-  - `DailySummary` 型: sessionStartTime / todayClickCount / activeHoursToday 等
-  - `buildDailySummary(events)` → DailySummary
-
-### 新規ドキュメント
-
-- `docs/PRODUCT_COMPLETION_ROADMAP.md` — 製品完成形・非目標・マイルストーン
-- `docs/PROGRESS_TRACKER.md` — 領域別進捗・バージョン履歴・次の目標
+- `docs/RESPONSE_QUALITY_GUIDE.md` — 禁止表現・良い例・activity別方針
 
 ---
 
-## 次のフェーズ (優先順)
+## 次のフェーズ候補 (v0.1.33)
 
-### Milestone A 第2段階 ← **次**
+### 優先候補 A: Memory Viewer UI ← **推奨**
 
-**目的:** コア返答品質の完成。自律発話の信頼性向上。
+**目的:** ユーザーが「無明が何を覚えているか」を確認・削除できる最小UI。
+DailySummaryとmemoryイベントが増えてきたため、透明性のために必要。
 
 **実装すべき内容:**
-1. `RuleProvider.ts` の文脈強化
-   - `activityInsight.kind` を switch して状況別の返答バリエーション
-   - "reading" 種別への対応 (静かに読んでる系の一言)
-   - "deepFocus" への対応 (集中中は基本黙る)
-   - 時間帯を使った返答分岐
-2. autonomous speech トリガー精度向上
-   - idle trigger: activity が "away" のときはスキップ
-   - observation trigger: 実際に何か気づいたことがある場合のみ
-3. 朝/夕の自動挨拶 (Milestone C 先行)
-   - 起動時刻によるグリーティング分岐
+1. Transparency UI か Settings に「記憶」タブを追加
+2. DailySummaryの表示 (今日のクリック数・起動時間等)
+3. MemoryEventのカテゴリ別サマリー表示
+4. 「記憶を全削除」ボタン (clearEvents()を呼ぶ)
+5. 削除前の確認ダイアログ
 
-### Milestone B (Voice) — 凍結中
-- Phase 6b-real-2: WhisperCli Rust sidecar 統合 → Milestone A 完了後に再開
-- Phase 6c: Voice UX Hardening
+**完了条件:**
+- ユーザーが記憶内容を確認できる
+- 削除が機能する
+- build が通る
 
-### Milestone C — Daily Presence
-- 時間帯別 autonomous speech パターン
-- 長時間作業検知
+### 優先候補 B: Character State Expression (最小)
 
-### Milestone D — Expressiveness
-- 感情スプライト切り替え
+**目的:** 状態変化が視覚的に伝わる最小スプライト切り替え。
 
----
+**実装すべき内容:**
+1. `speaking` 状態中の軽い表情変化
+2. `thinking` 状態中の表現 (目を細める等)
+3. 既存スプライト構造を確認してから判断
 
-## 次に触るファイル (Milestone A 第2段階)
+### 優先候補 C: First-run Onboarding
 
-**変更:**
-```
-src/companion/ai/RuleProvider.ts     ← 文脈強化
-src/hooks/useObservationReactions.ts ← autonomous speech 精度向上 (要確認)
-docs/PROGRESS_TRACKER.md             ← 完了後に進捗更新
-docs/NEXT_SESSION.md                 ← (このファイル更新)
-```
+**目的:** 初回起動時の権限・機能説明。
 
 ---
 
-## 既知の注意事項・リスク
+## 今やらないこと
 
-1. **Voice (Phase 6b-real-2) は凍結中** — WhisperCli Rust sidecar は Milestone A 完了後。
-
-2. **WebView MediaRecorder 対応**: Tauri v2 のパーミッション設定でマイクが許可されているか確認が必要。
-
-3. **whisper.cpp バイナリ・モデル同梱なし**: ユーザーが自分で用意してパスを設定する。
-
-4. **OllamaProvider の snapshot 参照**: Phase 6a.5 で修正済み。実際の `snapshotRef.current` が使われる。
+- Whisper実接続 (Phase 6b-real-2)
+- Screen Capture / OCR
+- TTS
+- 長期RAG
+- 大規模UI刷新
+- クラウドAI追加
 
 ---
 
 ## 壊してはいけないもの
 
 ```
-✅ onCharacterClick → requestAIResponse → AI(none/mock/ollama) → triggerSpeak
-✅ fireReaction → fallback when AI unavailable or policy blocks
+✅ onCharacterClick → requestAIResponse → AI(none/mock/ollama/rule) → triggerSpeak
+✅ fireReaction → fallback when AI unavailable
 ✅ SpeechPolicy (DND/quiet/focus/fullscreen 抑制)
-✅ useObservationReactions (fullscreenDetected/mediaDetected/gamingDetected/longIdle)
-✅ overClicked, returnAfterBreak, returnAfterLongBreak reactions
+✅ useObservationReactions (fullscreen/media/gaming/longIdle/downloads/desktop/activityTransition)
+✅ deepFocus/gaming/watchingVideo 中の自律発話抑制
+✅ overClicked / returnAfterBreak / returnAfterLongBreak reactions
 ✅ CryEngine (sleep/wake/touch sounds)
 ✅ ウィンドウ位置の保存・復元
-✅ MediaContext (Spotify 等のバックグラウンド検出)
-✅ Transparency UI v2 (ライブパネル・reasons表示・記憶パネル)
+✅ MediaContext (Spotify等のバックグラウンド検出)
+✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル)
 ✅ cargo build が通ること
 ✅ npm run build が通ること
-✅ voiceInputEnabled = false では録音しない
-✅ STT 失敗時は fallback (固まらない)
+✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
 ✅ Mock STT が動くこと
+✅ DailySummary / buildMemorySummary が動くこと
 ```
 
 ---
 
-## Claude Code が次セッションで迷わないための作業順 (Milestone A 第2段階)
+## Claude Code が次セッションで迷わないための作業順
 
 ```
-1. npm run build → 通ることを確認
-2. cargo build  → 通ることを確認
-3. src/companion/ai/RuleProvider.ts を読む
-4. RuleProvider を activityInsight 対応で強化
-5. useObservationReactions.ts を読んで autonomous speech トリガーを確認・改善
-6. npm run build → 通ることを確認
-7. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
-8. docs/NEXT_SESSION.md 更新 (このファイル)
-9. git add / commit / bump v0.1.32 / push
+1. docs/NEXT_SESSION.md を読む (このファイル)
+2. docs/PROGRESS_TRACKER.md で現在地を確認
+3. docs/PRODUCT_COMPLETION_ROADMAP.md で方針確認
+4. docs/RESPONSE_QUALITY_GUIDE.md で発話品質基準確認
+5. npm run build → 通ることを確認
+6. cargo build  → 通ることを確認
+7. 優先候補 A / B / C のどれかを選んで実装
+8. npm run build / cargo build → 通ることを確認
+9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
+10. docs/NEXT_SESSION.md 更新 (このファイル)
+11. git add / commit / bump v0.1.33 / push
 ```
