@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.27] — 2026-05-12
+
+### Added
+- **Phase 3 — メディア認識** (`MediaContext`): Rust 側で起動中のメディアアプリ (Spotify/VLC 等) を検出し、バックグラウンド音楽再生・動画視聴を推定。再生内容は取得しない
+- **Phase 4 — Transparency UI v2**: 設定ウィンドウの「無明が見ているもの」タブに現在の観測状態ライブパネル (活動推定・AI エンジン状態・Ollama 接続確認) を追加
+- **Phase 5 — ウィンドウ位置の保存・復元**: ドラッグ後に位置を `settings.json` へ書き込み、次回起動時に自動復元。画面外補正あり
+
+### Changed
+- `ObservationSnapshot` に `media?: MediaContext` フィールドを追加
+- `inferActivity`: バックグラウンド音楽アプリ検出で `listeningMusic` を推定するケースを追加
+- `PromptBuilder`: 音楽・動画再生中の情報をプロンプトに反映
+- `TransparencyPage`: 「見ていないもの」に画面キャプチャ・マイク・クリップボードを明示追加
+
 ## [0.1.26] — 2026-05-12
 
 ### Added
