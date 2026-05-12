@@ -19,6 +19,7 @@ import { cryEngine } from "./companion/audio/FileCryEngine";
 import { useObservationReactions } from "./companion/reactions/useObservationReactions";
 import type { ObservationSnapshot } from "./observation/types";
 import { EMPTY_SNAPSHOT } from "./observation/types";
+import { useVoiceRecorder } from "./systems/voice/useVoiceRecorder";
 import "./styles/index.css";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
