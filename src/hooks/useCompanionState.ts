@@ -154,6 +154,15 @@ export function useCompanionState(
   // クリック処理
   // ──────────────────────────────────────────
   const onCharacterClick = useCallback(() => {
+    // 連打検出: 発火条件を満たしたら overClicked を優先処理
+    recordClick();
+    if (isOverClicked()) {
+      resetClicks();
+      const text = fireReaction("overClicked") ?? pickDialogue("touch_reaction");
+      triggerSpeak(text);
+      return;
+    }
+
     setState((prev) => {
       logEvent("character_clicked", { fromState: prev });
 
