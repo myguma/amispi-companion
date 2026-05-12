@@ -63,6 +63,18 @@ export const DEFAULT_CHARACTER_CONFIG: CharacterConfig = {
 // ダイアログ型
 // ============================================================
 
+// ============================================================
+// 音声UI状態
+// ============================================================
+
+export type VoiceUIState =
+  | "voiceOff"          // 音声入力無効
+  | "voiceReady"        // 待機中 (enabled だが操作していない)
+  | "voiceListening"    // 長押し中
+  | "voiceTranscribing" // STT 処理中
+  | "voiceResponding"   // AI 返答中
+  | "voiceError";       // エラー
+
 export type DialogueTrigger =
   | "idle_greeting"
   | "touch_reaction"
