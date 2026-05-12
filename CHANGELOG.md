@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.1.32] — 2026-05-12
+
+### Added (Milestone A 第2段階 — Contextual RuleProvider and Autonomous Speech Precision)
+- **RuleProvider 文脈強化** (`src/companion/ai/RuleProvider.ts`):
+  - activity kind 別のクリック/voice/observation 返答プール (12 activity × 3 trigger)
+  - 重複防止: インスタンス内の rolling history で直近 2 発話を避ける
+  - confidence < 0.5 のとき汎用 fallback へ切り替え
+  - deepFocus / gaming / watchingVideo 中の idle trigger を自動抑制
+  - voiceInput がある場合は voice 専用プールを使用
+- **自律発話トリガー精度向上**:
+  - `activityDelta.ts`: `InferredActivity` ベースの `inferredKindChanged`, `prevInferredKind`, `nextInferredKind` フィールド追加
+  - `useObservationReactions.ts`: InferredActivity 遷移で発火
+    - composing 開始 / coding 開始 / 音楽再生開始 / 離席から復帰
+    - deepFocus / gaming / watchingVideo 中は全自律発話を抑制
+  - `useCompanionState.ts`: scheduleIdleSpeech が deepFocus/gaming/watchingVideo 中に randomIdle を発火しない
+- **reactions/types.ts**: `activityTransition` トリガー追加
+- **reactionData.ts**: activity transition 反応 8 件追加 (tiny text, 30min cooldown)
+- **Transparency UI — 発話制御パネル** (`settings/pages/TransparencyPage.tsx`):
+  - 自律発話 ON/OFF 状態表示
+  - 現在の抑制理由 (DND / quiet / focus / fullscreen / silent_activity / rateLimit 等)
+  - 次の推定挙動 ("今は黙る" / "状態変化があれば小さく反応" 等)
+- **Response Quality Guide** (`docs/RESPONSE_QUALITY_GUIDE.md`): 禁止表現・良い例・activity別方針
+
+### Changed
+- `src/companion/reactions/activityDelta.ts`: InferredActivity 計算を統合
+- `docs/PROGRESS_TRACKER.md`: v0.1.32 で 56% に更新
+- `docs/NEXT_SESSION.md`: Milestone A 第3段階への引継ぎ
+
+## [0.1.31] — 2026-05-12
+
+### Added (Milestone A 第1段階 — Contextual Companion MVP 基盤)
+- **ActivityInsight 精度向上** (`src/companion/activity/inferActivity.ts`):
+  - `reading` 種別追加 (browser + 30秒以上無入力)
+  - `inputActiveRecently` 活用 (deepFocus confidence 向上)
+  - `system.cpuLoad` を推定根拠 (high_cpu → ビルド中)
+  - confidence 精緻化・reasons 粒度向上
+- **DailySummary v1** (`src/companion/memory/dailySummary.ts`): 今日の活動パターン追跡
+- **buildMemorySummary 改善**: DailySummary 統合で shortNaturalSummary を強化
+- **PromptBuilder 改善** (`src/systems/ai/PromptBuilder.ts`):
+  - confidence 修飾語 (おそらく/もしかしたら)
+  - reasons 自然文変換・CPU シグナル追加
+- **Transparency UI 改善** (`settings/pages/TransparencyPage.tsx`):
+  - reasons タグ表示・CPU 表示
+  - 「今日の記憶」パネル追加
+- `docs/PRODUCT_COMPLETION_ROADMAP.md`: 製品完成形・非目標・マイルストーン計画
+- `docs/PROGRESS_TRACKER.md`: 領域別進捗・バージョン履歴
+
 ## [0.1.30] — 2026-05-12
 
 ### Added (Phase 6b-real-1 — Local STT Recording Foundation)
