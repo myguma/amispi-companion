@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.38] — 2026-05-13
+
+### Fixed (Hotfix: Settings Crash, Character Clipping, AI Reply Repetition)
+
+#### A: 設定画面の白画面クラッシュ修正
+
+- **SettingsApp.tsx**: `TabErrorBoundary` クラスコンポーネントを追加し、各タブを ErrorBoundary で保護
+- **TransparencyPage.tsx**: `ActiveAppDebugPanel` を防御的に書き直し
+  - `fetchingRef` / `intervalRef` で useRef ベースの二重fetch防止・クリーンアップ対応
+  - `fmtHwnd()` で hwndRaw が null/undefined/0 の場合も安全に表示
+  - 全フィールドに null チェックと fallback 値を追加
+
+#### B: キャラクタークリッピング修正 (DPI対応)
+
+- **tauri.conf.json**: 初期ウィンドウ高さ 180 → 220 (論理ピクセル)
+- **lib.rs**: `CHAR_WINDOW_H` / `BUBBLE_WINDOW_H` を論理ピクセルの float 定数に変更
+  - `window.scale_factor()` で DPI スケールを取得し、物理ピクセルに変換してからリサイズ
+  - 125% DPI 環境でのキャラクタークリッピングを根本解決
+- **App.tsx**: `CHAR_H` を 180 → 220 に合わせ変更
+- **App.tsx**: ドラッグ終了後の位置保存を簡素化 (hasSpeechRef 補正を削除)
+
+#### C: AI 返答の単調化・時刻偏重を修正
+
+- **PromptBuilder.ts**: トリガー別ヒント (`triggerHint()`) を追加
+  - click: 時刻への言及不要を明示
+  - idle/observation/wake/return/voice ごとに異なるヒント
+- **PromptBuilder.ts**: 時刻帯を後方へ移動し、ラベルを「時刻帯 (参考)」に変更
+- **PromptBuilder.ts**: 直近3件の発話を「繰り返し厳禁」として context に追加
+- **PromptBuilder.ts**: システムプロンプトに click 時の良い例を追加
+  - 「ここにいる」「また来たの」「うん、聞こえてる」「少しだけ起きた」等
+- **PromptBuilder.ts**: 「夜・朝・昼など時刻帯に毎回言及しない」をルールに追記
+- **QualityFilter.ts**: `TRUNCATED_PATTERN` を緩和 (「でも」「に」等の自然な終止を許容)
+
+---
+
 ## [0.1.37] — 2026-05-12
 
 ### Fixed / Improved (Companion Intelligence & Window Architecture)
