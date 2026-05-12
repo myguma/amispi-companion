@@ -30,8 +30,9 @@ const FORBIDDEN_PATTERNS = [
 // 英単語 (3文字超の連続ASCII英字) が含まれているか検出
 const ENGLISH_WORD_PATTERN = /[A-Za-z]{4,}/;
 
-// 文章の途中切れパターン (吹き出しが途切れた感じ)
-const TRUNCATED_PATTERN = /[ーはがをにでも]$/;
+// 文章の途中切れパターン: 「は」「が」「を」等の格助詞で終わるものだけ拒否
+// 「ーはがを」は切れているが「にでも」は自然な終止もあるため除外
+const TRUNCATED_PATTERN = /[はがをへ]$/;
 
 export type FilterResult =
   | { ok: true; text: string }
