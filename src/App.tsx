@@ -20,26 +20,25 @@ import { EMPTY_SNAPSHOT } from "./observation/types";
 import "./styles/index.css";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-
-// 観測ポーリング間隔 (ms)
 const OBSERVE_INTERVAL_MS = 30_000;
 
 export default function App() {
   const [settings] = useSettings();
-  const isFullscreen = useRef(false); // snapshot が来るまでの初期値
+
+  // 観測スナップショット — useCompanionState より先に宣言して fullscreen を渡す
+  const [snapshot, setSnapshot] = useState<ObservationSnapshot>(EMPTY_SNAPSHOT);
+  const isFullscreen = snapshot.fullscreenLikely;
+  const shouldSuppress = (settings.suppressWhenFullscreen && isFullscreen) || settings.doNotDisturb;
 
   const { state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction } = useCompanionState(
     undefined,
     settings.autonomousSpeechEnabled,
-    isFullscreen.current
+    isFullscreen
   );
   const { onDragStart, isDragging, mouseDownRef } = useDrag();
   const { facingRight } = useWander(state, mouseDownRef);
   const { updateAvailable, installing, installUpdate } = useUpdater();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const [snapshot, setSnapshot] = useState<ObservationSnapshot>(EMPTY_SNAPSHOT);
-  const snapshotRef = useRef<ObservationSnapshot>(EMPTY_SNAPSHOT);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -57,18 +56,14 @@ export default function App() {
     cryEngine.setVolume(settings.cryEnabled ? settings.volume : 0);
   }, [settings.cryEnabled, settings.volume]);
 
-  // 状態変化に応じて鳴き声を再生 (クリック以外)
-  // クリック音はハンドラ内で直接鳴らす (ユーザーgesture 文脈を確実に使うため)
+  // sleep 遷移のみ App 側で鳴らす (reaction trigger がない状態遷移)
+  // waking / speaking の cry は reaction.cry で対応済み
   const prevStateRef = useRef<typeof state>("idle");
   useEffect(() => {
     const prev = prevStateRef.current;
     prevStateRef.current = state;
     if (!settings.cryEnabled) return;
-    if (state === "speaking" && prev !== "speaking") {
-      void cryEngine.play({ id: "speak", synth: { kind: "soft_beep", durationMs: 200, pitch: 1.1 } });
-    } else if (state === "waking" && prev !== "waking") {
-      void cryEngine.play({ id: "wake", synth: { kind: "murmur", durationMs: 300 } });
-    } else if (state === "sleep" && prev !== "sleep") {
+    if (state === "sleep" && prev !== "sleep") {
       void cryEngine.play({ id: "sleep", synth: { kind: "sleepy", durationMs: 400 } });
     }
   }, [state, settings.cryEnabled]);
@@ -80,6 +75,15 @@ export default function App() {
     }
     onCharacterClick();
   }, [onCharacterClick, settings.cryEnabled]);
+
+  // ドラッグ開始で reaction を発火
+  const prevIsDragging = useRef(false);
+  useEffect(() => {
+    if (isDragging && !prevIsDragging.current) {
+      triggerDragReaction();
+    }
+    prevIsDragging.current = isDragging;
+  }, [isDragging, triggerDragReaction]);
 
   // 観測ポーリング
   useEffect(() => {
@@ -97,9 +101,8 @@ export default function App() {
           },
         });
         setSnapshot(snap);
-        snapshotRef.current = snap;
       } catch {
-        // ネットワーク/権限エラー — サイレント失敗
+        // 権限エラー等 — サイレント失敗
       }
     };
 
@@ -108,13 +111,7 @@ export default function App() {
     return () => clearInterval(timer);
   }, [settings.permissions]);
 
-  // 全画面中は Wander も発話も止める
-  const isFullscreen = snapshot.fullscreenLikely;
-  const shouldSuppress =
-    (settings.suppressWhenFullscreen && isFullscreen) ||
-    settings.doNotDisturb;
-
-  // 観測から提案トリガーを評価
+  // フォルダ観測トリガー
   useEffect(() => {
     if (!isTauri || shouldSuppress || !settings.autonomousSpeechEnabled) return;
     const dl = snapshot.folders.downloads?.fileCount ?? 0;
@@ -125,9 +122,7 @@ export default function App() {
 
   // 更新通知
   useEffect(() => {
-    if (updateAvailable) {
-      triggerSpeak(`v${updateAvailable.version} 来てるよ`);
-    }
+    if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const windowW = Math.round(200 * (settings.sizeScale ?? 1));
@@ -150,13 +145,11 @@ export default function App() {
     >
       <DebugOverlay state={state} speechText={speechText} />
 
-      {/* 吹き出しエリア */}
       <div style={{ position: "absolute", top: 10, left: 0, right: 0, display: "flex", justifyContent: "center", padding: "0 8px" }}>
         <SpeechBubble text={speechText} />
       </div>
 
-      {/* キャラクター本体 */}
-      <div ref={containerRef} className="drag-handle" onMouseDown={onDragStart} style={{ position: "relative" }}>
+      <div className="drag-handle" onMouseDown={onDragStart} style={{ position: "relative" }}>
         <Character
           state={state}
           config={DEFAULT_CHARACTER_CONFIG}
@@ -166,12 +159,10 @@ export default function App() {
         />
       </div>
 
-      {/* 更新バッジ */}
       {updateAvailable && (
         <UpdateBadge version={updateAvailable.version} installing={installing} onInstall={installUpdate} />
       )}
 
-      {/* 右クリックメニュー */}
       {contextMenu && (
         <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} />
       )}
