@@ -196,7 +196,6 @@ export default function App() {
         // インタラクティブな要素 (キャラ/吹き出し) だけ auto で上書きする。
         pointerEvents: "none",
       }}
-      onContextMenu={handleContextMenu}
     >
       <DebugOverlay state={state} speechText={speechText} />
 
