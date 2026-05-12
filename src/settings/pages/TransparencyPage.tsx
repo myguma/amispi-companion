@@ -334,7 +334,7 @@ export function TransparencyPage() {
       {/* ── 現在の認識状態 (ライブ) ── */}
       <Section title="今の認識状態">
         <LiveStatusPanel snap={snap} />
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
           <button
             onClick={() => void fetchSnap()}
             style={{
@@ -342,9 +342,10 @@ export function TransparencyPage() {
               borderRadius: 6, background: "white", color: "#6a40d0", cursor: "pointer",
             }}
           >
-            更新
+            手動更新
           </button>
           {lastFetch && <span style={{ fontSize: 11, color: "#bbb" }}>最終取得: {lastFetch}</span>}
+          <span style={{ fontSize: 10, color: "#ccc" }}>自動更新: 10秒ごと</span>
         </div>
       </Section>
 
