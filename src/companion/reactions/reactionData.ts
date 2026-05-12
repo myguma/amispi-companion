@@ -39,16 +39,42 @@ export const REACTIONS: Reaction[] = [
   { id: "ri_05", trigger: "randomIdle", text: "なんか考えてる", emotion: "idle", priority: 0, cooldownMs: 8 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
 
   // ──── 長時間 idle ─────────────────────────────────────
-  { id: "long_idle_01", trigger: "longIdle", text: "少し放置されてたみたい", emotion: "idle", priority: 0, cooldownMs: 30 * M, durationMs: 5000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "long_idle_01", trigger: "longIdle", text: "少し、離れてた？", emotion: "idle", priority: 0, cooldownMs: 30 * M, durationMs: 5000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "long_idle_02", trigger: "longIdle", text: "戻ってきた。", emotion: "idle", priority: 0, cooldownMs: 30 * M, durationMs: 5000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "long_idle_03", trigger: "longIdle", text: "...いた。", emotion: "idle", priority: 0, cooldownMs: 30 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
 
   // ──── 全画面 ─────────────────────────────────────────
-  { id: "fs_01", trigger: "fullscreenDetected", text: "全画面っぽいから、静かにしてる", emotion: "idle", priority: 1, cooldownMs: 2 * H, durationMs: 4000, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+  { id: "fs_01", trigger: "fullscreenDetected", text: "静かにするね。", emotion: "idle", priority: 1, cooldownMs: 20 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+  { id: "fs_02", trigger: "fullscreenDetected", text: "見てる。黙ってる。", emotion: "idle", priority: 1, cooldownMs: 20 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+
+  // ──── メディア視聴 ────────────────────────────────────
+  { id: "media_01", trigger: "mediaDetected", text: "見てるね。静かにする。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+  { id: "media_02", trigger: "mediaDetected", text: "...邪魔しない。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+
+  // ──── ゲーム中 ────────────────────────────────────────
+  { id: "game_01", trigger: "gamingDetected", text: "……がんばれ。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 3500, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
+  { id: "game_02", trigger: "gamingDetected", text: "邪魔しない。", emotion: "idle", priority: 1, cooldownMs: 30 * M, durationMs: 3000, displayMode: "tiny", interruptibility: "avoidDuringFocus" },
 
   // ──── Downloads 増加 ──────────────────────────────────
   { id: "dl_01", trigger: "downloadsPile", text: "Downloads、あとで見るものが増えてるかも", emotion: "aware", priority: 1, cooldownMs: 4 * H, durationMs: 6000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
 
   // ──── Desktop 散乱 ────────────────────────────────────
   { id: "dt_01", trigger: "desktopPile", text: "Desktopに色々たまってきてる", emotion: "aware", priority: 1, cooldownMs: 8 * H, durationMs: 6000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+
+  // ──── 連打 ───────────────────────────────────────────
+  { id: "oc_01", trigger: "overClicked", text: "いる。いるよ。", emotion: "aware", priority: 3, cooldownMs: 3 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "safe", cry: { id: "oc1", synth: { kind: "surprised", pitch: 1.3, durationMs: 120 } } },
+  { id: "oc_02", trigger: "overClicked", text: "そんなに呼ばなくても……", emotion: "aware", priority: 3, cooldownMs: 3 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "oc_03", trigger: "overClicked", text: "……落ち着いて。", emotion: "aware", priority: 3, cooldownMs: 3 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+
+  // ──── 起動: 休憩あけ ──────────────────────────────────
+  { id: "rab_01", trigger: "returnAfterBreak", text: "……おかえり。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "rab_02", trigger: "returnAfterBreak", text: "少し、時間あいたね。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "rab_03", trigger: "returnAfterBreak", text: "また、ここにいる。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
+
+  // ──── 起動: 長期休憩あけ (1日以上) ────────────────────
+  { id: "ralb_01", trigger: "returnAfterLongBreak", text: "……おかえり。久しぶり。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 6000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "ralb_02", trigger: "returnAfterLongBreak", text: "昨日ぶり、かな。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "ralb_03", trigger: "returnAfterLongBreak", text: "また来た。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
 ];
 
 export function getTimeTag(): string {
