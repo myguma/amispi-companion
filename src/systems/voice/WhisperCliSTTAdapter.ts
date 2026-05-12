@@ -16,12 +16,16 @@ import type { STTAdapter, STTInput, STTAdapterOutput } from "./STTAdapter";
 export class WhisperCliSTTAdapter implements STTAdapter {
   readonly name = "whisperCli";
 
-  constructor(
-    private readonly executablePath: string,
-    private readonly modelPath: string,
-    // Phase 6b-real-2 で whisper CLI タイムアウトに使用
-    private readonly timeoutMs: number = 30_000
-  ) {}
+  private readonly executablePath: string;
+  private readonly modelPath: string;
+  // Phase 6b-real-2 で whisper CLI タイムアウト設定に使用
+  readonly timeoutMs: number;
+
+  constructor(executablePath: string, modelPath: string, timeoutMs = 30_000) {
+    this.executablePath = executablePath;
+    this.modelPath = modelPath;
+    this.timeoutMs = timeoutMs;
+  }
 
   async isAvailable(): Promise<boolean> {
     // path が空なら利用不可 → STTAdapterManager が Mock/Fallback を選ぶ
