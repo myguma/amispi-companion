@@ -31,8 +31,10 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   ollamaModel: "llama3.2:3b",
   ollamaTimeoutMs: 8_000,
 
+  voiceInputEnabled: false,
+  voiceInputMode: "off",
+
   mediaAwarenessEnabled: false,
   screenUnderstandingEnabled: false,
-  voiceInputEnabled: false,
   ttsEnabled: false,
 };
