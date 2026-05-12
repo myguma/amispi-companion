@@ -3,7 +3,7 @@
 // どのキャラクター名・ロアにも依存しない
 
 import { useState } from "react";
-import type { CompanionState, CharacterConfig } from "../types/companion";
+import type { CompanionState, CharacterConfig, VoiceUIState } from "../types/companion";
 import { DEFAULT_CHARACTER_CONFIG } from "../types/companion";
 import type { CompanionEmotion } from "../companion/reactions/types";
 
