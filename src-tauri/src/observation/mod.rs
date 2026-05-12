@@ -446,8 +446,3 @@ fn chrono_timestamp() -> String {
     format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", year, month.min(12), day.min(31), h, m, s)
 }
 
-// Windows の SystemInformation を使うための feature 追加
-#[cfg(target_os = "windows")]
-mod sys_info_feature {
-    use windows_sys::Win32::System::SystemInformation::GetTickCount64;
-}
