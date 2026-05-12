@@ -1,8 +1,8 @@
-// 音声入力設定ページ (Phase 6a)
-// Push-to-talk の設定とプライバシー説明を表示する
+// 音声入力設定ページ (Phase 6b-real)
+// Push-to-talk の設定 / STT エンジン選択 / プライバシー説明
 
 import { useSettings } from "../store";
-import type { VoiceInputMode } from "../types";
+import type { VoiceInputMode, STTEngine } from "../types";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -40,9 +40,36 @@ function Toggle({ label, note, checked, onChange }: {
   );
 }
 
+function TextInput({ label, note, value, placeholder, onChange }: {
+  label: string; note?: string; value: string; placeholder?: string; onChange: (v: string) => void
+}) {
+  return (
+    <div style={{ padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+      <div style={{ fontSize: 13, marginBottom: 4 }}>{label}</div>
+      {note && <div style={{ fontSize: 11, color: "#999", marginBottom: 4 }}>{note}</div>}
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%", padding: "4px 8px", fontSize: 12,
+          border: "1px solid #ddd", borderRadius: 4, boxSizing: "border-box",
+          fontFamily: "monospace",
+        }}
+      />
+    </div>
+  );
+}
+
 const MODE_OPTIONS: { v: VoiceInputMode; label: string; note: string }[] = [
   { v: "off",        label: "OFF",           note: "音声入力を使用しない" },
   { v: "pushToTalk", label: "Push-to-Talk",  note: "キャラクター長押し中のみ聞く (推奨)" },
+];
+
+const STT_OPTIONS: { v: STTEngine; label: string; note: string }[] = [
+  { v: "mock",       label: "Mock (開発用)",   note: "実際の録音はするが STT は固定テキストを返す" },
+  { v: "whisperCli", label: "Whisper CLI",    note: "ローカル whisper.cpp executable を使用 (要設定)" },
 ];
 
 export function VoicePage() {
@@ -87,13 +114,71 @@ export function VoicePage() {
           <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
             {s.voiceInputMode === "pushToTalk" ? (
               <>
-                <strong>キャラクターを長押し (0.5秒以上)</strong> で聞き取りを開始します。<br />
-                離すと処理して返答します。
+                <strong>キャラクターを長押し (0.5秒以上)</strong> で録音開始します。<br />
+                離すと STT 処理して返答します。最大 {Math.round(s.maxRecordingMs / 1000)} 秒で自動停止。
               </>
             ) : (
               "モードを選択してください。"
             )}
           </div>
+
+          <SectionHead title="STT エンジン" />
+          {STT_OPTIONS.map((opt) => (
+            <div
+              key={opt.v}
+              onClick={() => update({ sttEngine: opt.v })}
+              style={{
+                display: "flex", alignItems: "flex-start", gap: 10,
+                padding: "8px 0", borderBottom: "1px solid #f0f0f0", cursor: "pointer",
+              }}
+            >
+              <div style={{
+                width: 16, height: 16, borderRadius: "50%", border: "2px solid #a890f0",
+                background: s.sttEngine === opt.v ? "#a890f0" : "transparent",
+                flexShrink: 0, marginTop: 1,
+              }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: s.sttEngine === opt.v ? 600 : 400 }}>{opt.label}</div>
+                <div style={{ fontSize: 11, color: "#999" }}>{opt.note}</div>
+              </div>
+            </div>
+          ))}
+
+          {s.sttEngine === "whisperCli" && (
+            <>
+              <SectionHead title="Whisper CLI 設定" />
+              <div style={{ fontSize: 11, color: "#e08030", padding: "4px 0 8px", borderBottom: "1px solid #f0f0f0" }}>
+                ⚠ Whisper CLI は Phase 6b-real-2 で統合予定。現在は path 設定のみ有効で、STT は Mock にフォールバックします。
+              </div>
+
+              <TextInput
+                label="Executable path"
+                note="whisper.cpp の実行ファイルパス (例: C:\tools\whisper\whisper.exe)"
+                value={s.whisperExecutablePath}
+                placeholder="C:\path\to\whisper.exe"
+                onChange={(v) => update({ whisperExecutablePath: v })}
+              />
+              <TextInput
+                label="Model path"
+                note="ggml モデルファイルパス (例: C:\tools\whisper\ggml-tiny.bin)"
+                value={s.whisperModelPath}
+                placeholder="C:\path\to\ggml-tiny.bin"
+                onChange={(v) => update({ whisperModelPath: v })}
+              />
+
+              <div style={{ padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
+                <div style={{ fontSize: 13, marginBottom: 4 }}>タイムアウト (秒)</div>
+                <input
+                  type="number"
+                  min={5}
+                  max={120}
+                  value={Math.round(s.whisperTimeoutMs / 1000)}
+                  onChange={(e) => update({ whisperTimeoutMs: Math.max(5, Number(e.target.value)) * 1000 })}
+                  style={{ width: 80, padding: "4px 8px", fontSize: 12, border: "1px solid #ddd", borderRadius: 4 }}
+                />
+              </div>
+            </>
+          )}
         </>
       )}
 
@@ -104,19 +189,11 @@ export function VoicePage() {
       }}>
         <strong>音声入力のプライバシーについて</strong><br />
         ・常時マイク監視は行いません<br />
-        ・Push-to-talk 操作中のみ聞きます<br />
-        ・音声データは処理後に即座に破棄されます<br />
+        ・Push-to-talk 操作中のみ録音します<br />
+        ・録音データは STT 処理後に即座に破棄されます<br />
         ・クラウド STT は使用しません (すべてローカル処理)<br />
-        ・聞き取った内容を外部に送信しません
-      </div>
-
-      {/* Phase 6b 予告 */}
-      <div style={{
-        marginTop: 12, padding: "8px 12px", background: "#f0f0f0",
-        borderRadius: 8, fontSize: 11, color: "#888", lineHeight: 1.6,
-      }}>
-        <strong>現在の状態:</strong> Phase 6a — 設定・導線のみ実装済み。<br />
-        ローカル STT (Whisper 等) は Phase 6b で統合予定です。
+        ・聞き取った内容を外部に送信しません<br />
+        ・whisper.cpp を使う場合もローカル実行のみです
       </div>
     </div>
   );
