@@ -58,6 +58,7 @@ pub struct SystemInfo {
 pub struct ActiveAppDebugInfo {
     pub platform: String,
     pub hwnd_available: bool,
+    pub hwnd_raw: u64,         // HWND の生値 (null=0 か否かの確認用)
     pub pid: u32,
     pub pid_available: bool,
     pub open_process_ok: bool,
@@ -67,6 +68,7 @@ pub struct ActiveAppDebugInfo {
     pub category: String,
     pub error_stage: String,
     pub error_code: u32,
+    pub last_error_before: u32, // API 呼び出し前の GetLastError 値
     pub is_self_app: bool,
 }
 
