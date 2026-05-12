@@ -48,6 +48,29 @@ export default function App() {
     setContextMenu({ x: e.clientX, y: e.clientY });
   }, []);
 
+  // push-to-talk 長押し (500ms 以上)
+  // Phase 6a: 本物の録音はまだしない。mock transcript を使う。
+  const pttTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pttActiveRef = useRef(false);
+
+  const handlePttDown = useCallback(() => {
+    if (!settings.voiceInputEnabled || settings.voiceInputMode !== "pushToTalk") return;
+    pttTimerRef.current = setTimeout(() => {
+      pttActiveRef.current = true;
+      // Phase 6a: mock transcript で voice flow を起動
+      const mockTranscript = "ねえ、今何してる？";
+      void requestVoiceResponse(mockTranscript);
+    }, 500);
+  }, [settings.voiceInputEnabled, settings.voiceInputMode, requestVoiceResponse]);
+
+  const handlePttUp = useCallback(() => {
+    if (pttTimerRef.current) {
+      clearTimeout(pttTimerRef.current);
+      pttTimerRef.current = null;
+    }
+    pttActiveRef.current = false;
+  }, []);
+
   // 常時最前面
   useEffect(() => {
     if (!isTauri) return;
