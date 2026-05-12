@@ -15,8 +15,8 @@
 | 観測システム (Rust) | 90% | classify_app 大幅拡充。Spotify/Bitwig/Discord/self 対応済み |
 | 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
 | AI コンテキスト構築 | 82% | CompanionContext・PromptBuilder改善済み |
-| AI プロバイダー (Ollama) | 85% | キャッシュバグ修正・デバッグUI追加・timeout改善 |
-| fallback / RuleProvider | 80% | source/fallbackReason 可視化追加 |
+| AI プロバイダー (Ollama) | 90% | CORS根本修正 (Rust経由HTTP)・Raw Chat テスト追加 |
+| fallback / RuleProvider | 82% | fallbackReason 詳細化 (model_not_found等) |
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 75% | InferredActivity遷移・抑制精度向上済み |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
