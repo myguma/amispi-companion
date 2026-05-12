@@ -395,6 +395,10 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
     // system (sysinfo)
     let system = Some(get_system_info());
 
+    // media: アクティブカテゴリとフルスクリーン状態から推定
+    let active_cat = active_app.as_ref().map(|a| a.category.as_str()).unwrap_or("unknown");
+    let media = Some(detect_media(active_cat, fullscreen_likely));
+
     ObservationSnapshot {
         timestamp,
         idle,
@@ -403,6 +407,7 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
         fullscreen_likely,
         folders,
         system,
+        media,
         privacy: PrivacyMeta {
             permission_level: perms.level,
             title_included: perms.window_title_enabled,
