@@ -4,7 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src-tauri/**'
+      # Rust ソースが変わったときだけ実行
+      # Cargo.toml と tauri.conf.json だけの変更 (バージョンバンプ) はスキップ
+      - 'src-tauri/src/**'
+      - 'src-tauri/build.rs'
 
 jobs:
   check:
