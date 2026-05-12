@@ -20,7 +20,7 @@
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 75% | InferredActivity遷移・抑制精度向上済み |
 | 音声入力 (Voice) | 40% | 実録音OK・STT未完成 (whisper skeleton) |
-| キャラクター表現 | 40% | 基本アニメのみ。感情スプライト未実装 |
+| キャラクター表現 | 68% | 状態別CSS アニメーション実装。感情スプライト追加は将来 |
 | 設定 UI | 85% | 記憶タブ追加済み |
 | 透明性 UI | 88% | 発話制御パネル・記憶タブ案内追加済み |
 | リリース品質 (docs) | 58% | MEMORY_AND_DATA_CONTROL.md 追加 |
