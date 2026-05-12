@@ -23,14 +23,7 @@ import { EMPTY_SNAPSHOT } from "../observation/types";
 import { inferActivity } from "../companion/activity/inferActivity";
 import { getSTTAdapter } from "../systems/voice/STTAdapterManager";
 
-/** 音声入力の UI 状態 */
-export type VoiceUIState =
-  | "voiceOff"          // 音声入力無効
-  | "voiceReady"        // 待機中 (enabled だが操作していない)
-  | "voiceListening"    // 長押し中 (mock: すぐ transcribing へ)
-  | "voiceTranscribing" // STT 処理中
-  | "voiceResponding"   // AI 返答中
-  | "voiceError";       // エラー
+export type { VoiceUIState };  // 後方互換のため再エクスポート
 
 interface UseCompanionStateReturn {
   state: CompanionState;
