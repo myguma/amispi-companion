@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-12 (v0.1.36)**
+**最終更新: 2026-05-12 (v0.1.37)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.36
-**フェーズ:** Field QA Root Cause Fixes 完了 (実機確認待ち)
-**全体進捗:** 約 69%
+**バージョン:** v0.1.37
+**フェーズ:** Companion Intelligence & Window Architecture Fixes 完了 (実機確認待ち)
+**全体進捗:** 約 73%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.36)
-✅ cargo build  → Finished dev profile (v0.1.36)  ← ureq 2 追加 (初回 +14s)
-✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.36 は push 直後)
+✅ npm run build → ✓ built (v0.1.37)
+✅ cargo build  → Finished dev profile (v0.1.37)
+✅ GitHub Actions / Windows Installer → v0.1.27 成功済み (v0.1.28〜v0.1.37 は push 直後)
 ```
 
 ---
@@ -43,50 +43,68 @@
 | Milestone B 第2段階 | Character State Expression・状態別CSSアニメーション・VoiceUIState統合 | ✅ v0.1.34 |
 | Field QA Fixes Round 1 | Ollamaキャッシュバグ修正・classify_app拡充・当たり判定改善・デバッグUI | ✅ v0.1.35 |
 | Field QA Root Cause Fixes | Ollama CORS根本修正(Rust経由HTTP)・ActiveAppDebug・SPEECH_VISIBLE hit test | ✅ v0.1.36 |
+| Companion Intelligence & Window Arch | AI-first自律発話・PromptBuilder/QualityFilter強化・window resize・3秒遅延キャプチャ | ✅ v0.1.37 |
 
 ---
 
-## Field QA Fixes 実装詳細 (v0.1.35)
+## v0.1.37 実装詳細
 
-### 修正 A: OllamaProvider キャッシュバグ
+### A: Ollama default URL → `http://127.0.0.1:11434`
 
-- `AIProviderManager.ts`: モジュール変数 `_ollamaProvider` キャッシュを廃止
-- 毎回 `getSettings()` から現在値を読み `new OllamaProvider()` を生成
-- `LastAIResultDebug` pub/sub state を追加 (source / fallbackReason / latencyMs / responsePreview)
-- AIPage に「接続テスト」「テスト発話」「最後のAI応答パネル」を追加
-- デフォルト timeout: 8000ms → 20000ms
-- `isAvailable()` timeout: 2000ms → 4000ms
+- `src/settings/defaults.ts`: `ollamaBaseUrl` を `http://127.0.0.1:11434` に変更
+- `src/companion/ai/OllamaProvider.ts`: `DEFAULT_BASE_URL` を同様に変更
+- 実機確認で `localhost` → timeout、`127.0.0.1` → 成功が判明したため
 
-### 修正 B: Active app 観測の classify_app 拡充
+### B: PromptBuilder / QualityFilter 強化
+
+- `src/systems/ai/PromptBuilder.ts`:
+  - 理想20〜60文字・最大80文字を明示
+  - 英語・ローマ字・英単語を一切禁止を明示
+  - "continued" / 壊れた句読点 / 途中切れの禁止を追加
+  - 良い例・悪い例をシステムプロンプトに追記
+  - ユーザーメッセージ末尾に「日本語一文のみで返答」を追加
+- `src/systems/ai/QualityFilter.ts`:
+  - `too_long` → truncate (ok:true) から reject (ok:false, reason:"too_long") に変更
+  - `continued` / 英単語4文字超 (`[A-Za-z]{4,}`) / `。。` / `...` / 途中切れ の禁止パターンを追加
+- `OllamaProvider.ts` / `lib.rs`: temperature 0.7 → 0.5
+
+### C: AI-first 自律発話
+
+- `src/hooks/useCompanionState.ts`:
+  - startup greeting: greetTimer を async に変更、AI-first → fallback on failure
+  - scheduleIdleSpeech: setTimeout callback を async に変更、AI-first → fallback
+- `src/companion/reactions/useObservationReactions.ts`:
+  - `tryAIOrFire()` ヘルパーを追加 (AI → fire() fallback)
+  - mediaWatching / gamingLikely / longIdle / activity 遷移 を AI-first に変更
+  - fullscreen / downloads-pile / desktop-pile は固定テキスト維持
+
+### D: Active App デバッグ強化
 
 - `src-tauri/src/observation/mod.rs`:
-  - `"self"` カテゴリ新設: `msedgewebview2.exe` / `amispi-companion.exe`
-  - `"communication"` カテゴリ新設: `discord.exe` / `slack.exe` / `teams.exe` / `zoom.exe` / `skype.exe` 等
-  - `"media"` 追加: `spotify.exe` / `musicbee.exe` / `foobar2000.exe` / `aimp.exe` / `tidal.exe` 等
-  - `"daw"` 追加: `"bitwig studio.exe"` / `fl64.exe` / `reaper64.exe` / `studioone.exe` / `cubase.exe`
-  - `"ide"` 追加: `notepad++.exe` / `sublime_text.exe`
-  - `"terminal"` 追加: `hyper.exe` / `mintty.exe`
-  - `"system"` 追加: `totalcmd.exe` / `freecommander.exe`
-- `src/observation/types.ts`: `AppCategory` に `"communication"` / `"self"` を追加
-- `src/companion/activity/inferActivity.ts`: `communication` / `self` カテゴリ処理追加
-- TransparencyPage: `processName` 表示・`unknownReason` 警告・10秒自動更新
+  - `ActiveAppDebugInfo` に `hwnd_raw: u64` / `last_error_before: u32` を追加
+  - `SetLastError(0)` を各 Win32 API 呼び出し前に追加
+- `src/settings/pages/TransparencyPage.tsx`:
+  - `ActiveAppDebugInfo` 型に `hwndRaw: number` / `lastErrorBefore: number` を追加
+  - 「3秒後にキャプチャ」ボタンを追加 (カウントダウン表示付き)
+  - HWND raw 値・pre-call LastError 値を表示
 
-### 修正 C: 当たり判定 / pointer-events
+### E: ウィンドウリサイズ方式 (当たり判定根本修正)
 
+- `src-tauri/tauri.conf.json`: height 300 → 180
+- `src-tauri/src/lib.rs`:
+  - `resize_companion(speechVisible: bool)` コマンドを追加
+  - 吹き出し非表示: 200×180、表示中: 200×310 に動的リサイズ
+  - キャラクター底辺の画面座標を固定 (char_bottom = pos.y + size.height)
+  - `set_speech_visible` / `SPEECH_VISIBLE AtomicBool` を削除
+  - hit test スレッドを簡素化 (常にウィンドウ全体を判定)
 - `src/App.tsx`:
-  - 外側コンテナ: `pointer-events: none`
-  - `drag-handle` / 吹き出しコンテナ / UpdateBadge / ContextMenu: `pointer-events: auto`
-  - 吹き出し非表示時はコンテナ div を非レンダリング
-  - `onContextMenu` を `drag-handle` に移動
-
-### 修正 D: VoicePage ON/mode 連動
-
-- 音声入力 ON 時に mode が `"off"` なら `"pushToTalk"` へ自動設定
-- `mode=off` 状態で ON の時に警告メッセージを表示
+  - `set_speech_visible` → `resize_companion` に変更
+  - `windowH` を hasSpeech に応じて 180 or 310 に切り替え
+  - ドラッグ終了時に `hasSpeechRef` で補正した charY を save_window_position に渡す
 
 ---
 
-## 次のフェーズ候補 (v0.1.37)
+## 次のフェーズ候補 (v0.1.38)
 
 ### 優先候補 A: First-run Onboarding ← **推奨**
 
@@ -146,7 +164,7 @@
 ✅ scheduleIdleSpeech の activity-aware 抑制
 ✅ overClicked / returnAfterBreak / returnAfterLongBreak reactions
 ✅ CryEngine (sleep/wake/touch sounds)
-✅ ウィンドウ位置の保存・復元
+✅ ウィンドウ位置の保存・復元 (charY 補正付き)
 ✅ MediaContext (Spotify等のバックグラウンド検出)
 ✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル・10秒自動更新)
 ✅ Memory Viewer UI (MemoryPage) - 削除後も表示が壊れない
@@ -155,9 +173,15 @@
 ✅ OllamaProvider: invoke("ollama_list_models") / invoke("ollama_chat") で Rust 経由 HTTP (CORS 回避)
 ✅ LastAIResultDebug: AIPage でデバッグ情報が表示される
 ✅ classify_app: self/communication カテゴリを含む拡充済みマッピング
-✅ pointer-events: none (外側コンテナ) — インタラクティブ要素のみ auto
-✅ SPEECH_VISIBLE: 吹き出し非表示時はウィンドウ下部190pxのみ hit test 有効
-✅ set_speech_visible: App.tsx から tinyText/speechText 変化時に invoke
+✅ resize_companion: 吹き出し on/off でウィンドウ 200×180 ↔ 200×310 動的リサイズ
+✅ hit test スレッド: 常にウィンドウ全体を判定 (SPEECH_VISIBLE 削除済み)
+✅ 3秒遅延キャプチャ: TransparencyPage でボタンを押してから3秒後に get_active_app_debug
+✅ hwnd_raw / last_error_before: ActiveAppDebugInfo に追加済み
+✅ AI-first startup greeting / idle speech / activity transitions
+✅ QualityFilter: too_long → reject (truncate しない)
+✅ QualityFilter: continued / 英単語4文字超 / 壊れた句読点 / 途中切れ を拒否
+✅ PromptBuilder: 理想20〜60文字・最大80文字・英語禁止・例文追加
+✅ ollamaBaseUrl default: http://127.0.0.1:11434
 ✅ get_active_app_debug: フォアグラウンドプロセス取得の段階別デバッグ情報
 ✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示
 ✅ cargo build が通ること
@@ -182,5 +206,5 @@
 8. npm run build / cargo build → 通ることを確認
 9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
 10. docs/NEXT_SESSION.md 更新 (このファイル)
-11. git add / commit / bump v0.1.37 / push
+11. git add / commit / bump v0.1.38 / push
 ```
