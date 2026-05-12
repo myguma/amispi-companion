@@ -379,15 +379,33 @@ export function useCompanionState(
 
     // 前回セッションからの休憩期間に応じて挨拶トリガーを選択
     const breakKind = classifyBreak();
-    const greetTimer = setTimeout(() => {
+    const greetTimer = setTimeout(async () => {
       let text: string | null = null;
-      if (breakKind === "longDay") {
-        text = fireReaction("returnAfterLongBreak");
-      } else if (breakKind === "hours" || breakKind === "short") {
-        text = fireReaction("returnAfterBreak");
+
+      // AI-first: 起動挨拶も Ollama/AI を先に試みる
+      const s      = getSettings();
+      const events = getRecentEvents(20);
+      const ctx    = buildCompanionContext("return", snapshotRef.current, events, s);
+      const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+
+      if (policy.allowed) {
+        try {
+          const output = await getNewAIResponse(ctx);
+          if (output.shouldSpeak && output.text) text = output.text;
+        } catch { /* AI エラー → reaction fallback */ }
       }
-      // 休憩なし or 反応が抑制されていれば通常の時刻挨拶にフォールバック
-      text ??= fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
+
+      // AI 失敗 → 休憩種別別の固定 reaction にフォールバック
+      if (!text) {
+        if (breakKind === "longDay") {
+          text = fireReaction("returnAfterLongBreak");
+        } else if (breakKind === "hours" || breakKind === "short") {
+          text = fireReaction("returnAfterBreak");
+        }
+        // 休憩なし or 反応が抑制されていれば通常の時刻挨拶にフォールバック
+        text ??= fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
+      }
+
       triggerSpeak(text);
     }, 1500);
 
