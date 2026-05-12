@@ -180,6 +180,14 @@ fn save_settings_cmd(
     settings::save_settings(&app, &s)
 }
 
+#[tauri::command]
+fn save_window_position(app: tauri::AppHandle, x: i32, y: i32) -> Result<(), String> {
+    let mut s = settings::load_settings(&app);
+    s.window_x = Some(x);
+    s.window_y = Some(y);
+    settings::save_settings(&app, &s)
+}
+
 // ──────────────────────────────────────────────────────────
 // エントリーポイント
 // ──────────────────────────────────────────────────────────
