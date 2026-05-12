@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.40)**
+**最終更新: 2026-05-13 (v0.1.41)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.40
-**フェーズ:** Hotfix — Character Layout / Context Menu 完了 (実機確認待ち)
-**全体進捗:** 約 76%
+**バージョン:** v0.1.41
+**フェーズ:** Hotfix — Character Rendering Anchor 完了 (実機確認待ち)
+**全体進捗:** 約 77%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.40)
-✅ cargo build  → Finished dev profile (v0.1.40)
-✅ GitHub Actions / Windows Installer → v0.1.39 成功済み。v0.1.40 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.41)
+✅ cargo build  → Finished dev profile (v0.1.41)
+✅ GitHub Actions / Windows Installer → v0.1.40 成功済み。v0.1.41 は tag push 後に確認
 ```
 
 ---
@@ -47,6 +47,7 @@
 | Hotfix: Settings/Clipping/AI | TabErrorBoundary・DPI対応resize_companion・PromptBuilder時刻偏重修正・直近発話context | ✅ v0.1.38 |
 | Hotfix: Character/Hit Area/Foreground Debug | 240px layout・楕円hit target・serde camelCase/raw JSON debug | ✅ v0.1.39 |
 | Hotfix: Character/ContextMenu | 280px layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp | ✅ v0.1.40 |
+| Hotfix: Character Rendering Anchor | Character実描画サイズをsizeScaleに同期・visual bottom anchor明確化 | ✅ v0.1.41 |
 
 ---
 
@@ -213,9 +214,40 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.41)
+## v0.1.41 実装詳細
 
-### 優先候補 A: v0.1.40 実機確認 ← **最優先**
+### A: Character rendering anchor 修正
+
+- `src/constants/companionLayout.ts`:
+  - `CHARACTER_SPRITE_W/H = 160` を明示
+- `src/App.tsx`:
+  - `settings.sizeScale` 済みの `characterW/characterH` を `Character` に渡す
+  - `character-stage` と実際の sprite / fallback 描画サイズを一致させた
+- `src/components/Character.tsx`:
+  - wrapper / sprite img / fallback が `width/height` props を使うよう変更
+- `src/styles/index.css`:
+  - `character-wrapper` / `character-anim` の `transform-origin: center bottom`
+  - sprite img を wrapper サイズに対して `width: 100%; height: 100%; display: block`
+
+### B: 原因
+
+- v0.1.40 では App 側の window / stage は `sizeScale` に合わせて縮尺していた
+- しかし `Character.tsx` は `DEFAULT_CHARACTER_CONFIG` の 160×160 固定で描画していた
+- `sizeScale < 1` では stage/window より sprite が大きくなり、Tauri window 外へ出た下端が `overflow: hidden` で切れる可能性があった
+- Rust hit test は `160×160 * sizeScale * DPI` 前提だったため、React実描画と hit test bbox の整合も崩れていた
+
+### C: 維持したもの
+
+- ContextMenu は変更なし。v0.1.40 の clamp / `アプリ終了` / context menu中全域interactive を維持
+- Active App / Transparency UI / Ollama / PromptBuilder / QualityFilter は変更なし
+- drag保存座標と `resize_companion` bottom anchor は変更なし
+- 上部透明領域 click-through と PNG透明余白クリック改善は維持
+
+---
+
+## 次のフェーズ候補 (v0.1.42)
+
+### 優先候補 A: v0.1.41 実機確認 ← **最優先**
 
 1. キャラが下にめり込まないか
 2. ドラッグしても画像が切れないか

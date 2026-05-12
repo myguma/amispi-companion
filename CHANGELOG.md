@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.1.41] — 2026-05-13
+
+### Fixed (Hotfix: Character Rendering Anchor)
+
+#### A: キャラクター描画サイズと visual anchor の不一致を修正
+
+- **原因**: v0.1.40 で App 側の `character-stage` / window bounds は `settings.sizeScale` で縮尺されていたが、`Character.tsx` の wrapper / img / fallback は `DEFAULT_CHARACTER_CONFIG` の `160×160` 固定で描画されていた
+  - `sizeScale < 1` では stage/window が縮む一方で sprite は 160px のままになり、root window の `overflow: hidden` で下端が切れる可能性があった
+  - Rust hit test は `160×160 * sizeScale * DPI` 前提のため、React 実描画と hit test bbox もずれていた
+- **companionLayout.ts**: `CHARACTER_SPRITE_W/H = 160` を明示し、App 側の visual bbox と Rust 側 hit test 前提を合わせた
+- **App.tsx**: `Character` に scaled `width/height` を渡し、stage と実描画サイズを一致させた
+- **Character.tsx**: wrapper / sprite img / SVG fallback が渡された実描画サイズを使うよう変更
+- **index.css**: `character-wrapper` / `character-anim` の `transform-origin` を `center bottom` に固定し、状態アニメーションの拡大が下端側へはみ出しにくいよう調整
+
+#### B: drag / speech resize の前提を維持
+
+- drag の保存座標は v0.1.40 と同じく window top-left のまま維持
+  - visual bbox が window 内に収まる構造に戻したため、追加の座標補正は入れない
+- `resize_companion(speechVisible, sizeScale)` の bottom anchor 方式は維持
+  - compact / expanded 切替で window 下端を固定し、React 側でもキャラ visual bottom が `window bottom - bottomPad` になるよう揃えた
+- Rust hit test の楕円判定は、React 側の scaled sprite bbox と同じ `160×160 * sizeScale` 前提に戻ったため変更なし
+
+#### C: v0.1.40 の成功部分は維持
+
+- ContextMenu の上方向 clamp / `アプリ終了` の押しやすさは変更なし
+- Active App取得 / Bitwig `daw` 認識 / Transparency UI は変更なし
+- PromptBuilder / QualityFilter / Ollama default URL / `source: ollama` は変更なし
+- 上部透明領域 click-through と PNG透明余白クリック改善は維持
+
 ## [0.1.40] — 2026-05-13
 
 ### Fixed (Hotfix: Character Layout and Context Menu)

@@ -4,8 +4,39 @@
 > v0.1.36 Field QA Root Cause Fixes でさらに根本原因に対処した。
 > v0.1.39 では v0.1.38 実機確認で残った character layout / hit area / foreground debug を hotfix。
 > v0.1.40 では v0.1.39 実機確認で残った character clipping / ContextMenu clipping を hotfix。
+> v0.1.41 では v0.1.40 実機確認で残った character rendering anchor / scale 不一致を hotfix。
 
-**更新: 2026-05-13 (v0.1.40)**
+**更新: 2026-05-13 (v0.1.41)**
+
+---
+
+## v0.1.41 での修正内容 (実機確認待ち)
+
+### 問題J: キャラ下端がまだめり込む / drag時に見切れる / speech表示時に沈む
+
+**v0.1.40 の状態:**
+- ContextMenu見切れ、Active App取得、Ollama品質、上部透明領域click-throughは改善済み
+- ただしキャラ本体は通常表示・drag・speech表示でまだ下端が切れることがある
+
+**原因:**
+1. App 側の `character-stage` / `windowW` / `windowH` は `settings.sizeScale` に合わせて縮尺されていた
+2. しかし `Character.tsx` の `character-wrapper` / sprite img / fallback は `DEFAULT_CHARACTER_CONFIG` の 160×160 固定で描画されていた
+3. `sizeScale < 1` では stage/window より sprite 実描画が大きくなり、Tauri window 外へ出た下端が `overflow: hidden` で切れる
+4. Rust hit test は `160×160 * sizeScale * DPI` 前提だったため、React実描画bboxと hit test bbox も不一致になっていた
+
+**v0.1.41 での修正:**
+- `src/constants/companionLayout.ts` に `CHARACTER_SPRITE_W/H = 160` を追加
+- `src/App.tsx` で scaled `characterW/characterH` を `Character` に渡す
+- `src/components/Character.tsx` で wrapper / img / fallback が渡された実描画サイズを使うよう修正
+- `src/styles/index.css` で `character-wrapper` / `character-anim` の `transform-origin` を `center bottom` に固定
+- drag保存座標、`resize_companion` bottom anchor、ContextMenu、Active App、Ollama、hit test設計は変更なし
+
+**実機確認手順:**
+1. 通常表示でキャラ下部が切れないか確認
+2. drag中/drag後にキャラ下部が見切れないか確認
+3. 吹き出し表示時もキャラが下へ沈まないか確認
+4. 終了→再起動後の位置復元でも切れないか確認
+5. ContextMenu / 上部透明領域click-through / PNG透明余白 / Active App / Ollama が維持されているか確認
 
 ---
 

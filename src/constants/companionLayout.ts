@@ -1,6 +1,8 @@
 export const COMPANION_WINDOW_W = 200;
 export const COMPANION_COMPACT_H = 280;
 export const COMPANION_BUBBLE_H = 130;
+export const CHARACTER_SPRITE_W = 160;
+export const CHARACTER_SPRITE_H = 160;
 export const CHARACTER_BOTTOM_PAD = 24;
 
 export const CONTEXT_MENU_W = 150;

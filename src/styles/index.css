@@ -259,6 +259,17 @@ html,
   display: flex;
   align-items: center;
   justify-content: center;
+  transform-origin: center bottom;
+}
+
+.character-wrapper {
+  transform-origin: center bottom;
+}
+
+.character-anim img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .character-anim--sprite[data-state="thinking"] {

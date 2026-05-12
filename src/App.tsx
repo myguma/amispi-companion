@@ -16,6 +16,8 @@ import { TinyWhisper } from "./components/TinyWhisper";
 import { DEFAULT_CHARACTER_CONFIG } from "./types/companion";
 import {
   CHARACTER_BOTTOM_PAD,
+  CHARACTER_SPRITE_H,
+  CHARACTER_SPRITE_W,
   COMPANION_BUBBLE_H,
   COMPANION_COMPACT_H,
   COMPANION_WINDOW_W,
@@ -197,8 +199,8 @@ export default function App() {
     void invoke("resize_companion", { speechVisible: hasSpeech, sizeScale: scale });
   }, [hasSpeech, scale]);
 
-  const characterW = Math.round(DEFAULT_CHARACTER_CONFIG.width * scale);
-  const characterH = Math.round(DEFAULT_CHARACTER_CONFIG.height * scale);
+  const characterW = Math.round(CHARACTER_SPRITE_W * scale);
+  const characterH = Math.round(CHARACTER_SPRITE_H * scale);
   const windowW = Math.round(COMPANION_WINDOW_W * scale);
   const windowH = Math.round((hasSpeech ? COMPANION_COMPACT_H + COMPANION_BUBBLE_H : COMPANION_COMPACT_H) * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
@@ -262,6 +264,8 @@ export default function App() {
         <Character
           state={state}
           config={DEFAULT_CHARACTER_CONFIG}
+          width={characterW}
+          height={characterH}
           onClick={handleCharacterClick}
           isDragging={isDragging}
           facingRight={facingRight}

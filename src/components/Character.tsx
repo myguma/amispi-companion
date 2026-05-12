@@ -29,6 +29,8 @@ export function emotionToSpriteState(emotion: CompanionEmotion): CompanionState 
 interface CharacterProps {
   state: CompanionState;
   config?: CharacterConfig;
+  width?: number;
+  height?: number;
   onClick: () => void;
   isDragging?: boolean;
   facingRight?: boolean;
@@ -183,6 +185,8 @@ function SpiritOrbFallback({
 export function Character({
   state,
   config = DEFAULT_CHARACTER_CONFIG,
+  width,
+  height,
   onClick,
   isDragging = false,
   facingRight = false,
@@ -201,14 +205,16 @@ export function Character({
   // character-anim--sprite: スプライト使用時のみ状態アニメーションを適用
   // SVGフォールバック時は spirit-orb が独自アニメーションを持つため二重適用を避ける
   const animClass = `character-anim${!useFallback ? " character-anim--sprite" : ""}`;
+  const displayWidth = width ?? config.width;
+  const displayHeight = height ?? config.height;
 
   return (
     <div
       className="character-wrapper"
       onClick={onClick}
       style={{
-        width: config.width,
-        height: config.height,
+        width: displayWidth,
+        height: displayHeight,
         cursor: "pointer",
         position: "relative",
         pointerEvents: "none",
@@ -224,15 +230,15 @@ export function Character({
         {!useFallback ? (
           <SpriteImage
             urls={spriteUrls}
-            width={config.width}
-            height={config.height}
+            width={displayWidth}
+            height={displayHeight}
             onFallback={() => setUseFallback(true)}
           />
         ) : (
           <SpiritOrbFallback
             state={effectiveState}
-            width={config.width}
-            height={config.height}
+            width={displayWidth}
+            height={displayHeight}
           />
         )}
         {isVoiceActive && (
