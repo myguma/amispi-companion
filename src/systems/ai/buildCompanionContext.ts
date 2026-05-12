@@ -47,7 +47,7 @@ export function contextToProviderInput(ctx: CompanionContext): AIProviderInput {
     trigger: "manualCall",
     runtimeContext: {
       nowLocal: new Date().toLocaleString("ja-JP"),
-      activity: activityInsight.kind,
+      activity: activityInsight.kind as never,
       activeAppCategory: obs.activeApp?.category,
       idleMinutes: Math.round(obs.idle.idleMs / 60_000),
       fullscreenLikely: obs.fullscreenLikely,
