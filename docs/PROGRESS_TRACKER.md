@@ -55,24 +55,25 @@
 
 ---
 
-## 次の目標: v0.1.34 候補
+## 次の目標: v0.1.35 候補
 
-優先候補A: **Character State Expression**
-- deepFocus / speaking / thinking / sleeping の視覚的状態表現
-- スプライト切り替えか最小限の CSS で表現
+優先候補A: **First-run Onboarding** ← **推奨**
+- 初回起動時に権限・Ollama・Voice・記憶の説明ウィザードを表示
+- localStorage `hasCompletedOnboarding` フラグで制御
 
-優先候補B: **First-run Onboarding**
-- 権限・Ollama・Voice・記憶の初回説明ウィザード
-- 既存設定UIへの誘導
+優先候補B: **Memory Retention Policy**
+- `memoryRetentionDays` 設定 (デフォルト30日)
+- 起動時に古い speech_shown / state_changed を自動削除
+- MemoryPage に設定UI追加
 
-優先候補C: **Memory retention policy**
-- 7日以上前の speech_shown は自動削除
-- 設定UIで保持期間を変更可能
+優先候補C: **Emotion Sprite Set**
+- 感情別スプライト (shy / concerned / happy)
+- CryEngine sound + sprite 連動
 
 | 作業 | 優先度 |
 |------|--------|
-| Character state expression | 高 |
 | First-run onboarding | 高 |
 | Memory retention / export | 中 |
+| Emotion sprite set | 中 |
 | RuleProvider daily summary活用強化 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |
