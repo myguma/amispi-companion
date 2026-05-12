@@ -47,6 +47,7 @@ export function TransparencyPage() {
         <Row icon={p.level >= 1 ? YES : NO} label="入力がしばらくないこと (idle)" note="全画面や sleep の判定に使う" />
         <Row icon={p.level >= 1 ? YES : NO} label="アクティブなアプリの種類" note="browser / ide / media など — タイトルは見ない" />
         <Row icon={p.level >= 1 ? YES : NO} label="全画面アプリ中かどうか" note="全画面中は黙る" />
+        <Row icon={p.level >= 1 ? YES : NO} label="音楽・動画アプリが起動中か" note="Spotify等が起動中かどうかのみ — 再生内容は取得しない" />
         <Row icon={p.level >= 1 && p.folderMetadataEnabled ? YES : NO} label="Desktop のファイル数" note="増えすぎたら一言" />
         <Row icon={p.level >= 1 && p.folderMetadataEnabled ? YES : NO} label="Downloads のファイル数" note="増えすぎたら一言" />
       </Section>
