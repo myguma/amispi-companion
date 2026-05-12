@@ -139,18 +139,37 @@ export function useCompanionState(
   }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
-  // クリック → AI応答
+  // クリック → AI応答 (新フロー: CompanionContext 経由)
   // ──────────────────────────────────────────
   const requestAIResponse = useCallback(async () => {
     setState("thinking");
-    const events = getRecentEvents(10);
-    const response = await getAIResponse(events);
-    if (response) {
-      triggerSpeak(response);
-    } else {
-      const text = fireReaction("click") ?? pickDialogue("touch_reaction");
-      triggerSpeak(text);
+
+    const s      = getSettings();
+    const events = getRecentEvents(20);
+    const ctx    = buildCompanionContext("click", snapshotRef.current, events, s);
+
+    // SpeechPolicy で発話可否チェック
+    const policy = canSpeak(
+      "manual",
+      s,
+      snapshotRef.current,
+      lastSpeechAtRef.current,
+      countInLastHour()
+    );
+
+    let text: string | null = null;
+    if (policy.allowed) {
+      try {
+        const input  = contextToProviderInput(ctx);
+        const output = await getNewAIResponse(input);
+        if (output.shouldSpeak && output.text) text = output.text;
+      } catch {
+        // AI エラー → reaction fallback へ
+      }
     }
+
+    text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+    triggerSpeak(text);
   }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
