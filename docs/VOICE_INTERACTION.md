@@ -19,7 +19,9 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | フェーズ | 内容 | 状態 |
 |---|---|---|
 | Phase 6a | 設定・状態・導線・mock transcript | ✅ 完了 (v0.1.28) |
-| Phase 6b | STTAdapter interface / MockSTTAdapter / Whisper 候補 | 🔜 次 |
+| Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
+| Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
+| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | 🔜 次 |
 | Phase 6c | UX 強化・フィードバック・DND 整合 | 📋 予定 |
 
 ---
@@ -33,65 +35,184 @@ voiceInputEnabled: boolean    // デフォルト false
 voiceInputMode: "off" | "pushToTalk"  // デフォルト "off"
 ```
 
-### 追加した UI
-
-- `settings/pages/VoicePage.tsx`: Voice ON/OFF / mode 選択 / プライバシー説明
-- `settings/SettingsApp.tsx`: "音声" タブ追加
-- `App.tsx`: キャラクター長押し (500ms) で push-to-talk 発火
-
 ### Voice UI 状態
 
 ```
 voiceOff         → 音声入力無効
 voiceReady       → enabled だが操作していない
-voiceListening   → 長押し中 (録音中 — Phase 6b 以降で実際の録音)
+voiceListening   → 長押し中・録音中
 voiceTranscribing→ STT 処理中
 voiceResponding  → AI 返答中
-voiceError       → エラー
+voiceError       → エラー (3秒後に voiceReady/Off へ自動復帰)
 ```
-
-### Phase 6a の mock 動作
-
-1. キャラクターを 500ms 以上長押し
-2. `mock transcript = "ねえ、今何してる？"` を発火
-3. `requestVoiceResponse(transcript)` → CompanionContext に voiceInput を設定
-4. trigger: "voice" で AI flow (none/mock/ollama) を通す
-5. QualityFilter → 返答を表示
 
 ---
 
-## Phase 6b — STTAdapter 設計
+## Phase 6b-real-1 実装詳細
 
-### インターフェース
+### 実録音パイプライン
+
+`src/systems/voice/useVoiceRecorder.ts`:
+
+```ts
+// Push-to-talk 中だけ録音
+const { startRecording, stopRecording } = useVoiceRecorder({
+  maxDurationMs: settings.maxRecordingMs,  // デフォルト 15000ms
+  onBlob: (blob) => void requestVoiceFromBlob(blob),
+  onError: (err) => voiceRecordingError(err),
+});
+```
+
+**録音フロー:**
+```
+[長押し 0ms]   → 500ms タイマー開始
+[長押し 500ms] → voiceListeningStart() + startRecording()
+                  → navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                  → MediaRecorder.start(500ms chunks)
+                  → voiceUIState: "voiceListening"
+[離した]       → stopRecording()
+                  → MediaRecorder.stop() → onstop → Blob
+                  → stream.getTracks().stop()  ← マイク解放
+                  → onBlob(blob)
+                  → requestVoiceFromBlob(blob)
+                  → voiceUIState: "voiceTranscribing"
+[STT 完了]     → transcript → AI flow
+                  → voiceUIState: "voiceResponding" → "voiceReady"
+```
+
+**安全保証:**
+- `getTracks().stop()` でマイクを必ず解放
+- maxDurationMs で自動停止 (長すぎる録音を防止)
+- 録音エラー時は 3秒後に自動復帰
+
+### STTAdapter 設計
 
 ```ts
 // src/systems/voice/STTAdapter.ts
-export type STTResult = {
-  text: string;
-  confidence?: number;
-  durationMs?: number;
-};
+export type STTInput = Blob | ArrayBuffer;
 
 export interface STTAdapter {
   readonly name: string;
   isAvailable(): Promise<boolean>;
-  transcribe(audioBlob: Blob): Promise<STTResult>;
+  transcribe(input: STTInput): Promise<STTAdapterOutput>;
 }
 ```
 
-### MockSTTAdapter
+### STTAdapterManager
+
+設定の `sttEngine` に応じてアダプターを選択:
+
+```
+sttEngine: "mock"       → MockSTTAdapter (常に available, mock transcript)
+sttEngine: "whisperCli" → WhisperCliSTTAdapter (path 未設定なら unavailable)
+                          unavailable → requestVoiceFromBlob で empty → fallback
+```
+
+### WhisperCliSTTAdapter (skeleton)
 
 ```ts
-// src/systems/voice/MockSTTAdapter.ts
-export class MockSTTAdapter implements STTAdapter {
-  readonly name = "mock";
-  async isAvailable() { return true; }
-  async transcribe(_blob: Blob): Promise<STTResult> {
-    await new Promise(r => setTimeout(r, 300)); // 模擬遅延
-    return { text: "ねえ、今何してる？", confidence: 1.0, durationMs: 300 };
+// src/systems/voice/WhisperCliSTTAdapter.ts
+class WhisperCliSTTAdapter implements STTAdapter {
+  isAvailable() {
+    // executable path + model path が空でなければ "設定済み" とみなす
+    return executablePath.trim().length > 0 && modelPath.trim().length > 0;
+  }
+
+  transcribe(_input) {
+    // Phase 6b-real-2 で Rust sidecar 統合後に実装
+    return { ok: false, error: "unavailable" };
   }
 }
 ```
+
+### requestVoiceFromBlob (useCompanionState)
+
+```ts
+// useCompanionState.ts
+const requestVoiceFromBlob = async (blob: Blob) => {
+  setVoiceUIState("voiceTranscribing");
+  
+  // STT
+  const adapter = getSTTAdapter();
+  let transcript = "";
+  if (await adapter.isAvailable()) {
+    const result = await adapter.transcribe(blob);
+    if (result.ok) transcript = result.result.text.trim().slice(0, 200);
+  }
+  
+  if (!transcript) { setVoiceUIState("voiceReady"); return; }
+  
+  // AI flow (requestVoiceResponse と同じルート)
+  // trigger: "voice", voiceInput: transcript
+  // SpeechPolicy → OllamaProvider/MockProvider/RuleProvider → QualityFilter → triggerSpeak
+};
+```
+
+### 追加した設定
+
+```ts
+sttEngine: "mock" | "whisperCli"    // デフォルト "mock"
+whisperExecutablePath: string        // デフォルト ""
+whisperModelPath: string             // デフォルト ""
+whisperTimeoutMs: number             // デフォルト 30000
+maxRecordingMs: number               // デフォルト 15000
+```
+
+---
+
+## Phase 6b-real-2 計画 — Rust sidecar 統合
+
+### 課題
+
+- WebView の MediaRecorder が出力する形式は `audio/webm` が主
+- whisper.cpp CLI は `wav` 形式を期待することが多い
+- WebM → WAV の変換が必要
+
+### 変換方針
+
+**Option A: Rust 側で変換 (推奨)**
+```
+Blob (WebM) → invoke("write_temp_audio", bytes) → Rust で temp WAV 書き出し
+→ std::process::Command whisper.cpp → transcript → delete temp file
+```
+
+**Option B: WebView 側で WebM → PCM → WAV (複雑)**
+```
+AudioContext.decodeAudioData() → PCM → WAV ヘッダ付与 → Uint8Array → Rust へ
+```
+
+**Option C: FFmpeg bundling (将来)**
+```
+Tauri sidecar に ffmpeg を含める → webm → wav → whisper
+```
+
+推奨: Phase 6b-real-2 では **Option A** で実装し、Option C を将来検討。
+
+### Rust コマンド skeleton
+
+```rust
+// src-tauri/src/voice/mod.rs (Phase 6b-real-2 で実装)
+#[tauri::command]
+async fn transcribe_with_whisper(
+    app: tauri::AppHandle,
+    audio_bytes: Vec<u8>,
+    mime_type: String,
+) -> Result<String, String> {
+    // 1. temp dir に音声ファイルを書き出す
+    // 2. 必要なら WAV 変換
+    // 3. std::process::Command で whisper executable を呼ぶ (shell 経由でない)
+    // 4. transcript を抽出
+    // 5. temp file を必ず削除 (Drop / finally 相当)
+    // 6. transcript を返す
+}
+```
+
+**安全方針:**
+- `std::process::Command` (shell 経由でない)
+- 引数は配列として渡す (shell injection なし)
+- タイムアウトを設ける
+- temp file は処理後に必ず削除
+- transcript のみ返す (生音声データを返さない)
 
 ---
 
@@ -104,21 +225,13 @@ export class MockSTTAdapter implements STTAdapter {
 | 日本語精度 | ◎ (large-v3 で高精度) |
 | ローカル実行 | ✅ |
 | クラウド不要 | ✅ |
-| Tauri との統合 | sidecar (外部バイナリ) または CLI 経由 |
+| Tauri との統合 | std::process::Command (CLI 経由) |
 | モデルサイズ | tiny: ~75MB / small: ~244MB / medium: ~769MB |
 | 速度 | tiny: 速い / small: 普通 / medium: 遅い (CPU) |
 | ライセンス | MIT |
 | Windows バイナリ | 配布可能 |
 
 **推奨モデル:** `tiny` (速度優先) または `small` (精度優先)
-
-**統合方式 (Tauri):**
-```rust
-// src-tauri/src/voice/mod.rs
-// Tauri sidecar として whisper-cli を bundler に含める
-// または: invoke コマンドで一時 WAV ファイルを書いて CLI 呼び出し
-// 一時ファイルは処理後に削除する
-```
 
 ### 2. Vosk
 
@@ -145,66 +258,58 @@ export class MockSTTAdapter implements STTAdapter {
 
 ### 結論
 
-**第一候補: whisper.cpp tiny モデル** (sidecar として bundler に含める)
+**第一候補: whisper.cpp tiny モデル**
 - 精度・日本語対応・ライセンス・モデルサイズのバランスが最良
 - ただし GPU なしの CPU 推論は slow (tiny で ~2-5秒/発話)
-
----
-
-## 録音の実装方針 (Phase 6b)
-
-### フロントエンド側
-
-```ts
-// MediaRecorder API (ブラウザ API, Tauri WebView で利用可能)
-navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  .then(stream => {
-    const recorder = new MediaRecorder(stream);
-    const chunks: BlobPart[] = [];
-    recorder.ondataavailable = e => chunks.push(e.data);
-    recorder.onstop = async () => {
-      const blob = new Blob(chunks, { type: "audio/webm" });
-      stream.getTracks().forEach(t => t.stop()); // マイク解放
-      const result = await sttAdapter.transcribe(blob);
-      requestVoiceResponse(result.text);
-    };
-    recorder.start();
-    // mouseup で recorder.stop()
-  });
-```
-
-**重要:**
-- `stream.getTracks().forEach(t => t.stop())` でマイクを必ず解放する
-- blob は transcribe() 内で即使用し、持続的に保持しない
-- 一時ファイルに書く場合 (Whisper CLI 経由) は処理後に即削除
-
-### Rust sidecar 側 (whisper.cpp)
-
-```rust
-// 一時ファイルを tempdir に書き → whisper-cli を spawn → 結果を返す → ファイル削除
-// src-tauri/src/voice/whisper.rs
-```
+- Phase 6b-real-2 で Rust sidecar 統合予定
 
 ---
 
 ## プライバシーフロー図
 
 ```
-[長押し開始]
+[長押し 500ms]
     ↓
-MediaRecorder.start() ← マイクアクセス開始 (Push-to-talk のみ)
+voiceListeningStart() → UI: 録音中インジケーター
     ↓
-[離した]
+getUserMedia({ audio: true }) ← ユーザーの明示操作のみ
+    ↓
+MediaRecorder.start()
+    ↓
+[離した / maxDurationMs 経過]
     ↓
 MediaRecorder.stop() → Blob
-    ↓
 stream.getTracks().stop() ← マイク即解放
     ↓
-STTAdapter.transcribe(blob)
-    ↓ (blob は使い捨て)
-STTResult { text }
+UI: voiceTranscribing
     ↓
-requestVoiceResponse(text) → CompanionContext.voiceInput
-    ↓ (text は一時保持のみ)
-AI → QualityFilter → SpeechBubble
+STTAdapter.transcribe(blob) ← blob はここで使い捨て
+    ↓ (成功)
+transcript (テキストのみ)
+    ↓
+buildCompanionContext("voice", snapshot, events, settings, transcript)
+    ↓
+SpeechPolicy.canSpeak()
+    ↓ (allowed)
+AIProvider.respond(ctx) → QualityFilter → text
+    ↓
+triggerSpeak(text) → SpeechBubble
+    ↓
+UI: voiceReady
 ```
+
+---
+
+## 手動確認チェックリスト (Phase 6b-real-1 完了後)
+
+- [ ] voiceInputEnabled false の状態で長押ししてもマイク許可要求が出ない
+- [ ] Voice Input ON + pushToTalk + Mock で長押し → マイク許可要求 → 録音中ドット
+- [ ] 離したら STT 処理 → 無明が返答する
+- [ ] whisperCli + path 未設定で壊れない (STT が mock/fallback になる)
+- [ ] maxRecordingMs 秒を超えると自動停止する
+- [ ] クリック反応が壊れていない
+- [ ] drag が壊れていない
+- [ ] window position persistence が壊れていない
+- [ ] MediaContext が壊れていない
+- [ ] Transparency UI が壊れていない
+- [ ] Ollama 未起動時 fallback が壊れていない
