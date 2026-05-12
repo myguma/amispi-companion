@@ -318,7 +318,12 @@ export function TransparencyPage() {
     } catch { /* サイレント */ }
   };
 
-  useEffect(() => { void fetchSnap(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void fetchSnap();
+    // TransparencyPage 表示中は 10秒ごとに自動更新
+    const timer = setInterval(() => { void fetchSnap(); }, 10_000);
+    return () => clearInterval(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ padding: "0 4px" }}>
