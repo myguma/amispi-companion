@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.1.33] — 2026-05-12
+
+### Added (Milestone B 第1段階 — Memory Viewer and Local Data Control)
+- **記憶タブ** (`src/settings/SettingsApp.tsx`): 設定画面に「記憶」タブを追加
+- **Memory Viewer UI** (`src/settings/pages/MemoryPage.tsx`): 新規作成
+  - ローカル保存のみである旨の説明 (外部送信なし)
+  - Memory Stats Card: 総件数・今日のタップ/発話/起動・最古/最新時刻
+  - Today's Summary Panel: DailySummary の自然文・起動時刻・経過時間・統計
+  - Event Log Panel: 最新 50件 / タイプ別フィルタ (すべて/発話/タップ/起動/状態変化/メモ)
+  - 削除コントロール: 発話ログのみ削除 / すべての記憶を削除 / 確認ダイアログ付き / 削除後自動更新
+  - 更新ボタン
+- **memoryStore.ts** 拡張:
+  - `getAllEvents()`: 全イベント取得 (古い順)
+  - `getEventsByType(type)`: タイプ別取得
+  - `clearEventsByType(type)`: タイプ別削除
+  - `getMemoryStats()`: 統計集計 (`MemoryStats` 型)
+- **TransparencyPage.tsx**: フッターに「記憶」タブへの案内を追加
+- **docs/MEMORY_AND_DATA_CONTROL.md**: 記憶の保存内容・削除方法・設計方針を記載
+
+### Changed
+- `docs/PROGRESS_TRACKER.md`: v0.1.33 で ~63% に更新
+- `docs/NEXT_SESSION.md`: 次フェーズ候補を更新
+
 ## [0.1.32] — 2026-05-12
 
 ### Added (Milestone A 第2段階 — Contextual RuleProvider and Autonomous Speech Precision)
