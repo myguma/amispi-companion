@@ -427,6 +427,15 @@ export function TransparencyPage() {
         </div>
       </Section>
 
+      {/* ── アクティブアプリ取得デバッグ ── */}
+      <Section title="アクティブアプリ取得 デバッグ">
+        <div style={{ fontSize: 11, color: "#999", marginBottom: 6, lineHeight: 1.6 }}>
+          フォアグラウンドプロセス名取得の各段階を表示します。<br />
+          「設定画面以外のアプリ」を前面にした状態で「再取得」を押してください。
+        </div>
+        <ActiveAppDebugPanel />
+      </Section>
+
       {/* ── 発話制御 ── */}
       <Section title="発話制御">
         <SpeechControlPanel
