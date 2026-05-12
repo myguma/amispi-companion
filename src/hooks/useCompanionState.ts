@@ -38,6 +38,9 @@ interface UseCompanionStateReturn {
   triggerSpeak: (text?: string) => void;
   triggerDragReaction: () => void;
   requestVoiceResponse: (transcript: string) => Promise<void>;
+  requestVoiceFromBlob: (blob: Blob) => Promise<void>;
+  voiceListeningStart: () => void;
+  voiceRecordingError: (err: string) => void;
   voiceUIState: VoiceUIState;
 }
 
