@@ -15,7 +15,7 @@ import type { ReactionTrigger } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
 import { getAIResponse as getNewAIResponse } from "../companion/ai/AIProviderManager";
-import { buildCompanionContext, contextToProviderInput } from "../systems/ai/buildCompanionContext";
+import { buildCompanionContext } from "../systems/ai/buildCompanionContext";
 import { canSpeak } from "../companion/speech/SpeechPolicy";
 import { countInLastHour } from "../companion/reactions/reactionHistory";
 import type { ObservationSnapshot } from "../observation/types";
