@@ -1,4 +1,4 @@
-import type { AIProvider, AIProviderInput, AIProviderOutput } from "./types";
+import type { AIProvider, AIProviderOutput, CompanionContext } from "./types";
 
 const LINES = ["ん", "...なに？", "呼んだ？", "ここにいるよ", "...", "どうしたの", "何かあった？"];
 
@@ -8,7 +8,7 @@ export class MockProvider implements AIProvider {
 
   async isAvailable(): Promise<boolean> { return true; }
 
-  async respond(_input: AIProviderInput): Promise<AIProviderOutput> {
+  async respond(_ctx: CompanionContext): Promise<AIProviderOutput> {
     await new Promise((r) => setTimeout(r, 300 + Math.random() * 300));
     return {
       text: LINES[Math.floor(Math.random() * LINES.length)],
