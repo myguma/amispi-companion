@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.1.37] — 2026-05-12
+
+### Fixed / Improved (Companion Intelligence & Window Architecture)
+
+#### A: Ollama default URL → `http://127.0.0.1:11434`
+
+- 実機確認により `localhost` → timeout、`127.0.0.1` → 成功が判明
+- `src/settings/defaults.ts` / `src/companion/ai/OllamaProvider.ts`: default URL を変更
+
+#### B: PromptBuilder / QualityFilter 強化
+
+- **PromptBuilder.ts**: 明示的な文字数制限 (理想20〜60文字、最大80文字) を追加
+- **PromptBuilder.ts**: 英語禁止・"continued" 禁止を明示追加
+- **PromptBuilder.ts**: 良い例・悪い例をシステムプロンプトに追記
+- **QualityFilter.ts**: `too_long` → truncate でなく ok:false (拒否) に変更
+- **QualityFilter.ts**: `continued` / 英単語4文字超 / 壊れた句読点 / 途中切れ の禁止パターンを追加
+- **temperature**: OllamaProvider / ollama_chat Rust コマンドの temperature を 0.7 → 0.5 に変更
+
+#### C: AI-first 自律発話
+
+- **useCompanionState.ts**: 起動挨拶・自律独り言を AI-first に変更 (失敗時は固定テキストにフォールバック)
+- **useObservationReactions.ts**: activity 遷移・メディア/ゲーム検出・longIdle を AI-first に変更
+- システム通知 (update / error) は引き続き固定テキスト
+
+#### D: Active App デバッグ改善 (3秒遅延キャプチャ)
+
+- **observation/mod.rs**: `ActiveAppDebugInfo` に `hwnd_raw: u64` / `last_error_before: u32` を追加
+- **observation/mod.rs**: API 呼び出し前に `SetLastError(0)` を追加 (誤検出防止)
+- **TransparencyPage.tsx**: 「3秒後にキャプチャ」ボタン追加 (設定画面以外のウィンドウを前面にしてからキャプチャ)
+- **TransparencyPage.tsx**: HWND raw 値・pre-call LastError 値を表示
+
+#### E: ウィンドウリサイズ方式による当たり判定根本修正
+
+- **tauri.conf.json**: window height 300 → 180 (キャラクター領域のみ)
+- **lib.rs**: `resize_companion(speechVisible)` コマンド追加
+  - 吹き出し非表示: 200×180、表示中: 200×310 に動的リサイズ
+  - キャラクター底辺の画面座標を固定してリサイズ (位置ずれなし)
+  - `set_speech_visible` / `SPEECH_VISIBLE` AtomicBool を削除
+- **lib.rs**: hit test スレッド簡素化 — 常にウィンドウ全体を判定 (SPEECH_VISIBLE 分岐を削除)
+- **App.tsx**: `set_speech_visible` → `resize_companion` に変更
+- **App.tsx**: ドラッグ終了時の位置保存を吹き出し表示状態で補正 (charY を正確に保存)
+
+---
+
 ## [0.1.36] — 2026-05-12
 
 ### Fixed (Field QA Root Cause Fixes — Round 2)
