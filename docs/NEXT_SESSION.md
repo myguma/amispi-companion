@@ -152,10 +152,14 @@
 ✅ Memory Viewer UI (MemoryPage) - 削除後も表示が壊れない
 ✅ Character State Expression - thinking/speaking/sleep/waking CSS アニメーション
 ✅ VoiceUIState dot インジケーター (Character 内部)
-✅ OllamaProvider: 毎回 getSettings() から new OllamaProvider() — キャッシュしない
+✅ OllamaProvider: invoke("ollama_list_models") / invoke("ollama_chat") で Rust 経由 HTTP (CORS 回避)
 ✅ LastAIResultDebug: AIPage でデバッグ情報が表示される
 ✅ classify_app: self/communication カテゴリを含む拡充済みマッピング
 ✅ pointer-events: none (外側コンテナ) — インタラクティブ要素のみ auto
+✅ SPEECH_VISIBLE: 吹き出し非表示時はウィンドウ下部190pxのみ hit test 有効
+✅ set_speech_visible: App.tsx から tinyText/speechText 変化時に invoke
+✅ get_active_app_debug: フォアグラウンドプロセス取得の段階別デバッグ情報
+✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示
 ✅ cargo build が通ること
 ✅ npm run build が通ること
 ✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
