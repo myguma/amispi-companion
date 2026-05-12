@@ -6,7 +6,6 @@ import type { PermissionSettings } from "../../privacy/permissions";
 
 const YES = "✓";
 const NO = "×";
-const MAYBE = "□";
 
 function Row({ icon, label, note }: { icon: string; label: string; note?: string }) {
   return (
