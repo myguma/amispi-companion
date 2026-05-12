@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.1.43] — 2026-05-13
+
+### Fixed (Hotfix: Speech Bubble Relative Anchor)
+
+#### A: 吹き出しがwindow上端に離れすぎる問題を修正
+
+- **実機確認結果**: v0.1.42 で通常idle、drag、speech表示時のキャラbottom anchorは改善した
+- **残問題**: キャラ自体は沈んでいないが、吹き出しがwindow上部に出すぎてキャラと大きく離れていた
+- **原因**: v0.1.42でキャラは `character-stage` の absolute bottom anchor になったが、speech bubble / TinyWhisper は `top: 10` のwindow top anchorのままだった
+  - expanded window内で、キャラと吹き出しが別々の基準点を持っていた
+- **companionLayout.ts**: `SPEECH_BUBBLE_GAP = 8` / `SPEECH_BUBBLE_HIT_H = 96` を追加
+- **App.tsx**: speech layer を `top: 10` から `bottom: bottomPad + characterH + gap` へ変更
+  - 吹き出しとTinyWhisperをキャラ頭上付近に表示
+  - root `100vw / 100vh` と character-stage bottom anchor は維持
+- **App.tsx**: DEV layout debug に speech layer bbox を追加
+
+#### B: Rust hit test の bubble 判定をキャラ相対へ変更
+
+- **lib.rs**: bubble hit area をwindow上端基準から `char_top - gap` 基準へ変更
+- tail部分もクリック可能にするため、bubble bottom側に小さな余白を許可
+- ContextMenu表示中のみ全域interactive、通常時は「吹き出し + キャラ楕円」の設計を維持
+- 吹き出し非表示時の上部透明領域 click-through は維持
+
+#### C: v0.1.42 の改善を維持
+
+- root `100vw / 100vh`
+- `character-stage` absolute bottom anchor
+- `resize_companion` 拡大時 `set_position → set_size`
+- drag reaction 遅延
+- v0.1.41 の Character実描画 sizeScale 同期
+- ContextMenu / Active App / Ollama / Transparency UI は変更なし
+
 ## [0.1.42] — 2026-05-13
 
 ### Fixed (Hotfix: Speech Resize Bottom Anchor)

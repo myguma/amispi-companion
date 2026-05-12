@@ -29,6 +29,10 @@ const CHARACTER_SPRITE_W_LOGICAL: f64 = 160.0;
 const CHARACTER_SPRITE_H_LOGICAL: f64 = 160.0;
 #[cfg(windows)]
 const CHARACTER_BOTTOM_PAD_LOGICAL: f64 = 24.0;
+#[cfg(windows)]
+const SPEECH_BUBBLE_GAP_LOGICAL: f64 = 8.0;
+#[cfg(windows)]
+const SPEECH_BUBBLE_HIT_H_LOGICAL: f64 = 96.0;
 
 static CONTEXT_MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
 
@@ -266,20 +270,23 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                     let lx = (cx - pos.x) as f64;
                     let ly = (cy - pos.y) as f64;
                     let char_h = CHAR_WINDOW_H_LOGICAL * ui_scale * scale;
-                    let bubble_h = BUBBLE_WINDOW_H_LOGICAL * ui_scale * scale;
                     let sprite_w = CHARACTER_SPRITE_W_LOGICAL * ui_scale * scale;
                     let sprite_h = CHARACTER_SPRITE_H_LOGICAL * ui_scale * scale;
                     let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * ui_scale * scale;
+                    let bubble_gap = SPEECH_BUBBLE_GAP_LOGICAL * ui_scale * scale;
+                    let bubble_hit_h = SPEECH_BUBBLE_HIT_H_LOGICAL * ui_scale * scale;
                     let unit = ui_scale * scale;
                     let speech_visible = size.height as f64 > char_h + (8.0 * unit);
 
+                    let char_top = size.height as f64 - bottom_pad - sprite_h;
+                    let bubble_bottom = char_top - bubble_gap;
+                    let bubble_top = (bubble_bottom - bubble_hit_h).max(0.0);
                     let bubble_hit = speech_visible
-                        && ly >= 8.0 * unit
-                        && ly <= bubble_h - 8.0 * unit
+                        && ly >= bubble_top
+                        && ly <= bubble_bottom + (10.0 * unit)
                         && lx >= 8.0 * unit
                         && lx <= size.width as f64 - 8.0 * unit;
 
-                    let char_top = size.height as f64 - bottom_pad - sprite_h;
                     let center_x = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale) / 2.0;
                     let center_y = char_top + sprite_h * 0.52;
                     let rx = sprite_w * 0.39;

@@ -6,8 +6,44 @@
 > v0.1.40 では v0.1.39 実機確認で残った character clipping / ContextMenu clipping を hotfix。
 > v0.1.41 では v0.1.40 実機確認で残った character rendering anchor / scale 不一致を hotfix。
 > v0.1.42 では v0.1.41 実機確認で残った speech表示時の沈み込みを hotfix。
+> v0.1.43 では v0.1.42 実機確認で残った speech bubble のwindow top寄りすぎを hotfix。
 
-**更新: 2026-05-13 (v0.1.42)**
+**更新: 2026-05-13 (v0.1.43)**
+
+---
+
+## v0.1.43 での修正内容 (実機確認待ち)
+
+### 問題L: キャラは沈んでいないが、吹き出しがwindow上端に出すぎる
+
+**v0.1.42 の状態:**
+- drag時にキャラが沈む問題は改善
+- 通常idleではキャラは切れていない
+- 吹き出し表示時もキャラ位置自体は維持されている
+- ただし吹き出しがwindow上部に出すぎて、キャラと大きく離れる
+
+**原因:**
+1. v0.1.42 でキャラは `character-stage` の absolute bottom anchor になった
+2. しかし speech bubble / TinyWhisper は `top: 10` のwindow top anchorのままだった
+3. expanded window内でキャラと吹き出しの基準点が分離し、吹き出しだけ上へ離れていた
+
+**v0.1.43 での修正:**
+- `src/constants/companionLayout.ts` に `SPEECH_BUBBLE_GAP = 8` / `SPEECH_BUBBLE_HIT_H = 96` を追加
+- `src/App.tsx`:
+  - speech layerを `top: 10` から `bottom: bottomPad + characterH + gap` へ変更
+  - TinyWhisperも同じキャラ頭上基準へ移動
+  - DEV debugに speech layer bbox を追加
+- `src-tauri/src/lib.rs`:
+  - `bubble_hit` をwindow上端基準から `char_top - gap` 基準へ変更
+  - tail部分を含めてクリック可能にするため、bubble bottom側に小さな余白を許可
+- v0.1.42 の root `100vw/100vh`、character bottom anchor、resize順序修正、drag reaction遅延は維持
+- ContextMenu / Active App / hit area / Ollama は維持
+
+**実機確認手順:**
+1. 吹き出しがキャラの頭上付近に出るか確認
+2. 吹き出しがwindow上端に離れすぎて出ないか確認
+3. 吹き出し表示時にキャラが下に沈まないか確認
+4. ドラッグ後の反応吹き出し位置が自然か確認
 
 ---
 

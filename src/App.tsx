@@ -22,6 +22,7 @@ import {
   COMPANION_COMPACT_H,
   COMPANION_WINDOW_W,
   CONTEXT_MENU_H,
+  SPEECH_BUBBLE_GAP,
   normalizeCompanionScale,
 } from "./constants/companionLayout";
 import { useSettings } from "./settings/store";
@@ -58,6 +59,7 @@ export default function App() {
   const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const characterStageRef = useRef<HTMLDivElement | null>(null);
+  const speechLayerRef = useRef<HTMLDivElement | null>(null);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -206,6 +208,7 @@ export default function App() {
   const windowW = Math.round(COMPANION_WINDOW_W * scale);
   const windowH = Math.round((hasSpeech ? COMPANION_COMPACT_H + COMPANION_BUBBLE_H : COMPANION_COMPACT_H) * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
+  const speechBubbleGap = Math.round(SPEECH_BUBBLE_GAP * scale);
   const menuSafeH = Math.round(CONTEXT_MENU_H * scale);
 
   const contextMenuVisible = contextMenu !== null;
@@ -223,6 +226,7 @@ export default function App() {
 
     const logLayout = (phase: string) => {
       const stageRect = characterStageRef.current?.getBoundingClientRect();
+      const speechLayerRect = speechLayerRef.current?.getBoundingClientRect();
       const wrapperRect = document.querySelector(".character-wrapper")?.getBoundingClientRect();
       const viewport = window.visualViewport;
       console.log("[companion-layout-debug]", {
@@ -235,7 +239,8 @@ export default function App() {
         clientWidth: document.documentElement.clientWidth,
         clientHeight: document.documentElement.clientHeight,
         visualViewport: viewport ? { width: viewport.width, height: viewport.height } : null,
-        computed: { windowW, windowH, characterW, characterH, bottomPad },
+        computed: { windowW, windowH, characterW, characterH, bottomPad, speechBubbleGap },
+        speechLayerRect,
         stageRect,
         wrapperRect,
       });
@@ -247,7 +252,7 @@ export default function App() {
       cancelAnimationFrame(raf);
       clearTimeout(timer);
     };
-  }, [hasSpeech, isDragging, scale, windowW, windowH, characterW, characterH, bottomPad]);
+  }, [hasSpeech, isDragging, scale, windowW, windowH, characterW, characterH, bottomPad, speechBubbleGap]);
 
   return (
     <div
@@ -267,8 +272,11 @@ export default function App() {
 
       {/* 吹き出し: コンテンツがある時だけ pointer-events: auto */}
       {(tinyText || speechText) && (
-        <div style={{
-          position: "absolute", top: 10, left: 0, right: 0,
+        <div ref={speechLayerRef} style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: bottomPad + characterH + speechBubbleGap,
           display: "flex", justifyContent: "center", padding: "0 8px",
           pointerEvents: "auto",
         }}>

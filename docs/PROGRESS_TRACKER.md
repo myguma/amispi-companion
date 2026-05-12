@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.42)**
+**最終更新: 2026-05-13 (v0.1.43)**
 
 ---
 
@@ -20,13 +20,13 @@
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 79% | speech resize時のviewport bottom anchor修正。実機確認待ち |
+| キャラクター表現 | 79% | speech bubbleをキャラ頭上基準へ変更。実機確認待ち |
 | 設定 UI | 93% | TabErrorBoundary追加・TransparencyPage 防御的描画 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 96% | 通常時は吹き出し+キャラ楕円、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 76% | v0.1.42 hotfix docs更新 |
+| リリース品質 (docs) | 77% | v0.1.43 hotfix docs更新 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~78%** | v0.1.42 Hotfix 実装完了。speech沈み込みは実機確認前なので控えめ評価 |
+| **総合** | **~78%** | v0.1.43 Hotfix 実装完了。吹き出し位置は実機確認前なので控えめ評価 |
 
 ---
 
@@ -50,6 +50,7 @@
 | v0.1.40 | Hotfix: 280px character layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp |
 | v0.1.41 | Hotfix: Character実描画サイズをsizeScaleへ同期・visual bottom anchor修正・React/Rust hit bbox整合 |
 | v0.1.42 | Hotfix: speech resize bottom anchor・root viewport基準化・resize拡大順序修正・drag中speech resize抑制 |
+| v0.1.43 | Hotfix: speech bubbleをwindow top基準からcharacter-stage上基準へ変更・bubble hit test整合 |
 
 ---
 
@@ -64,10 +65,10 @@
 
 ---
 
-## 次の目標: v0.1.43 候補
+## 次の目標: v0.1.44 候補
 
-優先候補A: **v0.1.42 実機確認 → First-run Onboarding** ← **推奨**
-- 通常表示、speech表示、drag中/drag後、ContextMenu見切れ、透明余白クリック、Active App を確認
+優先候補A: **v0.1.43 実機確認 → First-run Onboarding** ← **推奨**
+- 吹き出しがキャラ頭上付近に出るか、ContextMenu / click-through / drag / voice / Ollama / Active App が維持されているか確認
 - 問題なければ First-run Onboarding に進む
 
 優先候補B: **残QA修正**

@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.42)**
+**最終更新: 2026-05-13 (v0.1.43)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.42
-**フェーズ:** Hotfix — Speech Resize Bottom Anchor 完了 (実機確認待ち)
+**バージョン:** v0.1.43
+**フェーズ:** Hotfix — Speech Bubble Relative Anchor 完了 (実機確認待ち)
 **全体進捗:** 約 78%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.42)
-✅ cargo build  → Finished dev profile (v0.1.42)
-✅ GitHub Actions / Windows Installer → v0.1.41 成功済み。v0.1.42 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.43)
+✅ cargo build  → Finished dev profile (v0.1.43)
+✅ GitHub Actions / Windows Installer → v0.1.42 成功済み。v0.1.43 は tag push 後に確認
 ```
 
 ---
@@ -49,6 +49,7 @@
 | Hotfix: Character/ContextMenu | 280px layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp | ✅ v0.1.40 |
 | Hotfix: Character Rendering Anchor | Character実描画サイズをsizeScaleに同期・visual bottom anchor明確化 | ✅ v0.1.41 |
 | Hotfix: Speech Resize Bottom Anchor | rootをviewport基準化・character-stage absolute bottom anchor・resize拡大順序修正 | ✅ v0.1.42 |
+| Hotfix: Speech Bubble Relative Anchor | speech bubbleをwindow top基準からキャラ頭上基準へ変更 | ✅ v0.1.43 |
 
 ---
 
@@ -280,20 +281,45 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.43)
+## v0.1.43 実装詳細
 
-### 優先候補 A: v0.1.42 実機確認 ← **最優先**
+### A: speech bubble relative anchor 修正
 
-1. キャラが下にめり込まないか
-2. ドラッグしても画像が切れないか
-3. 吹き出し表示時もキャラが沈まないか
-4. キャラ上部/中央/下部どこで右クリックしてもメニューが見切れないか
-5. `アプリ終了` が普通にクリックできるか
+- v0.1.42 実機確認で、キャラ位置は維持されているが吹き出しがwindow上端に出すぎることが判明
+- 原因は、キャラが bottom anchor になった一方、speech bubble / TinyWhisper が `top: 10` のwindow top anchorのままだったこと
+- `src/constants/companionLayout.ts`:
+  - `SPEECH_BUBBLE_GAP = 8`
+  - `SPEECH_BUBBLE_HIT_H = 96`
+- `src/App.tsx`:
+  - speech layerを `top: 10` から `bottom: bottomPad + characterH + gap` へ変更
+  - DEV debugに speech layer bbox を追加
+- `src-tauri/src/lib.rs`:
+  - bubble hit areaをwindow上端基準から `char_top - gap` 基準へ変更
+  - ContextMenu中のみ全域interactive、通常時は吹き出し + キャラ楕円の設計を維持
+
+### B: 維持したもの
+
+- v0.1.42 の root `100vw / 100vh`
+- `character-stage` absolute bottom anchor
+- `resize_companion` 拡大時 `set_position → set_size`
+- drag reaction 遅延
+- v0.1.41 の Character実描画 sizeScale 同期
+- ContextMenu / Active App / Ollama / Transparency UI
+
+---
+
+## 次のフェーズ候補 (v0.1.44)
+
+### 優先候補 A: v0.1.43 実機確認 ← **最優先**
+
+1. 吹き出しがキャラの頭上付近に出るか
+2. 吹き出しがwindow上端に離れすぎて出ないか
+3. 吹き出し表示時にキャラが下に沈まないか
+4. ドラッグ後の反応吹き出し位置が自然か
+5. 右クリックメニューが見切れないか
 6. 吹き出し非表示時、上部透明領域で背面URLをクリックできるか
-7. PNG透明余白クリックが前より背面に通りやすいか
-8. キャラ本体クリック / drag / voice long press が動くか
-9. Ollama返答が自然なままか
-10. Active App取得が引き続き動くか
+7. キャラ本体クリック / drag / voice long press が動くか
+8. Ollama返答とActive App取得が壊れていないか
 
 ### 優先候補 B: First-run Onboarding
 
