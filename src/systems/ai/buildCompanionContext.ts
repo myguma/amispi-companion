@@ -41,10 +41,10 @@ export function buildCompanionContext(
  * CompanionContext から既存の AIProviderInput に変換する互換レイヤー。
  * Phase 2 で OllamaProvider が CompanionContext を直接受け取るまでのブリッジ。
  */
-export function contextToProviderInput(ctx: CompanionContext) {
+export function contextToProviderInput(ctx: CompanionContext): AIProviderInput {
   const { observation: obs, activityInsight, speechSettings: sp } = ctx;
   return {
-    trigger: ctx.trigger as string,
+    trigger: "manualCall",
     runtimeContext: {
       nowLocal: new Date().toLocaleString("ja-JP"),
       activity: activityInsight.kind,
