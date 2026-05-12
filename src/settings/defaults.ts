@@ -11,7 +11,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   suppressWhenGamingLikely: true,
 
   cryEnabled: true,
-  volume: 0.4,
+  volume: 0.15,
 
   autonomousMovementEnabled: true,
   movementFrequency: "low",
