@@ -211,6 +211,7 @@ export function Character({
         height: config.height,
         cursor: "pointer",
         position: "relative",
+        pointerEvents: "none",
         transform: facingRight ? "scaleX(-1)" : undefined,
         transition: "transform 0.1s ease",
       }}

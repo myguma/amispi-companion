@@ -10,24 +10,28 @@ use std::collections::HashMap;
 // ──────────────────────────────────────────
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct IdleInfo {
     pub idle_ms: u64,
     pub input_active_recently: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ActiveAppInfo {
     pub process_name: String,
     pub category: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ActiveWindowInfo {
     pub title_redacted: Option<String>,
     pub included: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct FolderSummary {
     pub folder_kind: String,
     pub file_count: usize,
@@ -41,12 +45,14 @@ pub struct FolderSummary {
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct FolderSnapshots {
     pub desktop: Option<FolderSummary>,
     pub downloads: Option<FolderSummary>,
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct SystemInfo {
     pub cpu_load: Option<f32>,
     pub memory_load: Option<f32>,
@@ -55,6 +61,7 @@ pub struct SystemInfo {
 /// フォアグラウンドプロセス取得の詳細デバッグ情報
 /// 実機でどの段階で失敗しているかを UI に表示するために使う
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ActiveAppDebugInfo {
     pub platform: String,
     pub hwnd_available: bool,
@@ -74,6 +81,7 @@ pub struct ActiveAppDebugInfo {
 
 /// バックグラウンドメディア再生の推定情報
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct MediaContext {
     /// 何らかのメディアアプリが起動中か
     pub audio_likely_active: bool,
@@ -84,6 +92,7 @@ pub struct MediaContext {
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct PrivacyMeta {
     pub permission_level: u8,
     pub title_included: bool,
@@ -93,6 +102,7 @@ pub struct PrivacyMeta {
 }
 
 #[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ObservationSnapshot {
     pub timestamp: String,
     pub idle: IdleInfo,
@@ -722,4 +732,3 @@ fn chrono_timestamp() -> String {
     let day = yd % 30 + 1;
     format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z", year, month.min(12), day.min(31), h, m, s)
 }
-

@@ -2,8 +2,88 @@
 
 > v0.1.35 Field QA Fixes で修正を試みたが、実機では一部問題が残存。
 > v0.1.36 Field QA Root Cause Fixes でさらに根本原因に対処した。
+> v0.1.39 では v0.1.38 実機確認で残った character layout / hit area / foreground debug を hotfix。
 
-**更新: 2026-05-12 (v0.1.36)**
+**更新: 2026-05-13 (v0.1.39)**
+
+---
+
+## v0.1.39 での修正内容 (実機確認待ち)
+
+### 問題E: キャラ下部がウィンドウ下端にめり込む/切れる
+
+**v0.1.38 の状態:**
+- 設定画面白画面と Ollama 返答品質は改善
+- ただし companion compact window が 220px のままで、状態アニメーションや voice dot の余白を含めると下端に余裕が少ない
+- ドラッグ時や吹き出し表示時にキャラ下部が沈んで見える
+
+**v0.1.39 での修正:**
+- 初期/compact window height を 240px に変更
+- `App.tsx` と `resize_companion` の高さを 200×240 / 200×370 に統一
+- 160px sprite + bottom padding 16px + 状態アニメーション余白を compact window 内に収める
+- drag 終了時の保存座標は補正せず、`resize_companion` の bottom anchor 方式を維持
+
+**実機確認手順:**
+1. 通常表示でキャラ下部が切れないか確認
+2. キャラをドラッグして、移動中/移動後に下端が切れないか確認
+3. クリックして吹き出し表示中もキャラが下へ沈まないか確認
+
+### 問題F: PNG透明余白が背面クリックを邪魔する
+
+**v0.1.38 の状態:**
+- 吹き出し非表示時の上部透明領域クリックは改善
+- ただし PNG 画像矩形の透明部分はクリックを吸う
+
+**v0.1.39 での修正:**
+- PNG の透明余白は最大 7px 程度で、アセットトリミング効果は限定的と判断
+- DOM 側で sprite 描画レイヤーと楕円 hit target を分離
+- Windows hit test 側も「ウィンドウ全体」ではなく「吹き出し領域 + キャラ楕円」のみを interactive に変更
+
+**限界:**
+- 完全なピクセル単位透過ではない
+- 必要なら将来 Rust 側で alpha mask / per-pixel hit test を実装する
+
+**実機確認手順:**
+1. キャラの透明余白付近をクリックし、以前より背面に通りやすいか確認
+2. キャラ本体クリックが反応するか確認
+3. drag と voice long press が楕円 hit target 内で動くか確認
+
+### 問題G: Active App Raw Debug が `raw=N/A`
+
+**v0.1.38 の状態:**
+- 3秒後キャプチャでも全項目が X
+- `hwnd X(raw=N/A)` で、Rust側で値がないのか TS側で受け取れていないのか不明
+
+**v0.1.39 での修正:**
+- Rust Serialize struct に `#[serde(rename_all = "camelCase")]` を追加
+- TS 側も snake_case / camelCase 両対応で normalize
+- `hwndRaw` 未受信と `GetForegroundWindow=0` を区別して表示
+- raw JSON preview と console log を追加
+- 3秒後キャプチャの説明を「対象ウィンドウをクリックしてアクティブ化」に変更
+
+**実機確認手順:**
+1. 設定 → 透明性タブを開く
+2. 「3秒後にキャプチャ」を押す
+3. 3秒以内に Chrome / VSCode / Bitwig 等をクリックして前面化する
+4. raw JSON、`hwndRaw`、`pid`、`processName`、`errorStage` を確認
+5. `hwndRaw: NULL(0)` なら GetForegroundWindow 自体が 0。`フィールド未受信` なら serde/型問題が残っている
+
+**OS側API最小確認用 PowerShell:**
+
+```powershell
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class Fg {
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+}
+"@
+$hwnd = [Fg]::GetForegroundWindow()
+$pid = 0
+[Fg]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
+"hwnd=$hwnd pid=$pid process=$((Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName)"
+```
 
 ---
 

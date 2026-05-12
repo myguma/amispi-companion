@@ -369,6 +369,22 @@ html,
    ドラッグハンドル
    ============================================================ */
 
+.character-stage {
+  flex-shrink: 0;
+}
+
+.character-hit-target {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 78%;
+  height: 92%;
+  transform: translate(-50%, -48%);
+  border-radius: 48% 48% 44% 44%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
 .drag-handle {
   cursor: grab;
 }

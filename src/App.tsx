@@ -24,6 +24,10 @@ import "./styles/index.css";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const OBSERVE_INTERVAL_MS = 30_000;
+const WINDOW_W = 200;
+const CHAR_WINDOW_H = 240;
+const BUBBLE_WINDOW_H = 130;
+const CHARACTER_BOTTOM_PAD = 16;
 
 export default function App() {
   const [settings] = useSettings();
@@ -180,7 +184,7 @@ export default function App() {
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 吹き出し表示状態に応じてウィンドウをリサイズ
-  // 非表示: 200×220 (キャラのみ) / 表示中: 200×350 (吹き出し+キャラ)
+  // 非表示: 200×240 (キャラのみ) / 表示中: 200×370 (吹き出し+キャラ)
   // キャラ底辺を固定してリサイズするため、画面上の位置は変わらない
   const hasSpeech = !!(tinyText || speechText);
 
@@ -189,11 +193,12 @@ export default function App() {
     void invoke("resize_companion", { speechVisible: hasSpeech });
   }, [hasSpeech]);
 
-  const CHAR_H = 220;
-  const BUBBLE_H = 130;
   const scale = settings.sizeScale ?? 1;
-  const windowW = Math.round(200 * scale);
-  const windowH = Math.round((hasSpeech ? CHAR_H + BUBBLE_H : CHAR_H) * scale);
+  const characterW = Math.round(DEFAULT_CHARACTER_CONFIG.width * scale);
+  const characterH = Math.round(DEFAULT_CHARACTER_CONFIG.height * scale);
+  const windowW = Math.round(WINDOW_W * scale);
+  const windowH = Math.round((hasSpeech ? CHAR_WINDOW_H + BUBBLE_WINDOW_H : CHAR_WINDOW_H) * scale);
+  const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
 
   return (
     <div
@@ -205,7 +210,7 @@ export default function App() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-end",
-        paddingBottom: 12,
+        paddingBottom: bottomPad,
         position: "relative",
         // 透明領域がバックグラウンドクリックを奪わないよう none に設定。
         // インタラクティブな要素 (キャラ/吹き出し) だけ auto で上書きする。
@@ -230,12 +235,15 @@ export default function App() {
       )}
 
       <div
-        className="drag-handle"
-        onMouseDown={(e) => { onDragStart(e); handlePttDown(); }}
-        onMouseUp={handlePttUp}
-        onMouseLeave={handlePttUp}
-        onContextMenu={handleContextMenu}
-        style={{ position: "relative", pointerEvents: "auto" }}
+        className="character-stage"
+        style={{
+          width: characterW,
+          height: characterH,
+          position: "relative",
+          pointerEvents: "none",
+          overflow: "visible",
+          flex: "0 0 auto",
+        }}
       >
         <Character
           state={state}
@@ -244,6 +252,15 @@ export default function App() {
           isDragging={isDragging}
           facingRight={facingRight}
           voiceUIState={voiceUIState}
+        />
+        <div
+          className="character-hit-target drag-handle"
+          onMouseDown={(e) => { onDragStart(e); handlePttDown(); }}
+          onMouseUp={handlePttUp}
+          onMouseLeave={handlePttUp}
+          onClick={handleCharacterClick}
+          onContextMenu={handleContextMenu}
+          aria-label="character"
         />
       </div>
 

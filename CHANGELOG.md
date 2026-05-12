@@ -1,5 +1,51 @@
 # Changelog
 
+## [0.1.39] — 2026-05-13
+
+### Fixed (Hotfix: Character Layout, Transparent Hit Area, Foreground Debug)
+
+#### A: キャラクター下端のめり込み/切れを修正
+
+- **tauri.conf.json**: companion 初期ウィンドウ高さを 220 → 240 論理pxに変更
+- **lib.rs**: `CHAR_WINDOW_H_LOGICAL` を 240 に統一し、`resize_companion` の compact/expanded 高さを 240 / 370 に変更
+- **App.tsx**: ウィンドウ高さ、キャラクター描画枠、下端 padding を定数化
+  - 160px スプライト + 状態アニメーション + voice dot + 下端余白が 240px 内に収まるよう調整
+  - 吹き出し表示時も Rust 側 resize と App 側 layout が同じ論理px体系になるよう揃えた
+- ドラッグ終了時の保存座標は v0.1.38 の「ウィンドウ上端をそのまま保存」を維持
+  - `resize_companion` が下端 anchor でリサイズするため、保存座標の追加補正は入れない
+
+#### B: PNG透明部分クリック判定の現実的改善
+
+- **App.tsx / Character.tsx / index.css**: キャラクター描画レイヤーと hit target レイヤーを分離
+  - sprite 本体は `pointer-events: none`
+  - クリック/drag/voice long press はキャラ本体に近い楕円状 hit target で受ける
+  - 画像矩形全体ではなく、実体に近い範囲だけが DOM のクリック対象になる
+- **lib.rs**: Windows の cursor hit test をウィンドウ矩形全体から「吹き出し領域 + キャラ楕円」に変更
+  - キャラPNGの透明余白や上部透明領域では `set_ignore_cursor_events(true)` になり、背面クリックが通りやすくなる
+  - 完全なピクセル単位 alpha hit test は未実装。必要なら将来 Rust 側 alpha mask で対応
+
+#### C: Active App Raw Foreground Debug 改善
+
+- **observation/mod.rs**: 観測系 Serialize struct に `#[serde(rename_all = "camelCase")]` を追加
+  - `hwnd_raw` → `hwndRaw`
+  - `process_name` → `processName`
+  - `active_app` → `activeApp`
+  - `fullscreen_likely` → `fullscreenLikely`
+- **TransparencyPage.tsx**: debug 結果を snake_case / camelCase 両対応で normalize
+  - `undefined` と `0` を区別し、`hwndRaw` 未受信は「フィールド未受信」、0 は `NULL(0)` と表示
+  - raw JSON preview と `console.log("[active-app-debug]", data)` を追加
+  - 3秒後キャプチャの説明を「3秒以内に対象ウィンドウをクリックしてアクティブ化」に明確化
+
+#### D: Ollama 返答品質は維持
+
+- PromptBuilder / QualityFilter / Ollama default URL は変更なし
+- `source: ollama` の改善、`http://127.0.0.1:11434` default、時刻偏重抑制は維持
+
+### Notes
+
+- v0.1.38 で解決した設定画面白画面対策 (SettingsApp ErrorBoundary / TransparencyPage defensive rendering) は維持
+- 実機確認前の進捗は控えめに更新。キャラ切れと hit target が実機で改善したら次フェーズへ進む
+
 ## [0.1.38] — 2026-05-13
 
 ### Fixed (Hotfix: Settings Crash, Character Clipping, AI Reply Repetition)

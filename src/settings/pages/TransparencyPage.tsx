@@ -29,6 +29,8 @@ type ActiveAppDebugInfo = {
   isSelfApp: boolean;
 };
 
+type RawActiveAppDebugInfo = Partial<ActiveAppDebugInfo> & Record<string, unknown>;
+
 const YES = "✓";
 const NO  = "×";
 
@@ -118,13 +120,48 @@ function errorStageLabel(stage: string, code: number): string {
     open_process_failed: "プロセスハンドル取得失敗 (OpenProcess)",
     query_name_failed:   "プロセス名取得失敗 (QueryFullProcessImageNameW)",
     unsupported_platform:"非Windowsプラットフォーム",
+    missing_field:       "デバッグ結果の必須フィールド未受信",
   };
   const label = labels[stage] ?? stage;
   return code > 0 ? `${label} (Win32エラー: ${code})` : label;
 }
 
+function pickBool(raw: RawActiveAppDebugInfo, camel: keyof ActiveAppDebugInfo, snake: string): boolean {
+  return Boolean(raw[camel] ?? raw[snake] ?? false);
+}
+
+function pickNumber(raw: RawActiveAppDebugInfo, camel: keyof ActiveAppDebugInfo, snake: string): number | undefined {
+  const value = raw[camel] ?? raw[snake];
+  return typeof value === "number" ? value : undefined;
+}
+
+function pickString(raw: RawActiveAppDebugInfo, camel: keyof ActiveAppDebugInfo, snake: string): string {
+  const value = raw[camel] ?? raw[snake];
+  return typeof value === "string" ? value : "";
+}
+
+function normalizeDebugInfo(raw: RawActiveAppDebugInfo): ActiveAppDebugInfo {
+  return {
+    platform: pickString(raw, "platform", "platform") || "?",
+    hwndAvailable: pickBool(raw, "hwndAvailable", "hwnd_available"),
+    hwndRaw: pickNumber(raw, "hwndRaw", "hwnd_raw") ?? -1,
+    pid: pickNumber(raw, "pid", "pid") ?? 0,
+    pidAvailable: pickBool(raw, "pidAvailable", "pid_available"),
+    openProcessOk: pickBool(raw, "openProcessOk", "open_process_ok"),
+    queryNameOk: pickBool(raw, "queryNameOk", "query_name_ok"),
+    processName: pickString(raw, "processName", "process_name"),
+    processPathLen: pickNumber(raw, "processPathLen", "process_path_len") ?? 0,
+    category: pickString(raw, "category", "category") || "unknown",
+    errorStage: pickString(raw, "errorStage", "error_stage") || "missing_field",
+    errorCode: pickNumber(raw, "errorCode", "error_code") ?? 0,
+    lastErrorBefore: pickNumber(raw, "lastErrorBefore", "last_error_before") ?? 0,
+    isSelfApp: pickBool(raw, "isSelfApp", "is_self_app"),
+  };
+}
+
 function ActiveAppDebugPanel() {
   const [info, setInfo] = useState<ActiveAppDebugInfo | null>(null);
+  const [rawInfo, setRawInfo] = useState<RawActiveAppDebugInfo | null>(null);
   const [fetching, setFetching] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
   const fetchingRef  = useRef(false);
@@ -135,9 +172,13 @@ function ActiveAppDebugPanel() {
     fetchingRef.current = true;
     setFetching(true);
     try {
-      const d = await invoke<ActiveAppDebugInfo>("get_active_app_debug");
-      setInfo(d);
-    } catch { /* サイレント */ }
+      const d = await invoke<RawActiveAppDebugInfo>("get_active_app_debug");
+      console.log("[active-app-debug]", d);
+      setRawInfo(d);
+      setInfo(normalizeDebugInfo(d));
+    } catch (err) {
+      console.warn("[active-app-debug] failed", err);
+    }
     fetchingRef.current = false;
     setFetching(false);
   };
@@ -167,7 +208,7 @@ function ActiveAppDebugPanel() {
 
   // hwndRaw を安全に hex 表示するヘルパー
   const fmtHwnd = (v: number | undefined | null): string => {
-    if (v == null) return "N/A";
+    if (v == null || v < 0) return "フィールド未受信";
     if (v === 0) return "NULL(0)";
     return `0x${v.toString(16)}`;
   };
@@ -188,6 +229,7 @@ function ActiveAppDebugPanel() {
           <div>pid: {info.pidAvailable ? `✓ (${info.pid})` : "✗"}</div>
           <div>OpenProcess: {info.openProcessOk ? "✓" : "✗"}</div>
           <div>QueryName: {info.queryNameOk ? "✓" : "✗"}</div>
+          <div>pathLen: {info.processPathLen}</div>
           {info.lastErrorBefore != null && info.lastErrorBefore > 0 && (
             <div style={{ color: "#e08030" }}>pre-call LastError: {info.lastErrorBefore}</div>
           )}
@@ -220,9 +262,19 @@ function ActiveAppDebugPanel() {
       </div>
       {countdown !== null && (
         <div style={{ color: "#f0a030", marginTop: 4 }}>
-          他のウィンドウに切り替えてください…
+          3秒以内に確認したいウィンドウをクリックして、キーボード入力を受ける一番手前の状態にしてください。最大化は不要です。
         </div>
       )}
+      <details style={{ marginTop: 8 }}>
+        <summary style={{ cursor: "pointer", color: "#a06010" }}>raw JSON</summary>
+        <pre style={{
+          marginTop: 4, padding: 8, background: "rgba(255,255,255,0.7)",
+          border: "1px solid #f0d8b8", borderRadius: 6, overflowX: "auto",
+          whiteSpace: "pre-wrap", wordBreak: "break-word",
+        }}>
+          {rawInfo ? JSON.stringify(rawInfo, null, 2) : "null"}
+        </pre>
+      </details>
     </div>
   );
 }

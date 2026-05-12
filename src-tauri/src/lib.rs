@@ -14,10 +14,19 @@ mod settings;
 // ウィンドウリサイズ (吹き出し表示/非表示で動的変更)
 // ──────────────────────────────────────────────────────────
 
-/// キャラクター領域の論理ピクセル高さ (吹き出し非表示時のウィンドウ高さ)
-const CHAR_WINDOW_H_LOGICAL: f64 = 220.0;
+/// キャラクター領域の論理ピクセル高さ (吹き出し非表示時のウィンドウ高さ)。
+/// 160px スプライト + 状態アニメーションの上下余白 + 下端パディングを収める。
+const CHAR_WINDOW_H_LOGICAL: f64 = 240.0;
 /// 吹き出し領域の論理ピクセル高さ
 const BUBBLE_WINDOW_H_LOGICAL: f64 = 130.0;
+#[cfg(windows)]
+const COMPANION_WINDOW_W_LOGICAL: f64 = 200.0;
+#[cfg(windows)]
+const CHARACTER_SPRITE_W_LOGICAL: f64 = 160.0;
+#[cfg(windows)]
+const CHARACTER_SPRITE_H_LOGICAL: f64 = 160.0;
+#[cfg(windows)]
+const CHARACTER_BOTTOM_PAD_LOGICAL: f64 = 16.0;
 
 /// 吹き出し表示状態に応じてウィンドウをリサイズする
 /// scale_factor() で論理→物理ピクセルを変換してから設定するため DPI に対応する
@@ -140,13 +149,43 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
             let Ok(pos) = window.outer_position() else { continue };
             let Ok(size) = window.outer_size() else { continue };
 
-            // ウィンドウが動的リサイズされるため、常にその時点のサイズ全体を判定領域とする
-            // 吹き出し非表示: 200×180, 吹き出し表示中: 200×310 (resize_companion が更新)
+            // 透明な WebView 矩形全体ではなく、実際に触れる UI 付近だけを有効化する。
+            // これによりキャラ画像の透明余白や上部の透明領域では背面をクリックできる。
             let in_window = cx >= pos.x
                 && cx < pos.x + size.width as i32
                 && cy >= pos.y
                 && cy < pos.y + size.height as i32;
-            let ignore = !in_window;
+            let interactive = if in_window {
+                let scale = window.scale_factor().unwrap_or(1.0);
+                let lx = (cx - pos.x) as f64;
+                let ly = (cy - pos.y) as f64;
+                let char_h = CHAR_WINDOW_H_LOGICAL * scale;
+                let bubble_h = BUBBLE_WINDOW_H_LOGICAL * scale;
+                let sprite_w = CHARACTER_SPRITE_W_LOGICAL * scale;
+                let sprite_h = CHARACTER_SPRITE_H_LOGICAL * scale;
+                let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * scale;
+                let speech_visible = size.height as f64 > char_h + (8.0 * scale);
+
+                let bubble_hit = speech_visible
+                    && ly >= 8.0 * scale
+                    && ly <= bubble_h - 8.0 * scale
+                    && lx >= 8.0 * scale
+                    && lx <= size.width as f64 - 8.0 * scale;
+
+                let char_top = size.height as f64 - bottom_pad - sprite_h;
+                let center_x = (COMPANION_WINDOW_W_LOGICAL * scale) / 2.0;
+                let center_y = char_top + sprite_h * 0.52;
+                let rx = sprite_w * 0.39;
+                let ry = sprite_h * 0.46;
+                let dx = (lx - center_x) / rx;
+                let dy = (ly - center_y) / ry;
+                let character_hit = dx * dx + dy * dy <= 1.0;
+
+                bubble_hit || character_hit
+            } else {
+                false
+            };
+            let ignore = !interactive;
             if ignore != last_ignore {
                 let _ = window.set_ignore_cursor_events(ignore);
                 last_ignore = ignore;
@@ -335,7 +374,7 @@ pub fn run() {
             if !restored {
                 if let Some(monitor) = window.current_monitor().ok().flatten() {
                     let screen = monitor.size();
-                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 180 });
+                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 240 });
                     let margin = 20i32;
                     let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                         x: screen.width as i32 - win.width as i32 - margin,
