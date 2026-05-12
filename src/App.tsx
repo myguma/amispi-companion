@@ -219,6 +219,7 @@ export default function App() {
         onMouseDown={(e) => { onDragStart(e); handlePttDown(); }}
         onMouseUp={handlePttUp}
         onMouseLeave={handlePttUp}
+        onContextMenu={handleContextMenu}
         style={{ position: "relative", pointerEvents: "auto" }}
       >
         <Character
