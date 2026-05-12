@@ -74,7 +74,7 @@
 
 ## 次のフェーズ (優先順)
 
-### Phase 6a — Voice Input Foundation ← **次に実装**
+### Phase 6b-real — Local STT 統合 ← **次に実装**
 
 目的: 本物の STT 統合はまだ行わない。設定・状態・導線・mock transcript まで。
 
