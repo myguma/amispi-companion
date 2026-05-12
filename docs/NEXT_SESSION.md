@@ -10,9 +10,9 @@
 
 ## 現在のステータス
 
-**バージョン:** v0.1.27
-**GitHub Actions / Windows Installer build:** ✅ 成功済み
-**フェーズ:** Phase 0〜5 完了、Phase 6a 実装中
+**バージョン:** v0.1.28
+**GitHub Actions / Windows Installer build:** v0.1.27 ✅ 成功済み (v0.1.28 は push 直後)
+**フェーズ:** Phase 0〜6a 完了、Phase 6b 準備済み
 
 ---
 
