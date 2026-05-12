@@ -1,4 +1,4 @@
-import type { AIProvider, AIProviderInput, AIProviderOutput, AIEngine } from "./types";
+import type { AIProvider, AIProviderOutput, AIEngine, CompanionContext } from "./types";
 import { MockProvider } from "./MockProvider";
 import { RuleProvider } from "./RuleProvider";
 import { OllamaProvider } from "./OllamaProvider";
