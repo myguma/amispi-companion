@@ -214,19 +214,21 @@ export function useCompanionState(
     let text: string | null = null;
     setVoiceUIState("voiceResponding");
 
-    if (policy.allowed) {
-      try {
-        const input  = contextToProviderInput(ctx);
-        const output = await getNewAIResponse(input);
-        if (output.shouldSpeak && output.text) text = output.text;
-      } catch {
-        // AI エラー → reaction fallback
+    try {
+      if (policy.allowed) {
+        try {
+          const output = await getNewAIResponse(ctx);
+          if (output.shouldSpeak && output.text) text = output.text;
+        } catch {
+          // AI エラー → reaction fallback
+        }
       }
-    }
 
-    text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
-    triggerSpeak(text);
-    setVoiceUIState("voiceReady");
+      text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+      triggerSpeak(text);
+    } finally {
+      setVoiceUIState("voiceReady");
+    }
   }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
