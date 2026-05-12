@@ -252,51 +252,66 @@ mod windows_impl {
     pub fn get_active_app_debug() -> super::ActiveAppDebugInfo {
         use super::ActiveAppDebugInfo;
         unsafe {
+            // 直前のエラーをクリアして誤検出を防ぐ
+            SetLastError(0);
+            let err_before = GetLastError();
+
             let hwnd = GetForegroundWindow();
+            let hwnd_raw = hwnd as u64;
+
             if hwnd.is_null() {
                 let code = GetLastError();
                 return ActiveAppDebugInfo {
                     platform: "windows".to_string(),
-                    hwnd_available: false, pid: 0, pid_available: false,
+                    hwnd_available: false, hwnd_raw,
+                    pid: 0, pid_available: false,
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
                     error_stage: "hwnd_null".to_string(),
-                    error_code: code, is_self_app: false,
+                    error_code: code, last_error_before: err_before,
+                    is_self_app: false,
                 };
             }
 
             let mut pid: u32 = 0;
+            SetLastError(0);
             GetWindowThreadProcessId(hwnd, &mut pid);
             if pid == 0 {
                 let code = GetLastError();
                 return ActiveAppDebugInfo {
                     platform: "windows".to_string(),
-                    hwnd_available: true, pid: 0, pid_available: false,
+                    hwnd_available: true, hwnd_raw,
+                    pid: 0, pid_available: false,
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
                     error_stage: "pid_zero".to_string(),
-                    error_code: code, is_self_app: false,
+                    error_code: code, last_error_before: err_before,
+                    is_self_app: false,
                 };
             }
 
+            SetLastError(0);
             let handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
             if handle.is_null() {
                 let code = GetLastError();
                 return ActiveAppDebugInfo {
                     platform: "windows".to_string(),
-                    hwnd_available: true, pid, pid_available: true,
+                    hwnd_available: true, hwnd_raw,
+                    pid, pid_available: true,
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
                     error_stage: "open_process_failed".to_string(),
-                    error_code: code, is_self_app: false,
+                    error_code: code, last_error_before: err_before,
+                    is_self_app: false,
                 };
             }
 
             let mut buf = vec![0u16; MAX_PATH as usize];
             let mut size = buf.len() as u32;
+            SetLastError(0);
             let ok = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, buf.as_mut_ptr(), &mut size);
             let code = if ok == 0 { GetLastError() } else { 0 };
             CloseHandle(handle);
@@ -304,12 +319,14 @@ mod windows_impl {
             if ok == 0 {
                 return ActiveAppDebugInfo {
                     platform: "windows".to_string(),
-                    hwnd_available: true, pid, pid_available: true,
+                    hwnd_available: true, hwnd_raw,
+                    pid, pid_available: true,
                     open_process_ok: true, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
                     error_stage: "query_name_failed".to_string(),
-                    error_code: code, is_self_app: false,
+                    error_code: code, last_error_before: err_before,
+                    is_self_app: false,
                 };
             }
 
@@ -326,13 +343,14 @@ mod windows_impl {
 
             ActiveAppDebugInfo {
                 platform: "windows".to_string(),
-                hwnd_available: true, pid, pid_available: true,
+                hwnd_available: true, hwnd_raw,
+                pid, pid_available: true,
                 open_process_ok: true, query_name_ok: true,
                 process_name,
                 process_path_len: path_len,
                 category,
                 error_stage: "ok".to_string(),
-                error_code: 0,
+                error_code: 0, last_error_before: err_before,
                 is_self_app: is_self,
             }
         }
