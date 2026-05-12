@@ -4,9 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CompanionState, StateConfig } from "../types/companion";
 import { DEFAULT_STATE_CONFIG } from "../types/companion";
-import { logEvent } from "../systems/memory/memoryStore";
-import { getAIResponse } from "../systems/ai/AIProvider";
-import { getRecentEvents } from "../systems/memory/memoryStore";
+import { logEvent, getRecentEvents } from "../systems/memory/memoryStore";
 import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
 import { selectReaction } from "../companion/reactions/selectReaction";
 import { recordReaction } from "../companion/reactions/reactionHistory";
@@ -16,6 +14,12 @@ import { cryEngine } from "../companion/audio/FileCryEngine";
 import type { ReactionTrigger } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
+import { getAIResponse as getNewAIResponse } from "../companion/ai/AIProviderManager";
+import { buildCompanionContext, contextToProviderInput } from "../systems/ai/buildCompanionContext";
+import { canSpeak } from "../companion/speech/SpeechPolicy";
+import { countInLastHour } from "../companion/reactions/reactionHistory";
+import type { ObservationSnapshot } from "../observation/types";
+import { EMPTY_SNAPSHOT } from "../observation/types";
 
 interface UseCompanionStateReturn {
   state: CompanionState;
