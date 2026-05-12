@@ -150,4 +150,6 @@ export function useWander(
       animRef.current = null;
     }
   }, [state]);
+
+  return { facingRight };
 }
