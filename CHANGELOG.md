@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.13] — 2026-05-12
+
+### Fixed
+- 自動更新: zip を再作成するのをやめ、tauri-action がビルド時に生成した .nsis.zip をそのまま使用。
+  自前で再作成した zip の圧縮方式が Tauri updater と非互換だったため "Compression method not supported" が発生していた。
+
 ## [0.1.12] — 2026-05-12
 
 ### Fixed
