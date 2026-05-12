@@ -134,27 +134,17 @@ fn cursor_pos() -> Option<(i32, i32)> {
 fn start_hit_test_thread(window: tauri::WebviewWindow) {
     std::thread::spawn(move || {
         let mut last_ignore = true;
-        // キャラクター本体が占める高さの概算 (160px sprite + 12px padding + 8px margin)
-        const CHAR_HIT_HEIGHT: i32 = 190;
-
         loop {
             std::thread::sleep(std::time::Duration::from_millis(16));
             let Some((cx, cy)) = cursor_pos() else { continue };
             let Ok(pos) = window.outer_position() else { continue };
             let Ok(size) = window.outer_size() else { continue };
 
-            // 吹き出し非表示時: ウィンドウ下部のキャラ領域のみ有効にする
-            // これによって上部の透明な空白領域でバックグラウンドクリックが奪われなくなる
-            let speech_visible = SPEECH_VISIBLE.load(Ordering::Relaxed);
-            let effective_top = if speech_visible {
-                pos.y  // 吹き出し表示中は全高さを有効
-            } else {
-                (pos.y + size.height as i32 - CHAR_HIT_HEIGHT).max(pos.y)
-            };
-
+            // ウィンドウが動的リサイズされるため、常にその時点のサイズ全体を判定領域とする
+            // 吹き出し非表示: 200×180, 吹き出し表示中: 200×310 (resize_companion が更新)
             let in_window = cx >= pos.x
                 && cx < pos.x + size.width as i32
-                && cy >= effective_top
+                && cy >= pos.y
                 && cy < pos.y + size.height as i32;
             let ignore = !in_window;
             if ignore != last_ignore {
