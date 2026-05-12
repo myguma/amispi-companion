@@ -12,6 +12,9 @@ import { recordReaction } from "./reactionHistory";
 import { cryEngine } from "../audio/FileCryEngine";
 import { getSettings } from "../../settings/store";
 import type { ReactionTrigger } from "./types";
+import { getRecentEvents } from "../../systems/memory/memoryStore";
+import { buildCompanionContext } from "../../systems/ai/buildCompanionContext";
+import { getAIResponse as getNewAIResponse } from "../ai/AIProviderManager";
 
 // deepFocus / gaming / watchingVideo 中は自律発話を抑制する
 const SILENT_KINDS: readonly InferredActivity[] = ["deepFocus", "gaming", "watchingVideo"];
