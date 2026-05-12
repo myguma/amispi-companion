@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.18] — 2026-05-12
+
+### Fixed
+- Rust コンパイルエラー: windows-sys 0.59 の HWND / HANDLE / HMONITOR は `*mut c_void` 型のため、
+  null チェックを `== 0` から `.is_null()` に修正
+- RECT 構造体が `Default` を実装しないため、`Default::default()` を明示的なゼロ初期化に変更
+- 不正な `impl GetTickCount64 {}` ブロックを削除
+
 ## [0.1.17] — 2026-05-12
 
 ### Added
