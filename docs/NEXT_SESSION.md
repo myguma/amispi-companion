@@ -19,10 +19,10 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.27)
+✅ npm run build → ✓ built (v0.1.28)
 ✅ cargo build  → Finished dev profile
-✅ GitHub Actions / Windows Installer → 成功済み
-✅ v0.1.27 タグ push 済み
+✅ GitHub Actions / Windows Installer → v0.1.27 成功済み
+✅ v0.1.28 タグ push 済み
 ```
 
 ---
