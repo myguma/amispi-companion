@@ -149,7 +149,7 @@ export function useCompanionState(
           const s      = getSettings();
           const events = getRecentEvents(20);
           const ctx    = buildCompanionContext("idle", snapshotRef.current, events, s);
-          const policy = canSpeak("autonomous", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+          const policy = canSpeak("idle", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
           if (policy.allowed) {
             try {
