@@ -404,7 +404,8 @@ export function TransparencyPage() {
 
       <div style={{ fontSize: 11, color: "#aaa", borderTop: "1px solid #eee", paddingTop: 12, lineHeight: 1.7 }}>
         この情報はPCの外に出ません。<br />
-        アプリを終了するといつでも観測が止まります。
+        アプリを終了するといつでも観測が止まります。<br />
+        過去の記録や今日の記憶は「<strong style={{ color: "#6a40d0" }}>記憶</strong>」タブで確認・削除できます。
       </div>
     </div>
   );
