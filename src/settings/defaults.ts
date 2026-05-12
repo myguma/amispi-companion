@@ -25,4 +25,14 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   permissions: DEFAULT_PERMISSIONS,
 
   showOnStartup: true,
+
+  aiEngine: "none",
+  ollamaBaseUrl: "http://localhost:11434",
+  ollamaModel: "llama3.2:3b",
+  ollamaTimeoutMs: 8_000,
+
+  mediaAwarenessEnabled: false,
+  screenUnderstandingEnabled: false,
+  voiceInputEnabled: false,
+  ttsEnabled: false,
 };
