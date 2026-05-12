@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.24] — 2026-05-12
+
+### Added
+- **Reaction System 統合**: トリガー別 (click / wake / randomIdle / dragStart / timedGreeting) の反応選択エンジンを本番配線
+  - クールダウン・時間当たり上限・fullscreen 抑制・quietMode/DND を自動適用
+  - reaction に `cry` が設定されていれば自動で CryEngine を鳴らす
+- `triggerDragReaction`: ドラッグ開始時の台詞 + 鳴き声を Reaction System 経由で発火
+- `isFullscreen` を `useCompanionState` に渡し、全画面時の抑制を状態マシン内で完結
+
+### Changed
+- 台詞のフォールバック順序: `fireReaction(trigger)` → `pickDialogue/pickTimedGreeting`
+- App.tsx の sleep 遷移 cry のみ残し、waking / speaking の cry は `reaction.cry` に移譲
+
 ## [0.1.23] — 2026-05-12
 
 ### Added
