@@ -223,6 +223,33 @@ html,
 }
 
 /* ============================================================
+   ささやき (tiny displayMode)
+   ============================================================ */
+
+.tiny-whisper {
+  font-size: 11px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #7c5cbf;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(168, 144, 240, 0.25);
+  border-radius: 8px;
+  padding: 3px 8px;
+  pointer-events: none;
+  opacity: 0.88;
+  animation: whisper-appear 0.3s ease-out;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes whisper-appear {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 0.88; transform: translateY(0); }
+}
+
+/* ============================================================
    ドラッグハンドル
    ============================================================ */
 
