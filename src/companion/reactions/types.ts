@@ -16,7 +16,8 @@ export type ReactionTrigger =
   | "observation"
   | "overClicked"
   | "returnAfterBreak"
-  | "returnAfterLongBreak";
+  | "returnAfterLongBreak"
+  | "activityTransition"; // InferredActivity の意味ある遷移 (tags で種別指定)
 
 export type CompanionEmotion =
   | "idle"
