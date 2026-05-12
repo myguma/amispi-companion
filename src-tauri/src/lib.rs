@@ -7,43 +7,36 @@ use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use tauri_plugin_updater::UpdaterExt;
 
+mod observation;
+mod settings;
+
 // ──────────────────────────────────────────────────────────
 // クリックスルー制御
 // ──────────────────────────────────────────────────────────
 
-// カーソル位置を OS から取得 (Windows のみ)
 #[cfg(windows)]
 fn cursor_pos() -> Option<(i32, i32)> {
     use windows_sys::Win32::Foundation::POINT;
     use windows_sys::Win32::UI::WindowsAndMessaging::GetCursorPos;
     let mut pt = POINT { x: 0, y: 0 };
     unsafe {
-        if GetCursorPos(&mut pt) != 0 {
-            Some((pt.x, pt.y))
-        } else {
-            None
-        }
+        if GetCursorPos(&mut pt) != 0 { Some((pt.x, pt.y)) } else { None }
     }
 }
 
-// ウィンドウ上にカーソルがあるときだけクリック有効にするスレッド
 #[cfg(windows)]
 fn start_hit_test_thread(window: tauri::WebviewWindow) {
     std::thread::spawn(move || {
         let mut last_ignore = true;
         loop {
             std::thread::sleep(std::time::Duration::from_millis(16));
-
             let Some((cx, cy)) = cursor_pos() else { continue };
             let Ok(pos) = window.outer_position() else { continue };
             let Ok(size) = window.outer_size() else { continue };
-
             let in_window = cx >= pos.x
                 && cx < pos.x + size.width as i32
                 && cy >= pos.y
                 && cy < pos.y + size.height as i32;
-
-            // 変化があるときだけ呼ぶ（毎フレーム呼ぶと重い）
             let ignore = !in_window;
             if ignore != last_ignore {
                 let _ = window.set_ignore_cursor_events(ignore);
@@ -53,18 +46,14 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
     });
 }
 
-// JS から呼ばれるコマンド (互換性のために残す・実際には使わない)
 #[tauri::command]
 fn set_ignore_cursor_events<R: Runtime>(
     window: tauri::Window<R>,
     ignore: bool,
 ) -> Result<(), String> {
-    window
-        .set_ignore_cursor_events(ignore)
-        .map_err(|e| e.to_string())
+    window.set_ignore_cursor_events(ignore).map_err(|e| e.to_string())
 }
 
-// ウィンドウを指定座標に移動する
 #[tauri::command]
 fn move_window<R: Runtime>(
     window: tauri::Window<R>,
@@ -76,27 +65,45 @@ fn move_window<R: Runtime>(
         .map_err(|e| e.to_string())
 }
 
-// アプリバージョンを返す
 #[tauri::command]
 fn get_app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
-// アプリを終了する
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
-// ウィンドウ表示トグル (トレイ・ショートカット共通)
 fn toggle_window_visibility(window: &tauri::WebviewWindow) {
     let visible = window.is_visible().unwrap_or(false);
-    if visible {
-        let _ = window.hide();
-    } else {
-        let _ = window.show();
-        let _ = window.set_focus();
+    if visible { let _ = window.hide(); }
+    else { let _ = window.show(); let _ = window.set_focus(); }
+}
+
+// ──────────────────────────────────────────────────────────
+// 設定ウィンドウ
+// ──────────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("settings") {
+        let _ = w.show();
+        let _ = w.set_focus();
+        return Ok(());
     }
+    tauri::WebviewWindowBuilder::new(
+        &app,
+        "settings",
+        tauri::WebviewUrl::App("index.html?page=settings".into()),
+    )
+    .title("AmitySpirit 設定")
+    .inner_size(520.0, 640.0)
+    .resizable(true)
+    .center()
+    .build()
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 // ──────────────────────────────────────────────────────────
@@ -105,12 +112,9 @@ fn toggle_window_visibility(window: &tauri::WebviewWindow) {
 
 #[tauri::command]
 fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
-    let autolaunch = app.autolaunch();
-    if enabled {
-        autolaunch.enable().map_err(|e| e.to_string())
-    } else {
-        autolaunch.disable().map_err(|e| e.to_string())
-    }
+    let al = app.autolaunch();
+    if enabled { al.enable().map_err(|e| e.to_string()) }
+    else { al.disable().map_err(|e| e.to_string()) }
 }
 
 #[tauri::command]
@@ -132,39 +136,57 @@ pub struct UpdateInfo {
 async fn check_for_updates(app: tauri::AppHandle) -> Option<UpdateInfo> {
     let updater = app.updater_builder().build().ok()?;
     let update = updater.check().await.ok()??;
-    Some(UpdateInfo {
-        version: update.version.clone(),
-        body: update.body.clone(),
-    })
+    Some(UpdateInfo { version: update.version.clone(), body: update.body.clone() })
 }
 
 #[tauri::command]
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
-    let updater = app
-        .updater_builder()
-        .build()
-        .map_err(|e| e.to_string())?;
-
+    let updater = app.updater_builder().build().map_err(|e| e.to_string())?;
     let Some(update) = updater.check().await.map_err(|e| e.to_string())? else {
         return Ok(());
     };
-
-    update
-        .download_and_install(|_chunk, _total| {}, || {})
-        .await
-        .map_err(|e| e.to_string())?;
-
+    update.download_and_install(|_chunk, _total| {}, || {}).await.map_err(|e| e.to_string())?;
     app.restart();
 }
 
 // ──────────────────────────────────────────────────────────
-// アプリエントリーポイント
+// 観測 API
+// ──────────────────────────────────────────────────────────
+
+#[tauri::command]
+async fn get_observation_snapshot(
+    perms: observation::PermissionConfig,
+) -> observation::ObservationSnapshot {
+    // ファイルスキャンは blocking なので spawn_blocking を使う
+    tokio::task::spawn_blocking(move || observation::build_snapshot(&perms))
+        .await
+        .unwrap_or_else(|_| observation::build_snapshot(&observation::PermissionConfig::default()))
+}
+
+// ──────────────────────────────────────────────────────────
+// 設定の保存・読み込み
+// ──────────────────────────────────────────────────────────
+
+#[tauri::command]
+fn load_settings(app: tauri::AppHandle) -> settings::PersistedSettings {
+    settings::load_settings(&app)
+}
+
+#[tauri::command]
+fn save_settings_cmd(
+    app: tauri::AppHandle,
+    s: settings::PersistedSettings,
+) -> Result<(), String> {
+    settings::save_settings(&app, &s)
+}
+
+// ──────────────────────────────────────────────────────────
+// エントリーポイント
 // ──────────────────────────────────────────────────────────
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -179,51 +201,36 @@ pub fn run() {
 
             // 初期位置: 右下隅
             if let Some(monitor) = window.current_monitor().ok().flatten() {
-                let screen_size = monitor.size();
-                let window_size = window.outer_size().unwrap_or(tauri::PhysicalSize {
-                    width: 200,
-                    height: 300,
-                });
+                let screen = monitor.size();
+                let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 300 });
                 let margin = 20i32;
-                let x = (screen_size.width as i32) - (window_size.width as i32) - margin;
-                let y = (screen_size.height as i32) - (window_size.height as i32) - margin;
-                let _ = window.set_position(tauri::Position::Physical(
-                    tauri::PhysicalPosition { x, y },
-                ));
+                let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: screen.width as i32 - win.width as i32 - margin,
+                    y: screen.height as i32 - win.height as i32 - margin,
+                }));
             }
 
-            // カーソル位置ベースのクリックスルー制御 (Windows)
-            // 最初はクリックスルーON、ウィンドウ上に乗ったら自動でOFF
             let _ = window.set_ignore_cursor_events(true);
             #[cfg(windows)]
             start_hit_test_thread(window.clone());
 
-            // 初回インストール時にスタートアップ登録
-            let autolaunch = app.autolaunch();
-            if !autolaunch.is_enabled().unwrap_or(true) {
-                let _ = autolaunch.enable();
-            }
+            // 初回スタートアップ登録
+            let al = app.autolaunch();
+            if !al.is_enabled().unwrap_or(true) { let _ = al.enable(); }
 
-            // ────────────────────────────────────────
-            // グローバルショートカット: Ctrl+Shift+Space で表示トグル
-            // ────────────────────────────────────────
+            // グローバルショートカット
             let shortcut_window = window.clone();
-            app.global_shortcut().on_shortcut(
-                "ctrl+shift+space",
-                move |_app, _shortcut, event| {
-                    if event.state == ShortcutState::Pressed {
-                        toggle_window_visibility(&shortcut_window);
-                    }
-                },
-            )?;
+            app.global_shortcut().on_shortcut("ctrl+shift+space", move |_app, _shortcut, event| {
+                if event.state == ShortcutState::Pressed {
+                    toggle_window_visibility(&shortcut_window);
+                }
+            })?;
 
-            // ────────────────────────────────────────
             // システムトレイ
-            // ────────────────────────────────────────
-            let toggle_item =
-                MenuItem::with_id(app, "toggle", "表示 / 非表示", true, None::<&str>)?;
+            let toggle_item = MenuItem::with_id(app, "toggle", "表示 / 非表示", true, None::<&str>)?;
+            let settings_item = MenuItem::with_id(app, "settings", "設定...", true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
-            let tray_menu = Menu::with_items(app, &[&toggle_item, &quit_item])?;
+            let tray_menu = Menu::with_items(app, &[&toggle_item, &settings_item, &quit_item])?;
 
             let tray_window = window.clone();
             let _tray = TrayIconBuilder::new()
@@ -236,8 +243,7 @@ pub fn run() {
                         button: MouseButton::Left,
                         button_state: MouseButtonState::Up,
                         ..
-                    } = event
-                    {
+                    } = event {
                         toggle_window_visibility(&tray_window);
                     }
                 })
@@ -246,6 +252,12 @@ pub fn run() {
                         if let Some(w) = app.get_webview_window("companion") {
                             toggle_window_visibility(&w);
                         }
+                    }
+                    "settings" => {
+                        let app2 = app.clone();
+                        tauri::async_runtime::spawn(async move {
+                            let _ = open_settings_window(app2).await;
+                        });
                     }
                     "quit" => app.exit(0),
                     _ => {}
@@ -263,6 +275,10 @@ pub fn run() {
             is_autostart_enabled,
             check_for_updates,
             install_update,
+            get_observation_snapshot,
+            open_settings_window,
+            load_settings,
+            save_settings_cmd,
         ])
         .run(tauri::generate_context!())
         .expect("AmitySpirit Companion startup failed");
