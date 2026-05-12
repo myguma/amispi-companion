@@ -78,6 +78,12 @@ export function inferActivity(snapshot: ObservationSnapshot): ActivityInsight {
     }
   }
 
+  // バックグラウンドで音楽アプリが起動中
+  const media = snapshot.media;
+  if (media?.audioLikelyActive && media.mediaKind === "music") {
+    return { kind: "listeningMusic", confidence: 0.65, reasons: [`bg_media:${media.sourceCategory}`], summary: "音楽を流しながら作業中" };
+  }
+
   // office 系 + idle
   if (cat === "office") {
     if (idle >= IDLE_MS) {
