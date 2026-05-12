@@ -7,14 +7,16 @@ import { TransparencyPage } from "./pages/TransparencyPage";
 import { BehaviorPage } from "./pages/BehaviorPage";
 import { AIPage } from "./pages/AIPage";
 import { VoicePage } from "./pages/VoicePage";
+import { MemoryPage } from "./pages/MemoryPage";
 
-type Tab = "transparency" | "behavior" | "ai" | "voice";
+type Tab = "transparency" | "behavior" | "ai" | "voice" | "memory";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "transparency", label: "無明が見ているもの" },
-  { id: "behavior", label: "動作設定" },
-  { id: "ai", label: "AI エンジン" },
-  { id: "voice", label: "音声" },
+  { id: "behavior",     label: "動作設定" },
+  { id: "ai",           label: "AI エンジン" },
+  { id: "voice",        label: "音声" },
+  { id: "memory",       label: "記憶" },
 ];
 
 export function SettingsApp() {
@@ -44,13 +46,13 @@ export function SettingsApp() {
             v{version}
           </span>
         </div>
-        <div style={{ display: "flex", gap: 0 }}>
+        <div style={{ display: "flex", gap: 0, flexWrap: "wrap" }}>
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               style={{
-                padding: "6px 14px",
+                padding: "6px 12px",
                 fontSize: 12,
                 border: "none",
                 background: "none",
@@ -59,6 +61,7 @@ export function SettingsApp() {
                 borderBottom: `2px solid ${tab === t.id ? "#a890f0" : "transparent"}`,
                 fontWeight: tab === t.id ? 600 : 400,
                 transition: "color 0.15s",
+                whiteSpace: "nowrap",
               }}
             >
               {t.label}
@@ -70,9 +73,10 @@ export function SettingsApp() {
       {/* コンテンツ */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
         {tab === "transparency" && <TransparencyPage />}
-        {tab === "behavior" && <BehaviorPage />}
-        {tab === "ai" && <AIPage />}
-        {tab === "voice" && <VoicePage />}
+        {tab === "behavior"     && <BehaviorPage />}
+        {tab === "ai"           && <AIPage />}
+        {tab === "voice"        && <VoicePage />}
+        {tab === "memory"       && <MemoryPage />}
       </div>
 
       {/* フッター */}
