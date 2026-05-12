@@ -236,6 +236,77 @@ export function useCompanionState(
   }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
+  // 録音中フラグ (voiceListening)
+  // ──────────────────────────────────────────
+  const voiceListeningStart = useCallback(() => {
+    setVoiceUIState("voiceListening");
+  }, []);
+
+  // ──────────────────────────────────────────
+  // 録音エラー → voiceError → voiceReady/Off
+  // ──────────────────────────────────────────
+  const voiceRecordingError = useCallback((err: string) => {
+    console.warn("[Voice] recording error:", err);
+    setVoiceUIState("voiceError");
+    const s = getSettings();
+    setTimeout(() => {
+      setVoiceUIState(s.voiceInputEnabled ? "voiceReady" : "voiceOff");
+    }, 3_000);
+  }, []);
+
+  // ──────────────────────────────────────────
+  // Voice: Blob → STT → AI → 返答
+  // 録音 Blob を STTAdapter に渡し transcript を得て requestVoiceResponse に繋ぐ
+  // 生音声データは transcribe() 内で使い捨て
+  // ──────────────────────────────────────────
+  const requestVoiceFromBlob = useCallback(async (blob: Blob) => {
+    setVoiceUIState("voiceTranscribing");
+    setState("thinking");
+
+    const s      = getSettings();
+    const events = getRecentEvents(20);
+    let transcript = "";
+
+    try {
+      const adapter = getSTTAdapter();
+      if (await adapter.isAvailable()) {
+        const result = await adapter.transcribe(blob);
+        if (result.ok) {
+          // 200文字で安全に切り詰め
+          transcript = result.result.text.trim().slice(0, 200);
+        }
+      }
+    } catch {
+      // STT エラー → empty → fallback
+    }
+
+    if (!transcript) {
+      setVoiceUIState("voiceReady");
+      setState("idle");
+      return;
+    }
+
+    const ctx    = buildCompanionContext("voice", snapshotRef.current, events, s, transcript);
+    const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+
+    let text: string | null = null;
+    setVoiceUIState("voiceResponding");
+
+    try {
+      if (policy.allowed) {
+        try {
+          const output = await getNewAIResponse(ctx);
+          if (output.shouldSpeak && output.text) text = output.text;
+        } catch { /* AI エラー → reaction fallback */ }
+      }
+      text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+      triggerSpeak(text);
+    } finally {
+      setVoiceUIState("voiceReady");
+    }
+  }, [triggerSpeak, fireReaction]);
+
+  // ──────────────────────────────────────────
   // クリック処理
   // ──────────────────────────────────────────
   const onCharacterClick = useCallback(() => {
