@@ -1,7 +1,8 @@
 // 設定ウィンドウのルートコンポーネント
 // ?page=settings で開かれる独立したウィンドウ
 
-import { useState, useEffect } from "react";
+import { Component, useState, useEffect } from "react";
+import type { ReactNode, ErrorInfo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { TransparencyPage } from "./pages/TransparencyPage";
 import { BehaviorPage } from "./pages/BehaviorPage";
@@ -18,6 +19,54 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "voice",        label: "音声" },
   { id: "memory",       label: "記憶" },
 ];
+
+// タブごとのエラーをキャッチし、白画面を防ぐ
+class TabErrorBoundary extends Component<
+  { children: ReactNode; tabId: string },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { children: ReactNode; tabId: string }) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, message: error?.message ?? String(error) };
+  }
+
+  componentDidCatch(_error: Error, _info: ErrorInfo) {
+    // サイレント: コンソールには出るが UI は落とさない
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20 }}>
+          <div style={{ color: "#e05050", fontWeight: 600, marginBottom: 8 }}>
+            このタブの読み込み中にエラーが発生しました
+          </div>
+          <pre style={{
+            fontSize: 11, color: "#888", whiteSpace: "pre-wrap",
+            background: "#fff0f0", padding: "8px 12px", borderRadius: 6,
+            marginBottom: 12, maxHeight: 120, overflowY: "auto",
+          }}>
+            {this.state.message}
+          </pre>
+          <button
+            onClick={() => this.setState({ hasError: false, message: "" })}
+            style={{
+              fontSize: 12, padding: "4px 14px", border: "1px solid #ddd",
+              borderRadius: 6, cursor: "pointer", background: "white",
+            }}
+          >
+            再試行
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function SettingsApp() {
   const [tab, setTab] = useState<Tab>("transparency");
@@ -70,13 +119,15 @@ export function SettingsApp() {
         </div>
       </div>
 
-      {/* コンテンツ */}
+      {/* コンテンツ — 各タブを ErrorBoundary で保護 */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
-        {tab === "transparency" && <TransparencyPage />}
-        {tab === "behavior"     && <BehaviorPage />}
-        {tab === "ai"           && <AIPage />}
-        {tab === "voice"        && <VoicePage />}
-        {tab === "memory"       && <MemoryPage />}
+        <TabErrorBoundary tabId={tab} key={tab}>
+          {tab === "transparency" && <TransparencyPage />}
+          {tab === "behavior"     && <BehaviorPage />}
+          {tab === "ai"           && <AIPage />}
+          {tab === "voice"        && <VoicePage />}
+          {tab === "memory"       && <MemoryPage />}
+        </TabErrorBoundary>
       </div>
 
       {/* フッター */}
