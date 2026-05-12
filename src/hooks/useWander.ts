@@ -120,6 +120,13 @@ export function useWander(
         const ny = Math.round(cy + (dy / dist) * speed);
         curPosRef.current = { x: nx, y: ny };
 
+        // 移動方向が変わったときだけ setState (毎フレーム呼ぶと重い)
+        const nowRight = dx > 0;
+        if (nowRight !== facingRightRef.current) {
+          facingRightRef.current = nowRight;
+          setFacingRight(nowRight);
+        }
+
         try {
           await invoke("move_window", { x: nx, y: ny });
         } catch {
