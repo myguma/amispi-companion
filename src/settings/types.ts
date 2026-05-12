@@ -30,4 +30,16 @@ export type CompanionSettings = {
   permissions: PermissionSettings;
 
   showOnStartup: boolean;
+
+  // AI エンジン設定
+  aiEngine: AIEngine;
+  ollamaBaseUrl: string;
+  ollamaModel: string;
+  ollamaTimeoutMs: number;
+
+  // 将来フェーズ用 (フラグだけ先行追加)
+  mediaAwarenessEnabled: boolean;
+  screenUnderstandingEnabled: boolean;
+  voiceInputEnabled: boolean;
+  ttsEnabled: boolean;
 };
