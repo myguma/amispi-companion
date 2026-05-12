@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# タグ push 時に Windows ターゲットのコンパイルチェックを実行する
+# cargo check はリンクしないので MSVC ツールチェーンなしで動く
+
+set -euo pipefail
+
+pushing_tag=false
+while read -r local_ref _local_sha _remote_ref _remote_sha; do
+  if [[ "$local_ref" == refs/tags/* ]]; then
+    pushing_tag=true
+  fi
+done
+
+if [ "$pushing_tag" != true ]; then
+  exit 0
+fi
+
+echo "[pre-push] Windows ターゲットのチェック中..."
+
+if ! cargo check --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc 2>&1; then
+  echo ""
+  echo "[pre-push] Windows ビルドチェック失敗 — push を中断しました"
+  echo "  エラーを修正してから再度 push してください"
+  exit 1
+fi
+
+echo "[pre-push] チェック完了 ✓"
