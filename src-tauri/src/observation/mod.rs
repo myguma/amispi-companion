@@ -52,6 +52,17 @@ pub struct SystemInfo {
     pub memory_load: Option<f32>,
 }
 
+/// バックグラウンドメディア再生の推定情報
+#[derive(Debug, Serialize, Clone)]
+pub struct MediaContext {
+    /// 何らかのメディアアプリが起動中か
+    pub audio_likely_active: bool,
+    /// "music" | "video" | "none"
+    pub media_kind: String,
+    /// "music_app" | "video_app" | "daw" | "browser" | "none"
+    pub source_category: String,
+}
+
 #[derive(Debug, Serialize, Clone)]
 pub struct PrivacyMeta {
     pub permission_level: u8,
