@@ -40,6 +40,7 @@ export default function App() {
   const { onDragStart, isDragging, mouseDownRef } = useDrag();
   const { facingRight } = useWander(state, mouseDownRef);
   const { updateAvailable, installing, installUpdate } = useUpdater();
+  const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
