@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.26] — 2026-05-12
+
+### Added
+- **Local LLM 統合 (Phase 1+2)**: OllamaProvider を新設。`engine=ollama` 時に `localhost:11434` へ POST し、ローカル LLM で日本語発話を生成。クラウド送信なし
+- **CompanionContext / ActivityInsight**: `inferActivity()` が ObservationSnapshot から作業状態を推定 (coding/browsing/gaming/watchingVideo 等 11 種)。全データを抽象化してから LLM へ渡す
+- **PromptBuilder**: CompanionContext → プロンプト文字列変換。時刻帯・活動概要・idle 時間のみ。ウィンドウタイトル・URL・ファイル名は含めない
+- **QualityFilter**: LLM 出力を 80 文字上限・禁止ワードで検閲。アシスタント文・医療語・URL を排除
+- **SpeechPolicy**: DND / quietMode / focusMode / 全画面 / レート制限を純粋関数で判定してから LLM を呼ぶ
+- **SpeechQueue**: 優先度つき発話キュー（0=自律, 1=観測, 2=システム, 3=手動）、30秒重複排除
+- **AI エンジン設定 UI** (`settings/pages/AIPage.tsx`): engine 選択 (none/mock/ollama)、Ollama URL・モデル名・タイムアウトを設定ウィンドウで変更可能
+- **設定ウィンドウ「AI エンジン」タブ**追加
+
+### Changed
+- `settings/types.ts`: `aiEngine` / `ollamaBaseUrl` / `ollamaModel` / `ollamaTimeoutMs` / 将来フェーズフラグを `CompanionSettings` に追加
+- `AIProviderManager.ts` 書き直し: engine 別にプロバイダーを切り替え、Ollama 未起動時は fallback
+- `useCompanionState.ts`: ObservationSnapshot を受け取り、SpeechPolicy → buildCompanionContext → getAIResponse の順に呼ぶ新フローに切り替え
+
 ## [0.1.25] — 2026-05-12
 
 ### Added
