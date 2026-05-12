@@ -93,5 +93,5 @@ export interface AIProvider {
   readonly name: string;
   readonly kind: AIProviderKind;
   isAvailable(): Promise<boolean>;
-  respond(input: AIProviderInput): Promise<AIProviderOutput>;
+  respond(ctx: CompanionContext): Promise<AIProviderOutput>;
 }
