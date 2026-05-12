@@ -20,6 +20,7 @@ import { canSpeak } from "../companion/speech/SpeechPolicy";
 import { countInLastHour } from "../companion/reactions/reactionHistory";
 import type { ObservationSnapshot } from "../observation/types";
 import { EMPTY_SNAPSHOT } from "../observation/types";
+import { inferActivity } from "../companion/activity/inferActivity";
 import { getSTTAdapter } from "../systems/voice/STTAdapterManager";
 
 /** 音声入力の UI 状態 */
