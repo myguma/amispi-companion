@@ -37,6 +37,17 @@ function saveEvents(events: MemoryEvent[]): void {
   }
 }
 
+/** メモリ統計型 */
+export type MemoryStats = {
+  totalEvents:   number;
+  appStartCount: number;
+  clickCount:    number;
+  speechCount:   number;
+  noteCount:     number;
+  oldestEventAt: number | null;
+  newestEventAt: number | null;
+};
+
 /**
  * メモリイベントを記録する
  */
@@ -63,11 +74,25 @@ export function logEvent(
 }
 
 /**
- * 最新のイベントを取得する
+ * 最新のイベントを取得する (逆順)
  */
 export function getRecentEvents(limit = 20): MemoryEvent[] {
   const events = loadEvents();
   return events.slice(-limit).reverse();
+}
+
+/**
+ * 全イベントを取得する (古い順)
+ */
+export function getAllEvents(): MemoryEvent[] {
+  return loadEvents();
+}
+
+/**
+ * 特定タイプのイベントのみ取得する (古い順)
+ */
+export function getEventsByType(type: MemoryEventType): MemoryEvent[] {
+  return loadEvents().filter((e) => e.type === type);
 }
 
 /**
@@ -78,10 +103,34 @@ export function clearEvents(): void {
 }
 
 /**
+ * 特定タイプのイベントのみ削除する
+ */
+export function clearEventsByType(type: MemoryEventType): void {
+  const events = loadEvents().filter((e) => e.type !== type);
+  saveEvents(events);
+}
+
+/**
  * 総イベント数を取得する
  */
 export function getEventCount(): number {
   return loadEvents().length;
+}
+
+/**
+ * メモリ統計を取得する
+ */
+export function getMemoryStats(): MemoryStats {
+  const events = loadEvents();
+  return {
+    totalEvents:   events.length,
+    appStartCount: events.filter((e) => e.type === "app_start").length,
+    clickCount:    events.filter((e) => e.type === "character_clicked").length,
+    speechCount:   events.filter((e) => e.type === "speech_shown").length,
+    noteCount:     events.filter((e) => e.type === "note_saved").length,
+    oldestEventAt: events.length > 0 ? events[0].timestamp : null,
+    newestEventAt: events.length > 0 ? events[events.length - 1].timestamp : null,
+  };
 }
 
 /**
