@@ -25,7 +25,7 @@
 | 透明性 UI | 88% | 発話制御パネル・記憶タブ案内追加済み |
 | リリース品質 (docs) | 58% | MEMORY_AND_DATA_CONTROL.md 追加 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~63%** | Milestone B 第1段階完了 |
+| **総合** | **~66%** | Milestone B 第2段階完了 |
 
 ---
 
