@@ -73,6 +73,26 @@ function ReasonTag({ text }: { text: string }) {
   );
 }
 
+function categoryLabel(cat: string): string {
+  const MAP: Record<string, string> = {
+    ide: "IDE/エディタ", daw: "DAW/音楽制作", browser: "ブラウザ",
+    media: "メディア", game: "ゲーム", office: "オフィス",
+    terminal: "ターミナル", communication: "チャット/通話",
+    system: "システム", self: "自アプリ (設定画面)",
+    unknown: "不明",
+  };
+  return MAP[cat] ?? cat;
+}
+
+function unknownReason(snap: ObservationSnapshot): string | null {
+  if (!snap.activeApp) return "前面アプリ名を取得できませんでした (権限不足の可能性)";
+  if (snap.activeApp.category === "self") return "設定画面・コンパニオン自身が前面です";
+  if (snap.activeApp.category === "unknown") {
+    return `アプリ名は取得済み (${snap.activeApp.processName}) ですが分類未登録です`;
+  }
+  return null;
+}
+
 function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
   if (!snap) {
     return <div style={{ fontSize: 12, color: "#bbb", padding: "8px 0" }}>取得中…</div>;
@@ -81,6 +101,7 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
   const insight = inferActivity(snap);
   const idleMin = Math.round(snap.idle.idleMs / 60_000);
   const media   = snap.media;
+  const reason  = unknownReason(snap);
 
   const activityColor =
     insight.kind === "deepFocus"     ? "#6a40d0" :
@@ -108,9 +129,17 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
         <span style={{ color: "#aaa" }}>({Math.round(insight.confidence * 100)}%)</span>
       </div>
       <div style={{ color: "#666" }}>
-        アプリ種別: <strong>{snap.activeApp?.category ?? "不明"}</strong>
+        アプリ種別: <strong>{snap.activeApp ? categoryLabel(snap.activeApp.category) : "不明"}</strong>
+        {snap.activeApp && (
+          <span style={{ color: "#aaa", fontSize: 11, marginLeft: 6 }}>
+            ({snap.activeApp.processName})
+          </span>
+        )}
         {snap.fullscreenLikely && <span style={{ marginLeft: 8, color: "#c040a0" }}>全画面中</span>}
       </div>
+      {reason && (
+        <div style={{ color: "#e08030", fontSize: 11, marginTop: 2 }}>⚠ {reason}</div>
+      )}
       {idleMin > 0 && (
         <div style={{ color: "#666" }}>idle: {idleMin}分</div>
       )}
