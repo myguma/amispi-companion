@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.17] — 2026-05-12
+
+### Added
+- **観測基盤**: Windows API (GetForegroundWindow / GetLastInputInfo / GetWindowRect / SHGetKnownFolderPath) でアクティブアプリ・idle 時間・全画面判定・Desktop/Downloads ファイル数を取得
+- **権限モデル**: Level 0〜4 の段階的観測権限。デフォルト Level 1 (ウィンドウタイトルなし)
+- **PrivacyGate**: データを宛先・目的別にフィルタリング。cloud LLM へは常時ブロック
+- **設定ウィンドウ**: 右クリック → 「設定...」または タスクトレイから開く 520×640 の独立ウィンドウ
+- **透明性ページ**: 「無明が見ているもの / 見ていないもの」を一覧表示。権限のON/OFF切替も可能
+- **動作設定ページ**: quiet / focus / DND / 全画面抑制 / 音量 / 発話頻度 など全設定を UI で変更可能
+- **Reaction System**: トリガー別・クールダウン付き・時間当たり上限付きの反応選択エンジン
+- **CryEngine**: Web Audio API ベースのシンセ鳴き声 (soft_beep / murmur / sleepy / surprised)。音声ファイル不要
+- **RuleProvider**: ルールベース AI プロバイダー。Downloads 増加・Desktop 散乱・長時間 idle などを検出して短い提案を返す
+- **AIProviderManager**: rule / mock を切り替え可能な抽象レイヤー。cloud はデフォルト無効
+- **設定永続化**: AppConfig ディレクトリに settings.json として保存
+- sysinfo クレートで CPU / メモリ使用率を取得
+
+### Changed
+- `shell:default` 権限を削除 (shell 実行機能は安全原則により禁止)
+- `@tauri-apps/plugin-shell` / `@tauri-apps/plugin-fs` を依存から除去
+- タスクトレイメニューに「設定...」を追加
+- 自律発話のデフォルトを OFF に変更
+
+### Security
+- shell コマンド実行経路を完全に削除
+- fs write / remove / rename 権限を capabilities から除去
+
 ## [0.1.16] — 2026-05-12
 
 ### Fixed
