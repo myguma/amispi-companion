@@ -245,6 +245,97 @@ mod windows_impl {
         }
     }
 
+    /// フォアグラウンドプロセス取得の各段階を詳細に返す
+    /// TransparencyPage のデバッグパネル向け
+    pub fn get_active_app_debug() -> super::ActiveAppDebugInfo {
+        use super::ActiveAppDebugInfo;
+        unsafe {
+            let hwnd = GetForegroundWindow();
+            if hwnd.is_null() {
+                let code = GetLastError();
+                return ActiveAppDebugInfo {
+                    platform: "windows".to_string(),
+                    hwnd_available: false, pid: 0, pid_available: false,
+                    open_process_ok: false, query_name_ok: false,
+                    process_name: String::new(), process_path_len: 0,
+                    category: "unknown".to_string(),
+                    error_stage: "hwnd_null".to_string(),
+                    error_code: code, is_self_app: false,
+                };
+            }
+
+            let mut pid: u32 = 0;
+            GetWindowThreadProcessId(hwnd, &mut pid);
+            if pid == 0 {
+                let code = GetLastError();
+                return ActiveAppDebugInfo {
+                    platform: "windows".to_string(),
+                    hwnd_available: true, pid: 0, pid_available: false,
+                    open_process_ok: false, query_name_ok: false,
+                    process_name: String::new(), process_path_len: 0,
+                    category: "unknown".to_string(),
+                    error_stage: "pid_zero".to_string(),
+                    error_code: code, is_self_app: false,
+                };
+            }
+
+            let handle: HANDLE = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+            if handle.is_null() {
+                let code = GetLastError();
+                return ActiveAppDebugInfo {
+                    platform: "windows".to_string(),
+                    hwnd_available: true, pid, pid_available: true,
+                    open_process_ok: false, query_name_ok: false,
+                    process_name: String::new(), process_path_len: 0,
+                    category: "unknown".to_string(),
+                    error_stage: "open_process_failed".to_string(),
+                    error_code: code, is_self_app: false,
+                };
+            }
+
+            let mut buf = vec![0u16; MAX_PATH as usize];
+            let mut size = buf.len() as u32;
+            let ok = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, buf.as_mut_ptr(), &mut size);
+            let code = if ok == 0 { GetLastError() } else { 0 };
+            CloseHandle(handle);
+
+            if ok == 0 {
+                return ActiveAppDebugInfo {
+                    platform: "windows".to_string(),
+                    hwnd_available: true, pid, pid_available: true,
+                    open_process_ok: true, query_name_ok: false,
+                    process_name: String::new(), process_path_len: 0,
+                    category: "unknown".to_string(),
+                    error_stage: "query_name_failed".to_string(),
+                    error_code: code, is_self_app: false,
+                };
+            }
+
+            let full_path = wide_to_string(&buf[..size as usize]);
+            let path_len = full_path.len();
+            let process_name = std::path::Path::new(&full_path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_lowercase();
+
+            let category = classify_app(&process_name);
+            let is_self = category == "self";
+
+            ActiveAppDebugInfo {
+                platform: "windows".to_string(),
+                hwnd_available: true, pid, pid_available: true,
+                open_process_ok: true, query_name_ok: true,
+                process_name,
+                process_path_len: path_len,
+                category,
+                error_stage: "ok".to_string(),
+                error_code: 0,
+                is_self_app: is_self,
+            }
+        }
+    }
+
     fn classify_app(name: &str) -> String {
         // 自アプリ (Tauri WebView / アプリ本体) — 設定画面が前面になる場合
         if name.contains("msedgewebview2") || name == "amispi-companion.exe" || name == "amispi-companion" {
