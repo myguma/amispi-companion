@@ -56,6 +56,8 @@ impl Default for PersistedSettings {
             speech_frequency: "rare".to_string(),
             max_autonomous_reactions_per_hour: 2,
             show_on_startup: true,
+            window_x: None,
+            window_y: None,
         }
     }
 }
