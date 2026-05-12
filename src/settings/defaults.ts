@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   showOnStartup: true,
 
   aiEngine: "none",
-  ollamaBaseUrl: "http://localhost:11434",
+  ollamaBaseUrl: "http://127.0.0.1:11434",
   ollamaModel: "llama3.2:3b",
   ollamaTimeoutMs: 20_000,
 
