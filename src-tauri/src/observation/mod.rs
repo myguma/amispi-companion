@@ -413,6 +413,77 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
     }
 }
 
+/// 起動中のメディアアプリを検出してメディアコンテキストを返す
+/// active_category: 現在フォアグラウンドのアプリ種別
+/// fullscreen: 全画面中か
+fn detect_media(active_category: &str, fullscreen: bool) -> MediaContext {
+    use sysinfo::{ProcessRefreshKind, RefreshKind, System};
+
+    const MUSIC_APPS: &[&str] = &[
+        "spotify.exe", "musicbee.exe", "foobar2000.exe",
+        "winamp.exe", "itunes.exe", "applemusic.exe", "tidal.exe",
+        "aimp.exe", "mediamonkey.exe",
+    ];
+    const VIDEO_APPS: &[&str] = &[
+        "vlc.exe", "mpc-hc.exe", "mpc-be.exe", "mpv.exe",
+        "wmplayer.exe", "potplayer.exe", "potplayermini64.exe",
+        "kmplayer.exe",
+    ];
+
+    // フォアグラウンドアプリがすでに明確な場合は即返す
+    if active_category == "daw" {
+        return MediaContext {
+            audio_likely_active: true,
+            media_kind: "music".into(),
+            source_category: "daw".into(),
+        };
+    }
+    if active_category == "media" {
+        let kind = if fullscreen { "video" } else { "music" }.to_string();
+        return MediaContext {
+            audio_likely_active: true,
+            media_kind: kind,
+            source_category: "video_app".into(),
+        };
+    }
+    if active_category == "browser" && fullscreen {
+        return MediaContext {
+            audio_likely_active: true,
+            media_kind: "video".into(),
+            source_category: "browser".into(),
+        };
+    }
+
+    // バックグラウンドプロセスをスキャン
+    let sys = System::new_with_specifics(
+        RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing()),
+    );
+
+    for (_, process) in sys.processes() {
+        let name = process.name().to_string_lossy().to_lowercase();
+        if MUSIC_APPS.iter().any(|m| name.as_str() == *m) {
+            return MediaContext {
+                audio_likely_active: true,
+                media_kind: "music".into(),
+                source_category: "music_app".into(),
+            };
+        }
+        if VIDEO_APPS.iter().any(|v| name.as_str() == *v) {
+            return MediaContext {
+                audio_likely_active: true,
+                media_kind: "video".into(),
+                source_category: "video_app".into(),
+            };
+        }
+    }
+
+    MediaContext {
+        audio_likely_active: false,
+        media_kind: "none".into(),
+        source_category: "none".into(),
+    }
+}
+
 fn get_system_info() -> SystemInfo {
     use sysinfo::System;
     let mut sys = System::new();
