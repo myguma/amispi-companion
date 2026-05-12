@@ -44,11 +44,13 @@ function getCurrentPhysicalPos() {
 export function useWander(
   state: CompanionState,
   mouseDownRef: React.RefObject<boolean>
-) {
+): { facingRight: boolean } {
   const stateRef = useRef<CompanionState>(state);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const curPosRef = useRef(getCurrentPhysicalPos());
+  const [facingRight, setFacingRight] = useState(false);
+  const facingRightRef = useRef(false);
 
   // 最新 state を ref に同期
   useEffect(() => {
