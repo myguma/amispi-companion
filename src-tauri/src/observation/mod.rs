@@ -108,7 +108,7 @@ mod windows_impl {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
     use windows_sys::Win32::{
-        Foundation::{CloseHandle, BOOL, HANDLE, MAX_PATH},
+        Foundation::{CloseHandle, BOOL, HANDLE, MAX_PATH, RECT},
         Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST},
         System::Threading::{
             OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32,
