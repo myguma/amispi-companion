@@ -50,16 +50,17 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
   if (engine === "ollama") {
     const provider = new OllamaProvider(s.ollamaBaseUrl, s.ollamaModel, s.ollamaTimeoutMs);
 
-    const available = await provider.isAvailable();
-    if (!available) {
+    // checkAvailability で詳細な失敗理由を取得 (isAvailable は boolean しか返さない)
+    const avail = await provider.checkAvailability();
+    if (!avail.available) {
       setLastResult({
         source: "fallback",
-        fallbackReason: "unavailable",
+        fallbackReason: avail.reason,
         baseUrl: s.ollamaBaseUrl,
         model: s.ollamaModel,
         updatedAt: Date.now(),
       });
-      return { shouldSpeak: false, reason: "unavailable" };
+      return { shouldSpeak: false, reason: avail.reason };
     }
 
     try {
