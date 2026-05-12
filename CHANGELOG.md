@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.16] — 2026-05-12
+
+### Fixed
+- 自動更新: Tauri v2 の updater フォーマットに合わせてワークフローを修正。
+  `.nsis.zip` ではなく `.exe` + `.exe.sig` を使用し latest.json の URL を `.exe` に変更。
+
 ## [0.1.15] — 2026-05-12
 
 ### Fixed
