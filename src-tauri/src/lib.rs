@@ -394,6 +394,10 @@ pub fn run() {
             load_settings,
             save_settings_cmd,
             save_window_position,
+            set_speech_visible,
+            ollama_list_models,
+            ollama_chat,
+            get_active_app_debug,
         ])
         .run(tauri::generate_context!())
         .expect("AmitySpirit Companion startup failed");
