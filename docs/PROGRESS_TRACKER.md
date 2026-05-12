@@ -25,7 +25,7 @@
 | 透明性 UI | 92% | processName表示・自動更新・unknownReason表示追加 |
 | リリース品質 (docs) | 68% | FIELD_QA_NOTES.md 追加 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~68%** | v0.1.35 Field QA Fixes 完了 |
+| **総合** | **~69%** | v0.1.36 Field QA Root Cause Fixes 完了 (実機確認待ち) |
 
 ---
 
