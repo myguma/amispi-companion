@@ -43,6 +43,13 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
   const idleMin = Math.round(observation.idle.idleMs / 60_000);
   if (idleMin >= 5) contextLines.push(`席を離れて${idleMin}分ほど経つ`);
 
+  // バックグラウンドメディア
+  const media = observation.media;
+  if (media?.audioLikelyActive) {
+    if (media.mediaKind === "music") contextLines.push("音楽を流しながら作業している");
+    else if (media.mediaKind === "video") contextLines.push("動画を見ている");
+  }
+
   // フォルダ状況 (abstracted)
   const dl = observation.folders.downloads?.fileCount ?? 0;
   const dt = observation.folders.desktop?.fileCount ?? 0;
