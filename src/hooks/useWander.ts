@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { CompanionState } from "../types/companion";
+import { COMPANION_COMPACT_H, COMPANION_WINDOW_W } from "../constants/companionLayout";
 
 const WANDER_STATES: readonly CompanionState[] = ["idle", "sleep"];
 
@@ -24,11 +25,13 @@ const isTauri =
 /** physical px での画面サイズと window サイズを返す */
 function getPhysicalBounds() {
   const dpr = window.devicePixelRatio || 1;
+  const ww = window.outerWidth > 0 ? window.outerWidth : COMPANION_WINDOW_W;
+  const wh = window.outerHeight > 0 ? window.outerHeight : COMPANION_COMPACT_H;
   return {
     sw: Math.round(window.screen.width * dpr),
     sh: Math.round(window.screen.height * dpr),
-    ww: Math.round(200 * dpr),
-    wh: Math.round(300 * dpr),
+    ww: Math.round(ww * dpr),
+    wh: Math.round(wh * dpr),
   };
 }
 

@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.39)**
+**最終更新: 2026-05-13 (v0.1.40)**
 
 ---
 
@@ -20,13 +20,13 @@
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 74% | 240px compact window・描画レイヤー/hit target分離。実機確認待ち |
+| キャラクター表現 | 76% | 280px compact window・sizeScale連動・work area clamp。実機確認待ち |
 | 設定 UI | 93% | TabErrorBoundary追加・TransparencyPage 防御的描画 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
-| ウィンドウ hit test | 96% | 透明矩形全体ではなく吹き出し+キャラ楕円を有効領域化 |
-| リリース品質 (docs) | 73% | v0.1.39 hotfix docs更新 |
+| ウィンドウ hit test | 96% | 通常時は吹き出し+キャラ楕円、ContextMenu中のみ全域interactive |
+| リリース品質 (docs) | 74% | v0.1.40 hotfix docs更新 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~74%** | v0.1.39 Hotfix 実装完了。実機確認前なので控えめ評価 |
+| **総合** | **~76%** | v0.1.40 Hotfix 実装完了。実機確認前なので控えめ評価 |
 
 ---
 
@@ -47,6 +47,7 @@
 | v0.1.37 | Companion Intelligence & Window Architecture: AI-first自律発話・PromptBuilder/QualityFilter強化・window resize hit area修正・3秒遅延キャプチャ |
 | v0.1.38 | Hotfix: TabErrorBoundary設定画面保護・DPI対応resize_companion (scale_factor)・PromptBuilder時刻偏重修正・直近発話context追加 |
 | v0.1.39 | Hotfix: 240px character layout・楕円hit target・Foreground Debug serde/raw JSON表示改善 |
+| v0.1.40 | Hotfix: 280px character layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp |
 
 ---
 
@@ -61,14 +62,14 @@
 
 ---
 
-## 次の目標: v0.1.40 候補
+## 次の目標: v0.1.41 候補
 
-優先候補A: **v0.1.39 実機確認 → First-run Onboarding** ← **推奨**
-- キャラ切れ/めり込み、透明余白クリック、Active App raw JSON を確認
+優先候補A: **v0.1.40 実機確認 → First-run Onboarding** ← **推奨**
+- キャラ切れ/めり込み、ContextMenu見切れ、透明余白クリック、Active App を確認
 - 問題なければ First-run Onboarding に進む
 
-優先候補B: **Active App取得修正継続**
-- raw JSON / hwndRaw / pid / processName の表示結果をもとに、GetForegroundWindow / serde / 権限問題を切り分け
+優先候補B: **残QA修正**
+- v0.1.40 実機確認でキャラ常駐体験に残った問題があれば優先修正
 
 優先候補C: **First-run Onboarding**
 - 初回起動時に権限・Ollama・Voice・記憶の説明ウィザードを表示

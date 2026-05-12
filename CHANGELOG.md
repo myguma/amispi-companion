@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.1.40] — 2026-05-13
+
+### Fixed (Hotfix: Character Layout and Context Menu)
+
+#### A: キャラクター下端のめり込み/ドラッグ時の見切れを修正
+
+- **layout定数の一元化**: `src/constants/companionLayout.ts` を追加
+  - compact: `200×280`
+  - expanded: `200×410`
+  - character bottom padding: `24px`
+  - context menu bounds: `150×112`
+- **App.tsx / lib.rs**: `settings.sizeScale` を React 側だけでなく Rust `resize_companion` にも渡すよう変更
+  - v0.1.39 では React 側の中身だけが scale され、Tauri window bounds が 240px 固定のままになる可能性があった
+  - `sizeScale` は `0.75〜1.5` に clamp して、壊れた保存値でも window が極端にならないようにした
+- **lib.rs**: compact height を 240 → 280 論理pxに変更
+  - 160px sprite、touch/speaking/thinking animation、voice dot、bottom padding を安全に収める
+- **lib.rs**: `resize_companion` で width/height を DPI scale と `sizeScale` の両方に合わせて設定
+- **lib.rs**: 保存済み/ドラッグ後の window top-left を monitor work area 内に clamp
+  - 旧バージョンの小さい window height で保存された座標を復元しても、下端が画面外へ沈まない
+  - drag 終了時に画面外へ出ていた場合は、保存前に window を work area 内へ戻す
+- **useWander.ts**: wander の画面内判定に現在の `window.outerWidth/outerHeight` を使うよう修正
+
+#### B: 右クリックメニューの下方向見切れを修正
+
+- **ContextMenu.tsx**: hardcoded `300px` window height を廃止し、実際の companion window height を受け取って clamp
+  - キャラ下部で右クリックした場合はメニューを上方向へ開く
+  - `アプリ終了` が window 外へ見切れないようにした
+- **lib.rs / App.tsx**: context menu 表示中は hit test を window 全体 interactive に切り替え
+  - v0.1.39 の楕円 hit test のままだと、メニュー項目が楕円外に出た時にクリックが背面へ抜ける可能性があった
+  - メニューを閉じると通常の楕円 hit test / click-through に戻る
+- メニュー項目の文言を `終了` → `アプリ終了` に変更
+
+#### C: v0.1.39 の成功部分は維持
+
+- SettingsApp / TabErrorBoundary / TransparencyPage defensive rendering は変更なし
+- Active App debug / camelCase serde / Bitwig `daw` 認識は変更なし
+- PromptBuilder / QualityFilter / Ollama default URL は変更なし
+- PNG透明余白クリック改善の楕円 hit target は維持
+
 ## [0.1.39] — 2026-05-13
 
 ### Fixed (Hotfix: Character Layout, Transparent Hit Area, Foreground Debug)

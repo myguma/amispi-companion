@@ -3,8 +3,60 @@
 > v0.1.35 Field QA Fixes で修正を試みたが、実機では一部問題が残存。
 > v0.1.36 Field QA Root Cause Fixes でさらに根本原因に対処した。
 > v0.1.39 では v0.1.38 実機確認で残った character layout / hit area / foreground debug を hotfix。
+> v0.1.40 では v0.1.39 実機確認で残った character clipping / ContextMenu clipping を hotfix。
 
-**更新: 2026-05-13 (v0.1.39)**
+**更新: 2026-05-13 (v0.1.40)**
+
+---
+
+## v0.1.40 での修正内容 (実機確認待ち)
+
+### 問題H: キャラが下にめり込む / drag時に見切れる
+
+**v0.1.39 の状態:**
+- Active App取得、上部透明領域click-through、PNG透明余白クリック改善は成功
+- ただしキャラ下部がまだ画面下へ沈む
+- drag時にさらに見切れる
+
+**原因:**
+1. `settings.sizeScale` が React 側の `windowH` / sprite size にだけ反映され、Rust `resize_companion` の window bounds には反映されていなかった
+2. 旧バージョンの小さい window height で保存された top-left をそのまま復元すると、v0.1.39 の大きい window では下端が work area 外へ出る
+3. drag後の保存座標も top-left のままだったため、画面外に少し出した位置がそのまま保存される可能性があった
+
+**v0.1.40 での修正:**
+- compact window を 240px → 280px に拡張
+- `src/constants/companionLayout.ts` で TS 側 layout 定数を一元化
+- `resize_companion` に `sizeScale` を渡し、Rust側も同じ scale で width/height を設定
+- `sizeScale` は `0.75〜1.5` に clamp
+- `resize_companion` / restore / save_window_position で monitor work area 内に clamp
+- drag終了時、windowが下へ出ていたら保存前に work area 内へ戻す
+
+**実機確認手順:**
+1. 通常表示でキャラ下部が切れないか確認
+2. drag中/drag後にキャラ下部が見切れないか確認
+3. 吹き出し表示時もキャラが沈まないか確認
+4. 一度終了→再起動して、保存位置復元後も下端が切れないか確認
+
+### 問題I: 右クリックメニューが下方向で見切れる
+
+**v0.1.39 の状態:**
+- `ContextMenu.tsx` が window height `300px` 前提で top を clamp していた
+- 実際の compact window は 240px だったため、下部右クリック時に menu bottom が window 外へ出て `終了` が見切れた
+- v0.1.39 の楕円 hit test では、メニュー項目が楕円外に出るとクリックが背面へ抜ける可能性もあった
+
+**v0.1.40 での修正:**
+- `ContextMenu` に実際の `windowWidth/windowHeight` を渡す
+- menu bottom が window 内に収まるよう top を clamp
+- 下部右クリック時は上方向へ開く
+- `終了` を `アプリ終了` に変更
+- ContextMenu表示中だけ Rust hit test を window 全体 interactive にする
+- menu close 後は通常の「吹き出し + キャラ楕円」hit test に戻る
+
+**実機確認手順:**
+1. キャラ上部で右クリック → メニュー全体が見えるか
+2. キャラ中央で右クリック → メニュー全体が見えるか
+3. キャラ下部で右クリック → `アプリ終了` が見切れず押せるか
+4. メニューを閉じた後、上部透明領域の背面クリックが維持されるか
 
 ---
 

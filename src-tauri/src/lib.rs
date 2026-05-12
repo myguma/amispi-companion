@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -16,47 +17,95 @@ mod settings;
 
 /// キャラクター領域の論理ピクセル高さ (吹き出し非表示時のウィンドウ高さ)。
 /// 160px スプライト + 状態アニメーションの上下余白 + 下端パディングを収める。
-const CHAR_WINDOW_H_LOGICAL: f64 = 240.0;
+const CHAR_WINDOW_H_LOGICAL: f64 = 280.0;
 /// 吹き出し領域の論理ピクセル高さ
 const BUBBLE_WINDOW_H_LOGICAL: f64 = 130.0;
-#[cfg(windows)]
 const COMPANION_WINDOW_W_LOGICAL: f64 = 200.0;
+const MIN_SIZE_SCALE: f64 = 0.75;
+const MAX_SIZE_SCALE: f64 = 1.5;
 #[cfg(windows)]
 const CHARACTER_SPRITE_W_LOGICAL: f64 = 160.0;
 #[cfg(windows)]
 const CHARACTER_SPRITE_H_LOGICAL: f64 = 160.0;
 #[cfg(windows)]
-const CHARACTER_BOTTOM_PAD_LOGICAL: f64 = 16.0;
+const CHARACTER_BOTTOM_PAD_LOGICAL: f64 = 24.0;
+
+static CONTEXT_MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
+
+fn normalized_size_scale(value: Option<f64>) -> f64 {
+    let n = value.unwrap_or(1.0);
+    if n.is_finite() {
+        n.clamp(MIN_SIZE_SCALE, MAX_SIZE_SCALE)
+    } else {
+        1.0
+    }
+}
+
+fn clamp_position_to_work_area(
+    window: &tauri::WebviewWindow,
+    x: i32,
+    y: i32,
+    width: u32,
+    height: u32,
+) -> (i32, i32) {
+    let Some(monitor) = window.current_monitor().ok().flatten() else {
+        return (x.max(0), y.max(0));
+    };
+    let area = monitor.work_area();
+    let min_x = area.position.x;
+    let min_y = area.position.y;
+    let max_x = (area.position.x + area.size.width as i32 - width as i32).max(min_x);
+    let max_y = (area.position.y + area.size.height as i32 - height as i32).max(min_y);
+    (x.clamp(min_x, max_x), y.clamp(min_y, max_y))
+}
 
 /// 吹き出し表示状態に応じてウィンドウをリサイズする
 /// scale_factor() で論理→物理ピクセルを変換してから設定するため DPI に対応する
 /// キャラクター底辺の位置を固定してリサイズするため、画面上の位置が維持される
 #[tauri::command]
-async fn resize_companion(app: tauri::AppHandle, speech_visible: bool) -> Result<(), String> {
+async fn resize_companion(
+    app: tauri::AppHandle,
+    speech_visible: bool,
+    size_scale: Option<f64>,
+) -> Result<(), String> {
     let window = app
         .get_webview_window("companion")
         .ok_or_else(|| "companion window not found".to_string())?;
-    let pos   = window.outer_position().map_err(|e| e.to_string())?;
-    let size  = window.outer_size().map_err(|e| e.to_string())?;
+    let pos = window.outer_position().map_err(|e| e.to_string())?;
+    let size = window.outer_size().map_err(|e| e.to_string())?;
     let scale = window.scale_factor().unwrap_or(1.0);
+    let ui_scale = normalized_size_scale(size_scale);
 
-    let char_h   = (CHAR_WINDOW_H_LOGICAL   * scale).round() as u32;
-    let bubble_h = (BUBBLE_WINDOW_H_LOGICAL * scale).round() as u32;
-    let target_h = if speech_visible { char_h + bubble_h } else { char_h };
+    let target_w = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale).round() as u32;
+    let char_h = (CHAR_WINDOW_H_LOGICAL * ui_scale * scale).round() as u32;
+    let bubble_h = (BUBBLE_WINDOW_H_LOGICAL * ui_scale * scale).round() as u32;
+    let target_h = if speech_visible {
+        char_h + bubble_h
+    } else {
+        char_h
+    };
 
-    // キャラクター底辺 (= ウィンドウ下端) を画面上で固定する
+    // キャラクター底辺 (= ウィンドウ下端) を画面上で固定する。
+    // その後 work_area 内に clamp し、旧バージョンで保存された小さいwindow用の座標でも
+    // 下端が画面外へ沈まないようにする。
     let char_bottom = pos.y + size.height as i32;
-    let new_y = (char_bottom - target_h as i32).max(0);
+    let (new_x, new_y) = clamp_position_to_work_area(
+        &window,
+        pos.x,
+        char_bottom - target_h as i32,
+        target_w,
+        target_h,
+    );
 
     window
         .set_size(tauri::Size::Physical(tauri::PhysicalSize {
-            width: size.width,
+            width: target_w,
             height: target_h,
         }))
         .map_err(|e| e.to_string())?;
     window
         .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-            x: pos.x,
+            x: new_x,
             y: new_y,
         }))
         .map_err(|e| e.to_string())?;
@@ -156,32 +205,39 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                 && cy >= pos.y
                 && cy < pos.y + size.height as i32;
             let interactive = if in_window {
-                let scale = window.scale_factor().unwrap_or(1.0);
-                let lx = (cx - pos.x) as f64;
-                let ly = (cy - pos.y) as f64;
-                let char_h = CHAR_WINDOW_H_LOGICAL * scale;
-                let bubble_h = BUBBLE_WINDOW_H_LOGICAL * scale;
-                let sprite_w = CHARACTER_SPRITE_W_LOGICAL * scale;
-                let sprite_h = CHARACTER_SPRITE_H_LOGICAL * scale;
-                let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * scale;
-                let speech_visible = size.height as f64 > char_h + (8.0 * scale);
+                if CONTEXT_MENU_VISIBLE.load(Ordering::Relaxed) {
+                    true
+                } else {
+                    let scale = window.scale_factor().unwrap_or(1.0);
+                    let ui_scale = (size.width as f64 / (COMPANION_WINDOW_W_LOGICAL * scale))
+                        .clamp(MIN_SIZE_SCALE, MAX_SIZE_SCALE);
+                    let lx = (cx - pos.x) as f64;
+                    let ly = (cy - pos.y) as f64;
+                    let char_h = CHAR_WINDOW_H_LOGICAL * ui_scale * scale;
+                    let bubble_h = BUBBLE_WINDOW_H_LOGICAL * ui_scale * scale;
+                    let sprite_w = CHARACTER_SPRITE_W_LOGICAL * ui_scale * scale;
+                    let sprite_h = CHARACTER_SPRITE_H_LOGICAL * ui_scale * scale;
+                    let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * ui_scale * scale;
+                    let unit = ui_scale * scale;
+                    let speech_visible = size.height as f64 > char_h + (8.0 * unit);
 
-                let bubble_hit = speech_visible
-                    && ly >= 8.0 * scale
-                    && ly <= bubble_h - 8.0 * scale
-                    && lx >= 8.0 * scale
-                    && lx <= size.width as f64 - 8.0 * scale;
+                    let bubble_hit = speech_visible
+                        && ly >= 8.0 * unit
+                        && ly <= bubble_h - 8.0 * unit
+                        && lx >= 8.0 * unit
+                        && lx <= size.width as f64 - 8.0 * unit;
 
-                let char_top = size.height as f64 - bottom_pad - sprite_h;
-                let center_x = (COMPANION_WINDOW_W_LOGICAL * scale) / 2.0;
-                let center_y = char_top + sprite_h * 0.52;
-                let rx = sprite_w * 0.39;
-                let ry = sprite_h * 0.46;
-                let dx = (lx - center_x) / rx;
-                let dy = (ly - center_y) / ry;
-                let character_hit = dx * dx + dy * dy <= 1.0;
+                    let char_top = size.height as f64 - bottom_pad - sprite_h;
+                    let center_x = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale) / 2.0;
+                    let center_y = char_top + sprite_h * 0.52;
+                    let rx = sprite_w * 0.39;
+                    let ry = sprite_h * 0.46;
+                    let dx = (lx - center_x) / rx;
+                    let dy = (ly - center_y) / ry;
+                    let character_hit = dx * dx + dy * dy <= 1.0;
 
-                bubble_hit || character_hit
+                    bubble_hit || character_hit
+                }
             } else {
                 false
             };
@@ -200,6 +256,11 @@ fn set_ignore_cursor_events<R: Runtime>(
     ignore: bool,
 ) -> Result<(), String> {
     window.set_ignore_cursor_events(ignore).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_context_menu_visible(visible: bool) {
+    CONTEXT_MENU_VISIBLE.store(visible, Ordering::Relaxed);
 }
 
 #[tauri::command]
@@ -331,8 +392,21 @@ fn save_settings_cmd(
 #[tauri::command]
 fn save_window_position(app: tauri::AppHandle, x: i32, y: i32) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
-    s.window_x = Some(x);
-    s.window_y = Some(y);
+    let (save_x, save_y) = if let Some(window) = app.get_webview_window("companion") {
+        let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
+        let clamped = clamp_position_to_work_area(&window, x, y, size.width, size.height);
+        if clamped != (x, y) {
+            let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x: clamped.0,
+                y: clamped.1,
+            }));
+        }
+        clamped
+    } else {
+        (x, y)
+    };
+    s.window_x = Some(save_x);
+    s.window_y = Some(save_y);
     settings::save_settings(&app, &s)
 }
 
@@ -360,8 +434,10 @@ pub fn run() {
             let restored = if let (Some(sx), Some(sy)) = (saved.window_x, saved.window_y) {
                 // 画面外補正: 明らかにおかしな値は無視
                 if sx > -500 && sy > -500 && sx < 10_000 && sy < 10_000 {
+                    let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
+                    let (rx, ry) = clamp_position_to_work_area(&window, sx, sy, size.width, size.height);
                     let _ = window.set_position(tauri::Position::Physical(
-                        tauri::PhysicalPosition { x: sx, y: sy },
+                        tauri::PhysicalPosition { x: rx, y: ry },
                     ));
                     true
                 } else {
@@ -373,12 +449,12 @@ pub fn run() {
 
             if !restored {
                 if let Some(monitor) = window.current_monitor().ok().flatten() {
-                    let screen = monitor.size();
-                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 240 });
+                    let area = monitor.work_area();
+                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
                     let margin = 20i32;
                     let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x: screen.width as i32 - win.width as i32 - margin,
-                        y: screen.height as i32 - win.height as i32 - margin,
+                        x: area.position.x + area.size.width as i32 - win.width as i32 - margin,
+                        y: area.position.y + area.size.height as i32 - win.height as i32 - margin,
                     }));
                 }
             }
@@ -441,6 +517,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_ignore_cursor_events,
+            set_context_menu_visible,
             move_window,
             get_app_version,
             quit_app,

@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.39)**
+**最終更新: 2026-05-13 (v0.1.40)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.39
-**フェーズ:** Hotfix — Character Layout / Transparent Hit Area / Foreground Debug 完了 (実機確認待ち)
-**全体進捗:** 約 74%
+**バージョン:** v0.1.40
+**フェーズ:** Hotfix — Character Layout / Context Menu 完了 (実機確認待ち)
+**全体進捗:** 約 76%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.39)
-✅ cargo build  → Finished dev profile (v0.1.39)
-✅ GitHub Actions / Windows Installer → v0.1.38 成功済み。v0.1.39 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.40)
+✅ cargo build  → Finished dev profile (v0.1.40)
+✅ GitHub Actions / Windows Installer → v0.1.39 成功済み。v0.1.40 は tag push 後に確認
 ```
 
 ---
@@ -46,6 +46,7 @@
 | Companion Intelligence & Window Arch | AI-first自律発話・PromptBuilder/QualityFilter強化・window resize・3秒遅延キャプチャ | ✅ v0.1.37 |
 | Hotfix: Settings/Clipping/AI | TabErrorBoundary・DPI対応resize_companion・PromptBuilder時刻偏重修正・直近発話context | ✅ v0.1.38 |
 | Hotfix: Character/Hit Area/Foreground Debug | 240px layout・楕円hit target・serde camelCase/raw JSON debug | ✅ v0.1.39 |
+| Hotfix: Character/ContextMenu | 280px layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp | ✅ v0.1.40 |
 
 ---
 
@@ -172,18 +173,60 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.40)
+## v0.1.40 実装詳細
 
-### 優先候補 A: v0.1.39 実機確認 ← **最優先**
+### A: キャラめり込み/見切れの根本対策
+
+- `src/constants/companionLayout.ts` を追加し、TS側の window/layout 定数を一元化
+  - compact: `200×280`
+  - expanded: `200×410`
+  - bottom padding: `24px`
+- `src/App.tsx`:
+  - `settings.sizeScale` を `normalizeCompanionScale()` で `0.75〜1.5` に clamp
+  - `resize_companion` に `sizeScale` を渡す
+- `src-tauri/src/lib.rs`:
+  - `CHAR_WINDOW_H_LOGICAL = 280.0`
+  - `resize_companion(speechVisible, sizeScale)` で width/height を DPI scale と sizeScale の両方に合わせる
+  - resize後の top-left を monitor work area 内へ clamp
+- 保存済み window position と drag終了時の position 保存も work area 内へ clamp
+  - 旧バージョンの小さい window で保存された top-left をそのまま復元して、下端が画面外に沈む問題を防ぐ
+- `useWander.ts` は現在の `window.outerWidth/outerHeight` で画面内移動範囲を計算
+
+### B: ContextMenu見切れ修正
+
+- `src/components/ContextMenu.tsx`:
+  - 固定 `300px` 想定を削除
+  - 実際の companion window width/height を受け取り、menu bottom が window 内に収まるよう clamp
+  - 下部右クリック時は上方向に開く
+  - `終了` を `アプリ終了` に変更
+- `src-tauri/src/lib.rs`:
+  - `CONTEXT_MENU_VISIBLE` と `set_context_menu_visible(visible)` を追加
+  - ContextMenu 表示中だけ hit test を window 全体 interactive にし、メニュー項目クリックが楕円hit target外で背面へ抜けないようにした
+  - メニューを閉じたら通常の「吹き出し + キャラ楕円」hit test に戻る
+
+### C: 維持したもの
+
+- v0.1.39 で解決した Active App取得 / Bitwig `daw` 認識 / raw JSON debug
+- SettingsApp の白画面防止
+- Ollama `source: ollama`、`http://127.0.0.1:11434` default、PromptBuilder / QualityFilter
+- 上部透明領域クリック改善と PNG透明余白クリック改善
+
+---
+
+## 次のフェーズ候補 (v0.1.41)
+
+### 優先候補 A: v0.1.40 実機確認 ← **最優先**
 
 1. キャラが下にめり込まないか
 2. ドラッグしても画像が切れないか
 3. 吹き出し表示時もキャラが沈まないか
-4. 吹き出し非表示時、上部透明領域で背面URLをクリックできるか
-5. PNG透明余白クリックが前より背面に通りやすいか
-6. キャラ本体クリック / drag / voice long press が動くか
-7. Ollama返答が自然なままか
-8. 3秒後キャプチャで raw JSON / hwndRaw / pid / processName がどう表示されるか
+4. キャラ上部/中央/下部どこで右クリックしてもメニューが見切れないか
+5. `アプリ終了` が普通にクリックできるか
+6. 吹き出し非表示時、上部透明領域で背面URLをクリックできるか
+7. PNG透明余白クリックが前より背面に通りやすいか
+8. キャラ本体クリック / drag / voice long press が動くか
+9. Ollama返答が自然なままか
+10. Active App取得が引き続き動くか
 
 ### 優先候補 B: First-run Onboarding
 
@@ -201,9 +244,9 @@
 - 「設定を開く」が機能する
 - build が通る
 
-### 優先候補 C: Active App取得修正継続
+### 優先候補 C: 残QA修正
 
-**目的:** v0.1.39 の raw JSON 結果をもとに、GetForegroundWindow が本当に 0 なのか、権限/前面化/serde の問題なのかを切り分ける。
+**目的:** v0.1.40 実機確認で、キャラ常駐体験に残った問題を優先修正する。
 
 ### 優先候補 D: Memory Retention Policy
 
@@ -256,8 +299,8 @@
 ✅ OllamaProvider: invoke("ollama_list_models") / invoke("ollama_chat") で Rust 経由 HTTP (CORS 回避)
 ✅ LastAIResultDebug: AIPage でデバッグ情報が表示される
 ✅ classify_app: self/communication カテゴリを含む拡充済みマッピング
-✅ resize_companion: 吹き出し on/off でウィンドウ 200×240 ↔ 200×370 動的リサイズ
-✅ hit test スレッド: 吹き出し矩形 + キャラ楕円のみ有効化
+✅ resize_companion: 吹き出し on/off でウィンドウ 200×280 ↔ 200×410 動的リサイズ
+✅ hit test スレッド: 通常時は吹き出し矩形 + キャラ楕円、ContextMenu中のみ全域有効化
 ✅ 3秒遅延キャプチャ: TransparencyPage でボタンを押してから3秒後に get_active_app_debug
 ✅ hwnd_raw / last_error_before: ActiveAppDebugInfo に追加済み
 ✅ AI-first startup greeting / idle speech / activity transitions
@@ -269,8 +312,8 @@
 ✅ get_active_app_debug: フォアグラウンドプロセス取得の段階別デバッグ情報
 ✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示 (防御的・useRef対応)
 ✅ TabErrorBoundary: SettingsApp の各タブを ErrorBoundary で保護
-✅ resize_companion: scale_factor() で DPI 対応・logical 240px → physical 変換
-✅ tauri.conf.json: 初期ウィンドウ高さ 240px (論理ピクセル)
+✅ resize_companion: scale_factor() + sizeScale で DPI/ユーザーscale 対応
+✅ tauri.conf.json: 初期ウィンドウ高さ 280px (論理ピクセル)
 ✅ cargo build が通ること
 ✅ npm run build が通ること
 ✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
@@ -289,7 +332,7 @@
 4. docs/RESPONSE_QUALITY_GUIDE.md で発話品質基準確認
 5. npm run build → 通ることを確認
 6. cargo build  → 通ることを確認
-7. まず v0.1.39 実機確認。問題なければ First-run Onboarding へ進む
+7. まず v0.1.40 実機確認。問題なければ First-run Onboarding へ進む
 8. npm run build / cargo build → 通ることを確認
 9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
 10. docs/NEXT_SESSION.md 更新 (このファイル)

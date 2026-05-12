@@ -3,17 +3,21 @@
 
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { CONTEXT_MENU_H, CONTEXT_MENU_W } from "../constants/companionLayout";
 
 interface ContextMenuProps {
   x: number;
   y: number;
+  windowWidth: number;
+  windowHeight: number;
   onClose: () => void;
 }
 
-const MENU_W = 150;
-const MENU_H = 96;
+function clamp(n: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, n));
+}
 
-export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
+export function ContextMenu({ x, y, windowWidth, windowHeight, onClose }: ContextMenuProps) {
   const [autostart, setAutostart] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -22,9 +26,9 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
       .catch(() => setAutostart(false));
   }, []);
 
-  // ウィンドウ境界内に収める
-  const left = Math.min(x, 200 - MENU_W - 4);
-  const top = Math.min(y, 300 - MENU_H - 4);
+  // compact window 内に収める。下側で右クリックした場合は上方向に開く。
+  const left = clamp(x, 4, Math.max(4, windowWidth - CONTEXT_MENU_W - 4));
+  const top = clamp(y, 4, Math.max(4, windowHeight - CONTEXT_MENU_H - 4));
 
   const handleSettings = () => {
     invoke("open_settings_window").catch(() => {});
@@ -68,7 +72,7 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
           borderRadius: 10,
           boxShadow: "0 4px 16px rgba(100,60,200,0.18)",
           padding: "4px 0",
-          width: MENU_W,
+          width: CONTEXT_MENU_W,
           fontFamily: "system-ui, -apple-system, sans-serif",
           fontSize: 12,
           color: "#3a2870",
@@ -99,7 +103,7 @@ export function ContextMenu({ x, y, onClose }: ContextMenuProps) {
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(220,60,60,0.1)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
         >
-          終了
+          アプリ終了
         </button>
       </div>
     </>

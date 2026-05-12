@@ -14,6 +14,14 @@ import { ContextMenu } from "./components/ContextMenu";
 import { DebugOverlay } from "./components/DebugOverlay";
 import { TinyWhisper } from "./components/TinyWhisper";
 import { DEFAULT_CHARACTER_CONFIG } from "./types/companion";
+import {
+  CHARACTER_BOTTOM_PAD,
+  COMPANION_BUBBLE_H,
+  COMPANION_COMPACT_H,
+  COMPANION_WINDOW_W,
+  CONTEXT_MENU_H,
+  normalizeCompanionScale,
+} from "./constants/companionLayout";
 import { useSettings } from "./settings/store";
 import { cryEngine } from "./companion/audio/FileCryEngine";
 import { useObservationReactions } from "./companion/reactions/useObservationReactions";
@@ -24,10 +32,6 @@ import "./styles/index.css";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 const OBSERVE_INTERVAL_MS = 30_000;
-const WINDOW_W = 200;
-const CHAR_WINDOW_H = 240;
-const BUBBLE_WINDOW_H = 130;
-const CHARACTER_BOTTOM_PAD = 16;
 
 export default function App() {
   const [settings] = useSettings();
@@ -183,22 +187,32 @@ export default function App() {
     if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 吹き出し表示状態に応じてウィンドウをリサイズ
-  // 非表示: 200×240 (キャラのみ) / 表示中: 200×370 (吹き出し+キャラ)
-  // キャラ底辺を固定してリサイズするため、画面上の位置は変わらない
+  // 吹き出し表示状態に応じてウィンドウをリサイズ。
+  // React の sizeScale と Rust 側 window bounds を必ず同じ値に揃える。
   const hasSpeech = !!(tinyText || speechText);
+  const scale = normalizeCompanionScale(settings.sizeScale);
 
   useEffect(() => {
     if (!isTauri) return;
-    void invoke("resize_companion", { speechVisible: hasSpeech });
-  }, [hasSpeech]);
+    void invoke("resize_companion", { speechVisible: hasSpeech, sizeScale: scale });
+  }, [hasSpeech, scale]);
 
-  const scale = settings.sizeScale ?? 1;
   const characterW = Math.round(DEFAULT_CHARACTER_CONFIG.width * scale);
   const characterH = Math.round(DEFAULT_CHARACTER_CONFIG.height * scale);
-  const windowW = Math.round(WINDOW_W * scale);
-  const windowH = Math.round((hasSpeech ? CHAR_WINDOW_H + BUBBLE_WINDOW_H : CHAR_WINDOW_H) * scale);
+  const windowW = Math.round(COMPANION_WINDOW_W * scale);
+  const windowH = Math.round((hasSpeech ? COMPANION_COMPACT_H + COMPANION_BUBBLE_H : COMPANION_COMPACT_H) * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
+  const menuSafeH = Math.round(CONTEXT_MENU_H * scale);
+
+  const contextMenuVisible = contextMenu !== null;
+
+  useEffect(() => {
+    if (!isTauri) return;
+    void invoke("set_context_menu_visible", { visible: contextMenuVisible });
+    return () => {
+      void invoke("set_context_menu_visible", { visible: false });
+    };
+  }, [contextMenuVisible]);
 
   return (
     <div
@@ -272,7 +286,13 @@ export default function App() {
 
       {contextMenu && (
         <div style={{ pointerEvents: "auto" }}>
-          <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} />
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            windowWidth={windowW}
+            windowHeight={Math.max(windowH, menuSafeH)}
+            onClose={() => setContextMenu(null)}
+          />
         </div>
       )}
     </div>
