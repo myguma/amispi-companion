@@ -2,6 +2,15 @@
 
 ## [0.1.49] — 2026-05-13
 
+### Field QA (Passed)
+
+- **v0.1.49 実機QA通過**: First-run Onboarding は完了扱い
+- 初回起動 / 設定画面から Onboarding を開けることを確認
+- Onboarding 完了後に自動再表示されず、設定画面の「はじめに」から再表示できることを確認
+- Ollama / 自律発話 / privacy 説明は問題なし
+- 既存設定、idle / speech / drag / speech中drag のキャラ表示、click-through、右クリック、voice long press、Active App、Update は問題なし
+- compact `200x280` speech layout は引き続き安定
+
 ### Added (First-run Onboarding)
 
 #### A: 初回起動オンボーディング

@@ -24,9 +24,9 @@
 | 設定 UI | 96% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 84% | v0.1.49 docs更新、v0.1.48実機QA結果を反映 |
+| リリース品質 (docs) | 86% | v0.1.49実機QA通過を反映。First-run Onboarding完了扱い |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~82%** | v0.1.48でキャラ描画は実用上解決。v0.1.49でFirst-run Onboarding追加 |
+| **総合** | **~83%** | v0.1.49実機QA通過。First-run Onboarding完了、compact 200x280 speech layout安定 |
 
 ---
 
@@ -56,7 +56,7 @@
 | v0.1.46 | Hotfix: sprite実表示をbackground surfaceへ変更・renderMode debug追加 |
 | v0.1.47 | Hotfix: companion windowを常時expanded height化・SPEECH_VISIBLE明示hit test・DebugOverlay/ContextMenu重なり修正 |
 | v0.1.48 | Hotfix: v0.1.47常時410pxを撤回・常時compact 280px内speech layout・bubble 3行省略 |
-| v0.1.49 | First-run Onboarding追加・onboardingCompleted/onboardingVersion・v0.1.48 Field QA docs反映 |
+| v0.1.49 | First-run Onboarding追加・onboardingCompleted/onboardingVersion・v0.1.48 Field QA docs反映・実機QA通過 |
 
 ---
 
@@ -73,23 +73,21 @@
 
 ## 次の目標: v0.1.50 候補
 
-優先候補A: **v0.1.49 実機確認 → 残QA修正** ← **推奨**
-- First-run Onboardingの初回表示・完了保存・再表示導線を確認
-- 既存設定、UpdatePage、DebugPage、TransparencyPageの回帰確認
-- v0.1.48のcompact 200x280 character layout維持を確認
-
-優先候補B: **Memory Retention Policy**
+優先候補A: **Memory Retention Policy** ← **推奨**
 - `memoryRetentionDays` 設定 (デフォルト30日)
 - 起動時に古い speech_shown / state_changed を自動削除
 - MemoryPage に設定UI追加
 
-優先候補C: **Emotion Sprite Set**
+優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
 - CryEngine sound + sprite 連動
 
+優先候補C: **RuleProvider daily summary活用強化**
+- DailySummary を fallback / rule response の文脈に使う
+- ただし Ollama / PromptBuilder の既存品質は壊さない
+
 | 作業 | 優先度 |
 |------|--------|
-| v0.1.49 onboarding QA / 残QA修正 | 高 |
 | Memory retention / export | 中 |
 | Emotion sprite set | 中 |
 | RuleProvider daily summary活用強化 | 中 |

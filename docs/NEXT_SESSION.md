@@ -11,8 +11,8 @@
 ## 現在のステータス
 
 **バージョン:** v0.1.49
-**フェーズ:** First-run Onboarding 実装完了 (実機確認待ち)
-**全体進捗:** 約 82%
+**フェーズ:** First-run Onboarding 実機QA通過
+**全体進捗:** 約 83%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -26,7 +26,7 @@
 ```
 ✅ npm run build → ✓ built (v0.1.49)
 ✅ cargo build  → Finished dev profile (v0.1.49)
-✅ GitHub Actions / Windows Installer → v0.1.48 成功済み。v0.1.49 は tag push 後に確認
+✅ GitHub Actions / Windows Installer → v0.1.49 成功済み
 ```
 
 ---
@@ -84,6 +84,8 @@
   - Finish
 - 完了またはスキップで `onboardingCompleted=true` / `onboardingVersion=1`
 - 完了後も設定画面から再表示可能
+- 実機QAで初回表示、完了後の非再表示、設定画面からの再表示を確認済み
+- Ollama / 自律発話 / privacy 説明、既存設定、Update、Active App、voice long press の回帰なし
 
 ### C: 注意
 
@@ -515,19 +517,7 @@
 
 ## 次のフェーズ候補 (v0.1.50)
 
-### 優先候補 A: v0.1.49 実機確認 → 残QA修正 ← **最優先**
-
-1. 初回起動または設定画面からOnboardingを開けるか確認
-2. Onboarding完了後に再表示されないか確認
-3. 設定画面の「はじめに」タブから再表示できるか確認
-4. 既存設定、UpdatePage、DebugPage、TransparencyPageが壊れていないか確認
-5. v0.1.48のcompact 200x280 character layoutが維持されているか確認
-
-### 優先候補 B: 残QA修正
-
-**目的:** v0.1.49 実機確認で出たOnboarding/設定/常駐体験の問題を優先修正する。
-
-### 優先候補 C: Memory Retention Policy
+### 優先候補 A: Memory Retention Policy ← **推奨**
 
 **目的:** 古いイベントを自動的に整理する仕組み。
 
@@ -536,7 +526,7 @@
 2. 起動時に古い speech_shown / state_changed を削除
 3. MemoryPage に設定UI追加
 
-### 優先候補 D: Emotion Sprite Set
+### 優先候補 B: Emotion Sprite Set
 
 **目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
 
@@ -544,6 +534,14 @@
 1. `public/characters/default/` に shy.png / concerned.png を追加
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
+
+### 優先候補 C: RuleProvider daily summary活用強化
+
+**目的:** DailySummaryをfallback / RuleProvider応答に軽く反映し、ローカル文脈の継続感を上げる。
+
+**注意:**
+- PromptBuilder / QualityFilter / Ollama品質は大きく触らない
+- source: ollama の挙動を壊さない
 
 ---
 

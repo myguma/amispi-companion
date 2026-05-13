@@ -13,12 +13,31 @@
 > v0.1.47 では v0.1.46 debug結果を受け、speech表示/非表示でwindow heightを変えない常時expanded方式へ変更。
 > v0.1.48 では v0.1.47 実機改悪を受け、常時expanded方式を撤回し、speech時もcompact 280px内に収める方式へ変更。
 > v0.1.49 では v0.1.48 実機確認結果を反映し、First-run Onboardingを追加。
+> v0.1.49 実機QAで First-run Onboarding、compact speech layout、主要操作の安定を確認。
 
 **更新: 2026-05-13 (v0.1.49)**
 
 ---
 
 ## v0.1.49 での更新内容
+
+### v0.1.49 実機QA結果 (通過)
+
+**確認結果:**
+- 初回起動 / 設定画面から Onboarding を開ける
+- Onboarding 完了後に再表示されない
+- 設定画面の「はじめに」から Onboarding を再表示できる
+- Ollama / 自律発話 / privacy 説明は問題なし
+- 既存設定は壊れていない
+- idle / speech / drag / speech中drag でキャラ表示は正常
+- click-through / 右クリック / voice long press / Active App / Update も問題なし
+
+**判断:**
+- v0.1.49 は実機QA通過
+- First-run Onboarding は完了扱い
+- compact `200x280` speech layout は引き続き安定
+- 次候補は Memory Retention Policy / Emotion Sprite Set / RuleProvider daily summary活用強化
+- Whisper実接続 / Screen Capture / TTS はまだ実施しない
 
 ### v0.1.48 実機確認結果を採用
 
