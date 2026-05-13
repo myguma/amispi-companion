@@ -51,6 +51,7 @@ type ImageSnapshot = {
   overflow: string;
   effectiveState: string;
   emotion: string;
+  visualEmotion: string;
   renderMode: string;
   alphaBox: AlphaBox | null;
   alphaError: string | null;
@@ -224,6 +225,7 @@ function snapshotImage(): ImageSnapshot {
       overflow: "",
       effectiveState: "",
       emotion: "",
+      visualEmotion: "",
       renderMode: "",
       alphaBox: null,
       alphaError: "no-img",
@@ -256,6 +258,7 @@ function snapshotImage(): ImageSnapshot {
     overflow: surfaceStyle?.overflow ?? parentStyle?.overflow ?? style.overflow,
     effectiveState: animEl?.dataset.state ?? "",
     emotion: animEl?.dataset.emotion ?? "",
+    visualEmotion: animEl?.dataset.visualEmotion ?? "",
     renderMode: surface?.dataset.renderMode ?? img.dataset.renderMode ?? "img",
     alphaBox: box,
     alphaError: error,
@@ -390,7 +393,7 @@ export function DebugOverlay({
           borderRadius: 4,
         }}
       >
-        <div>state: {state} eff={imgInfo.effectiveState || "-"} emo={imgInfo.emotion || "-"} speech={String(hasSpeech)} drag={String(isDragging)}</div>
+        <div>state: {state} eff={imgInfo.effectiveState || "-"} emo={imgInfo.emotion || "-"} vis={imgInfo.visualEmotion || "-"} speech={String(hasSpeech)} drag={String(isDragging)}</div>
         <div>scale={scale.toFixed(2)} expected={windowW}x{windowH}</div>
         <div>vh inner={viewport.innerWidth}x{viewport.innerHeight} client={viewport.clientWidth}x{viewport.clientHeight}</div>
         <div>visual={viewport.visualWidth ?? "n/a"}x{viewport.visualHeight ?? "n/a"}</div>

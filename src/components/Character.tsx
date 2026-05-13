@@ -27,6 +27,14 @@ export function emotionToSpriteState(emotion: CompanionEmotion): CompanionState 
   }
 }
 
+/**
+ * 既存の operational state (speaking / touched / idle など) は描画stateを上書きしない。
+ * v0.2.2では、追加表情だけをsprite探索の候補にする。
+ */
+function isExpressiveSpriteEmotion(emotion: CompanionEmotion | null | undefined): emotion is "happy" | "shy" | "concerned" {
+  return emotion === "happy" || emotion === "shy" || emotion === "concerned";
+}
+
 interface CharacterProps {
   state: CompanionState;
   config?: CharacterConfig;
@@ -239,8 +247,9 @@ export function Character({
 }: CharacterProps) {
   const [useFallback, setUseFallback] = useState(false);
 
-  const effectiveState: CompanionState = isDragging ? "touched" : (emotion ? emotionToSpriteState(emotion) : state);
-  const spriteUrls = getSpriteUrl(config.id, effectiveState, isDragging ? null : emotion);
+  const visualEmotion = isDragging ? null : (isExpressiveSpriteEmotion(emotion) ? emotion : null);
+  const effectiveState: CompanionState = isDragging ? "touched" : state;
+  const spriteUrls = getSpriteUrl(config.id, effectiveState, visualEmotion);
 
   const isVoiceActive =
     voiceUIState === "voiceListening" ||
@@ -274,6 +283,7 @@ export function Character({
         className={animClass}
         data-state={effectiveState}
         data-emotion={emotion ?? ""}
+        data-visual-emotion={visualEmotion ?? ""}
         style={{
           width: "100%",
           height: "100%",

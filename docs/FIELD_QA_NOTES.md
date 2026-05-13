@@ -22,8 +22,26 @@
 > v0.1.55 では Release polish としてNode.js 24 opt-in、Update/Ollama失敗案内、Known Issuesを追加。
 > v0.2.0 では daily-use beta としてv0.1.x安定化をdocs/checklistに整理。
 > v0.2.1 では Emotion Sprite Set minimal として、emotion propとsafe fallbackを追加。
+> v0.2.2 では Expressiveness QA として、operational emotionが描画stateを過剰に上書きしないよう調整。
 
-**更新: 2026-05-13 (v0.2.1)**
+**更新: 2026-05-13 (v0.2.2)**
+
+---
+
+## v0.2.2 での更新内容
+
+### Expressiveness QA
+
+**調整内容:**
+- `happy` / `shy` / `concerned` だけを追加表情sprite候補として扱う
+- `aware` / `idle` / `speaking` は描画stateを上書きしない
+- drag中は従来通り `touched` stateを優先
+- DebugOverlayに `vis=` を追加し、実際のvisual override有無を確認できるようにした
+
+**field QA pending:**
+- speech中 / click中 / drag中に表情切替が過剰でないか
+- `emo=` と `vis=` の表示が想定通りか
+- compact 200x280 character layout / click-through / hit test の回帰
 
 ---
 

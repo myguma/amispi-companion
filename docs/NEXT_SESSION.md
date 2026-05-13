@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.1)**
+**最終更新: 2026-05-13 (v0.2.2)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.2.1
-**フェーズ:** Minimal Emotion Sprite Set (automated checks passed / field QA pending)
+**バージョン:** v0.2.2
+**フェーズ:** Expressiveness QA (automated checks passed / field QA pending)
 **全体進捗:** 約 91%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.2.1)
-✅ cargo build  → Finished dev profile (v0.2.1)
-✅ GitHub Actions / Windows Installer → v0.2.0 成功済み。v0.2.1 は tag push 後に確認
+✅ npm run build → ✓ built (v0.2.2)
+✅ cargo build  → Finished dev profile (v0.2.2)
+✅ GitHub Actions / Windows Installer → v0.2.1 成功済み。v0.2.2 は tag push 後に確認
 ```
 
 ---
@@ -64,6 +64,26 @@
 | Release Polish | Node.js 24 opt-in・Update/Ollama失敗案内・Known Issues作成 | ✅ v0.1.55 |
 | Daily-use Beta | v0.1.x安定化をdocs/checklist/known issuesとして整理 | ✅ v0.2.0 |
 | Minimal Emotion Sprite Set | emotion prop・safe sprite fallback・DebugOverlay emo表示 | ✅ v0.2.1 |
+| Expressiveness QA | operational emotionが表示stateを過剰に上書きしないよう調整 | ✅ v0.2.2 |
+
+---
+
+## v0.2.2 実装詳細
+
+### A: Expressiveness QA
+
+- `happy` / `shy` / `concerned` だけを追加表情sprite候補として扱う
+- `aware` / `idle` / `speaking` など既存state相当のemotionは、描画stateを上書きしない
+- drag中は表情より `touched` stateを優先
+- DebugOverlayに raw emotion `emo=` と visual override `vis=` を分けて表示
+- window size / hit test / character-stage / compact speech layout は変更なし
+
+### B: Field QA pending
+
+- `vis=` が想定通り追加表情の時だけ表示されるか
+- speaking / touched / drag中に表示が過剰に切り替わらないか
+- 専用emotion画像なしでも既存sprite fallbackが自然か
+- compact 200x280 character layout / hit test / click-through の回帰がないか
 
 ---
 

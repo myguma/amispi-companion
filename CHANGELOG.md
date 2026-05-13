@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.2.2] — 2026-05-13
+
+### Changed (Expressiveness QA)
+
+- **Character.tsx**:
+  - emotionによるsprite上書きを `happy` / `shy` / `concerned` の追加表情だけに限定
+  - `aware` / `idle` / `speaking` など既存のoperational stateは、描画stateを上書きしないよう調整
+  - drag中は従来通り `touched` stateを優先
+- **DebugOverlay.tsx**:
+  - `emo=` に加えて、実際にsprite探索へ使われた追加表情を `vis=` として表示
+- **docs/EMOTION_SPRITE_SET.md**:
+  - operational emotion と expressive sprite emotion の違いを明記
+
+### Maintained
+
+- compact `200x280` window / speech時window resize不採用 / hit test geometry は変更なし
+- sprite画像の新規制作なし
+- 専用emotion assetが存在しない場合も既存spriteへfallback
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。`vis=` 表示、happy/shy/concerned fallback、speaking/drag中の見た目は field QA pending
+
 ## [0.2.1] — 2026-05-13
 
 ### Added (Minimal Emotion Sprite Set)
