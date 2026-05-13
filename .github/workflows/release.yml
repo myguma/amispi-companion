@@ -2,15 +2,17 @@ name: Release — Windows Installer
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  RELEASE_TAG: ${{ inputs.tag_name || github.ref_name }}
 
 on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release tag (e.g. v0.2.0)'
+        description: 'Release tag (e.g. v0.2.0 or v1.0.0-rc.1)'
         required: true
         default: 'v0.1.0'
 
@@ -52,10 +54,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ github.ref_name || inputs.tag_name }}
-          releaseName: 'AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}'
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: 'AmitySpirit Companion ${{ env.RELEASE_TAG }}'
           releaseBody: |
-            ## AmitySpirit Companion ${{ github.ref_name || inputs.tag_name }}
+            ## AmitySpirit Companion ${{ env.RELEASE_TAG }}
 
             インストール方法:
             - `amispi-companion_X.Y.Z_x64-setup.exe` をダウンロードして実行
@@ -65,7 +67,7 @@ jobs:
 
             詳細は [CHANGELOG.md](https://github.com/myguma/amispi-companion/blob/main/CHANGELOG.md) を参照してください。
           releaseDraft: false
-          prerelease: false
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
 
       # Tauri v2 (createUpdaterArtifacts:true) は .exe + .exe.sig を生成する。
       # .exe は tauri-action が既にアップロード済みなので .exe.sig と latest.json だけ追加する。
@@ -74,7 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $tagName   = "${{ github.ref_name || inputs.tag_name }}"
+          $tagName   = "${{ env.RELEASE_TAG }}"
           $bundleDir = "src-tauri/target/release/bundle/nsis"
           $conf      = Get-Content "src-tauri/tauri.conf.json" | ConvertFrom-Json
           $version   = $conf.version

@@ -9,6 +9,7 @@
 - `docs/V1_RELEASE_CANDIDATE_CHECKLIST.md` を追加
 - `docs/V1_RELEASE_NOTES_DRAFT.md` を追加
 - Known Issues / roadmap / progress / next session docsをRC基準へ更新
+- Release workflowをprerelease tag (`v1.0.0-rc.1`) と `workflow_dispatch` のtag inputに対応
 
 ### Maintained
 

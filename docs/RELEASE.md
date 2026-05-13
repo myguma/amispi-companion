@@ -91,6 +91,9 @@ git push origin v1.0.0-rc.1
 
 → GitHub Actions が自動起動し、約 5〜10 分で Draft Release が作成される。
 
+`v1.0.0-rc.1` のような prerelease tag も workflow 対象。
+`workflow_dispatch` で手動起動する場合は `tag_name` に対象tagを指定する。
+
 ### 5. GitHub Release を Publish
 
 GitHub の Releases ページを開き、Draft を確認してから **Publish release** をクリック。

@@ -14,6 +14,7 @@ automated checks は実施するが、実機依存項目は field QA pending と
 | Release workflow | required after tag |
 | Version files | `1.0.0-rc.1` |
 | Docs / changelog | updated |
+| Prerelease tag support | workflow updated for `v1.0.0-rc.1` |
 
 ## Stable Baseline
 
