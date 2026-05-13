@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.49)**
+**最終更新: 2026-05-13 (v0.1.50)**
 
 ---
 
@@ -17,16 +17,16 @@
 | AI コンテキスト構築 | 90% | trigger別ヒント・直近発話context・時刻偏重修正 |
 | AI プロバイダー (Ollama) | 93% | 127.0.0.1修正・temperature 0.5・QualityFilter強化 |
 | fallback / RuleProvider | 82% | fallbackReason 詳細化 (model_not_found等) |
-| 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
+| 記憶システム | 78% | DailySummary・MemoryViewer・削除機能・保存期間ポリシー実装済み |
 | 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
 | キャラクター表現 | 88% | v0.1.48実機確認で idle / speech / drag / speech中drag の描画消失が解決 |
-| 設定 UI | 96% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding追加 |
+| 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 86% | v0.1.49実機QA通過を反映。First-run Onboarding完了扱い |
+| リリース品質 (docs) | 87% | v0.1.50 Memory Retention Policy を反映 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~83%** | v0.1.49実機QA通過。First-run Onboarding完了、compact 200x280 speech layout安定 |
+| **総合** | **~84%** | v0.1.50でローカル記憶の保存期間制御を追加。compact 200x280 speech layout安定 |
 
 ---
 
@@ -57,6 +57,7 @@
 | v0.1.47 | Hotfix: companion windowを常時expanded height化・SPEECH_VISIBLE明示hit test・DebugOverlay/ContextMenu重なり修正 |
 | v0.1.48 | Hotfix: v0.1.47常時410pxを撤回・常時compact 280px内speech layout・bubble 3行省略 |
 | v0.1.49 | First-run Onboarding追加・onboardingCompleted/onboardingVersion・v0.1.48 Field QA docs反映・実機QA通過 |
+| v0.1.50 | Memory Retention Policy: memoryRetentionDays・起動時cleanup・MemoryPage保存期間UI/手動整理 |
 
 ---
 
@@ -71,24 +72,23 @@
 
 ---
 
-## 次の目標: v0.1.50 候補
+## 次の目標: v0.1.51 候補
 
-優先候補A: **Memory Retention Policy** ← **推奨**
-- `memoryRetentionDays` 設定 (デフォルト30日)
-- 起動時に古い speech_shown / state_changed を自動削除
-- MemoryPage に設定UI追加
-
-優先候補B: **Emotion Sprite Set**
+優先候補A: **Emotion Sprite Set** ← **推奨**
 - 感情別スプライト (shy / concerned / happy)
 - CryEngine sound + sprite 連動
 
-優先候補C: **RuleProvider daily summary活用強化**
+優先候補B: **RuleProvider daily summary活用強化**
 - DailySummary を fallback / rule response の文脈に使う
 - ただし Ollama / PromptBuilder の既存品質は壊さない
 
+優先候補C: **残QA修正**
+- v0.1.50 の保存期間UI / cleanup 挙動を実機確認
+- compact 200x280 character layout維持を確認
+
 | 作業 | 優先度 |
 |------|--------|
-| Memory retention / export | 中 |
 | Emotion sprite set | 中 |
 | RuleProvider daily summary活用強化 | 中 |
+| v0.1.50 retention QA / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |

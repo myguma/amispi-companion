@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CompanionState, StateConfig, VoiceUIState } from "../types/companion";
 import { DEFAULT_STATE_CONFIG } from "../types/companion";
-import { logEvent, getRecentEvents } from "../systems/memory/memoryStore";
+import { logEvent, getRecentEvents, pruneExpiredEvents } from "../systems/memory/memoryStore";
 import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
 import { selectReaction } from "../companion/reactions/selectReaction";
 import { recordReaction } from "../companion/reactions/reactionHistory";
@@ -375,6 +375,12 @@ export function useCompanionState(
   // 初期化
   // ──────────────────────────────────────────
   useEffect(() => {
+    const initialSettings = getSettings();
+    const retentionResult = pruneExpiredEvents(initialSettings.memoryRetentionDays);
+    if ((import.meta.env.DEV || initialSettings.debugModeEnabled) && retentionResult.deletedCount > 0) {
+      console.log("[memory-retention]", retentionResult);
+    }
+
     logEvent("app_start");
 
     // 前回セッションからの休憩期間に応じて挨拶トリガーを選択

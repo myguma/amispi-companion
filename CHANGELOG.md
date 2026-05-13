@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.1.50] — 2026-05-13
+
+### Added (Memory Retention Policy)
+
+- **settings/types.ts / defaults.ts**: `memoryRetentionDays` を追加
+  - `7`: 7日より古い MemoryEvent を削除
+  - `30`: デフォルト・推奨
+  - `90`: 長めに保存
+  - `0`: 無期限 / 自動削除なし
+- **memoryStore.ts**:
+  - `countExpiredEvents(retentionDays, now)` を追加
+  - `pruneExpiredEvents(retentionDays, now)` を追加
+  - retention は MemoryEvent 全タイプを対象にし、不正timestampの既存イベントは互換性のため残す
+- **useCompanionState.ts**: 起動時に `pruneExpiredEvents(settings.memoryRetentionDays)` を1回実行し、その後 `app_start` を記録
+- **MemoryPage.tsx**:
+  - 保存期間 UI を追加
+  - 削除対象件数プレビューを追加
+  - 「今すぐ整理」ボタンを追加
+  - 実行後に stats / event list / DailySummary を再読み込み
+
+### Docs
+
+- **docs/MEMORY_AND_DATA_CONTROL.md**: retention policy を実装済みとして更新
+- 保存期間、起動時cleanup、手動cleanup、DailySummary再計算、外部送信なしを明記
+
+### Maintained
+
+- compact `200x280` speech layout / character window policy は変更なし
+- ContextMenu / click-through / drag / voice long press / Active App / Ollama / First-run Onboarding は変更なし
+
 ## [0.1.49] — 2026-05-13
 
 ### Field QA (Passed)

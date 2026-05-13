@@ -14,8 +14,35 @@
 > v0.1.48 では v0.1.47 実機改悪を受け、常時expanded方式を撤回し、speech時もcompact 280px内に収める方式へ変更。
 > v0.1.49 では v0.1.48 実機確認結果を反映し、First-run Onboardingを追加。
 > v0.1.49 実機QAで First-run Onboarding、compact speech layout、主要操作の安定を確認。
+> v0.1.50 ではローカル記憶の保存期間設定と起動時/手動cleanupを追加。
 
-**更新: 2026-05-13 (v0.1.49)**
+**更新: 2026-05-13 (v0.1.50)**
+
+---
+
+## v0.1.50 での更新内容
+
+### Memory Retention Policy
+
+**追加内容:**
+- `memoryRetentionDays` 設定を追加
+- デフォルトは30日
+- 選択肢は 7日 / 30日 / 90日 / 無期限
+- 起動時に古い MemoryEvent を1回自動整理
+- MemoryPageから削除対象件数を確認し、「今すぐ整理」で手動cleanup可能
+- DailySummary は保存済み MemoryEvent から再計算される
+
+**方針:**
+- retention対象は MemoryEvent 全タイプ
+- localStorage保存のみで、外部送信なし
+- 生音声、スクリーンショット、OCR等は保存しない方針を維持
+- 500件の件数上限は維持
+
+**維持したもの:**
+- v0.1.48 compact `200x280` speech layout
+- v0.1.49 First-run Onboarding
+- click-through / 右クリック / voice long press / Active App / Ollama / Update
+- Whisper実接続 / Screen Capture / TTS はまだ実施しない
 
 ---
 
@@ -36,7 +63,7 @@
 - v0.1.49 は実機QA通過
 - First-run Onboarding は完了扱い
 - compact `200x280` speech layout は引き続き安定
-- 次候補は Memory Retention Policy / Emotion Sprite Set / RuleProvider daily summary活用強化
+- Memory Retention Policy は v0.1.50 で対応。次候補は Emotion Sprite Set / RuleProvider daily summary活用強化
 - Whisper実接続 / Screen Capture / TTS はまだ実施しない
 
 ### v0.1.48 実機確認結果を採用

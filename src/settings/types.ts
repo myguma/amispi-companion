@@ -35,6 +35,7 @@ export type CompanionSettings = {
   debugModeEnabled: boolean;
   onboardingCompleted: boolean;
   onboardingVersion: number;
+  memoryRetentionDays: number;
 
   // AI エンジン設定
   aiEngine: AIEngine;

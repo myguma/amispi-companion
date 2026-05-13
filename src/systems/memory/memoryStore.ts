@@ -48,6 +48,74 @@ export type MemoryStats = {
   newestEventAt: number | null;
 };
 
+export type MemoryRetentionResult = {
+  enabled: boolean;
+  retentionDays: number;
+  beforeCount: number;
+  afterCount: number;
+  deletedCount: number;
+  cutoffTimestamp: number | null;
+};
+
+function buildRetentionResult(events: MemoryEvent[], retentionDays: number, now: number): MemoryRetentionResult {
+  if (!Number.isFinite(retentionDays) || retentionDays <= 0) {
+    return {
+      enabled: false,
+      retentionDays,
+      beforeCount: events.length,
+      afterCount: events.length,
+      deletedCount: 0,
+      cutoffTimestamp: null,
+    };
+  }
+
+  const cutoffTimestamp = now - retentionDays * 24 * 60 * 60 * 1000;
+  const afterCount = events.filter((event) => (
+    typeof event.timestamp !== "number" ||
+    !Number.isFinite(event.timestamp) ||
+    event.timestamp >= cutoffTimestamp
+  )).length;
+
+  return {
+    enabled: true,
+    retentionDays,
+    beforeCount: events.length,
+    afterCount,
+    deletedCount: events.length - afterCount,
+    cutoffTimestamp,
+  };
+}
+
+/**
+ * 保存期間を超えた MemoryEvent 数を数える。
+ * timestamp が不正な既存イベントは、互換性のため削除対象にしない。
+ */
+export function countExpiredEvents(retentionDays: number, now = Date.now()): MemoryRetentionResult {
+  return buildRetentionResult(loadEvents(), retentionDays, now);
+}
+
+/**
+ * 保存期間を超えた MemoryEvent を削除する。
+ * retentionDays <= 0 は無期限として扱い、自動削除しない。
+ */
+export function pruneExpiredEvents(retentionDays: number, now = Date.now()): MemoryRetentionResult {
+  const events = loadEvents();
+  const result = buildRetentionResult(events, retentionDays, now);
+
+  if (!result.enabled || result.deletedCount === 0 || result.cutoffTimestamp === null) {
+    return result;
+  }
+
+  const cutoffTimestamp = result.cutoffTimestamp;
+  const kept = events.filter((event) => (
+    typeof event.timestamp !== "number" ||
+    !Number.isFinite(event.timestamp) ||
+    event.timestamp >= cutoffTimestamp
+  ));
+  saveEvents(kept);
+  return { ...result, afterCount: kept.length, deletedCount: events.length - kept.length };
+}
+
 /**
  * メモリイベントを記録する
  */

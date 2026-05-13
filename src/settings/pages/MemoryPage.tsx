@@ -8,9 +8,13 @@ import {
   clearEvents,
   clearEventsByType,
   getMemoryStats,
+  countExpiredEvents,
+  pruneExpiredEvents,
   type MemoryStats,
+  type MemoryRetentionResult,
 } from "../../systems/memory/memoryStore";
 import { buildDailySummary, type DailySummary } from "../../companion/memory/dailySummary";
+import { useSettings } from "../store";
 
 // ────────────────────────────────────────────────
 // ユーティリティ
@@ -64,6 +68,13 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
 ];
 
 const DISPLAY_LIMIT = 50;
+
+const RETENTION_OPTIONS: { value: number; label: string; description: string }[] = [
+  { value: 7,  label: "7日",  description: "短めに保つ" },
+  { value: 30, label: "30日", description: "推奨" },
+  { value: 90, label: "90日", description: "長めに保つ" },
+  { value: 0,  label: "無期限", description: "自動削除なし" },
+];
 
 // ────────────────────────────────────────────────
 // サブコンポーネント
@@ -193,6 +204,26 @@ function FilterBar({ active, onChange }: { active: FilterType; onChange: (v: Fil
   );
 }
 
+function RetentionSummary({ result }: { result: MemoryRetentionResult }) {
+  if (!result.enabled) {
+    return (
+      <span style={{ color: "#888" }}>
+        自動削除は無効です。記録は最大500件まで、このPC内に保存されます。
+      </span>
+    );
+  }
+
+  const cutoff = result.cutoffTimestamp
+    ? new Date(result.cutoffTimestamp).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric" })
+    : "—";
+
+  return (
+    <span style={{ color: "#888" }}>
+      {cutoff} より古い記録が対象です。現在の設定では <strong>{result.deletedCount}</strong> 件が削除対象です。
+    </span>
+  );
+}
+
 // ────────────────────────────────────────────────
 // MemoryPage 本体
 // ────────────────────────────────────────────────
@@ -207,13 +238,18 @@ function loadPageData() {
 }
 
 export function MemoryPage() {
+  const [settings, updateSettings] = useSettings();
   const [data, setData] = useState(() => loadPageData());
   const [filter, setFilter] = useState<FilterType>("all");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [lastRetentionResult, setLastRetentionResult] = useState<MemoryRetentionResult | null>(null);
 
   const refresh = useCallback(() => {
     setData(loadPageData());
+    setLastRetentionResult(null);
   }, []);
+
+  const retentionPreview = countExpiredEvents(settings.memoryRetentionDays);
 
   // 全記憶削除
   const handleClearAll = useCallback(() => {
@@ -245,6 +281,28 @@ export function MemoryPage() {
     refresh();
   }, [refresh]);
 
+  const handleRetentionChange = useCallback((retentionDays: number) => {
+    updateSettings({ memoryRetentionDays: retentionDays });
+    setLastRetentionResult(null);
+  }, [updateSettings]);
+
+  const handlePruneExpired = useCallback(() => {
+    const preview = countExpiredEvents(settings.memoryRetentionDays);
+    if (!preview.enabled) {
+      setLastRetentionResult(preview);
+      return;
+    }
+
+    if (preview.deletedCount > 0 && !window.confirm(
+      `${preview.deletedCount}件の古い記録を整理しますか？\n\n` +
+      "削除された記録は元に戻せません。"
+    )) return;
+
+    const result = pruneExpiredEvents(settings.memoryRetentionDays);
+    setLastRetentionResult(result);
+    setData(loadPageData());
+  }, [settings.memoryRetentionDays]);
+
   // フィルタ適用
   const filteredEvents = filter === "all"
     ? data.allEvents
@@ -269,6 +327,60 @@ export function MemoryPage() {
       {/* 今日の活動サマリー */}
       <Section title="今日の様子">
         <DailySummaryPanel daily={data.daily} />
+      </Section>
+
+      {/* 保存期間 */}
+      <Section title="保存期間">
+        <div style={{ background: "#f7fbff", borderRadius: 8, padding: "10px 14px", fontSize: 12, lineHeight: 1.8 }}>
+          <p style={{ color: "#666", margin: "0 0 10px" }}>
+            古い記録はこのPC内で自動削除されます。外部送信は行いません。
+            DailySummary は保存された記録から再計算されます。
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+            {RETENTION_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleRetentionChange(option.value)}
+                style={{
+                  padding: "4px 11px",
+                  borderRadius: 14,
+                  border: settings.memoryRetentionDays === option.value ? "1px solid #4a90d9" : "1px solid #d8e5f5",
+                  background: settings.memoryRetentionDays === option.value ? "#eaf4ff" : "white",
+                  color: settings.memoryRetentionDays === option.value ? "#286aa5" : "#777",
+                  fontSize: 12,
+                  fontWeight: settings.memoryRetentionDays === option.value ? 600 : 400,
+                  cursor: "pointer",
+                }}
+                title={option.description}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, marginBottom: 10 }}>
+            <RetentionSummary result={retentionPreview} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <button
+              onClick={handlePruneExpired}
+              disabled={data.stats.totalEvents === 0}
+              style={{
+                fontSize: 12, padding: "5px 14px", border: "1px solid #b8d4f0",
+                borderRadius: 6, background: "white", color: "#286aa5", cursor: "pointer",
+                opacity: data.stats.totalEvents === 0 ? 0.4 : 1,
+              }}
+            >
+              今すぐ整理
+            </button>
+            {lastRetentionResult && (
+              <span style={{ fontSize: 11, color: "#888" }}>
+                {lastRetentionResult.enabled
+                  ? `${lastRetentionResult.deletedCount}件を整理しました`
+                  : "無期限のため自動整理は無効です"}
+              </span>
+            )}
+          </div>
+        </div>
       </Section>
 
       {/* イベントログ */}

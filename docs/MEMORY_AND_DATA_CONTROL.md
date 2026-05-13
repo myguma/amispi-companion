@@ -3,7 +3,7 @@
 > このドキュメントは無明がローカルに保存するデータの種類・保存先・削除方法を説明する。
 > ユーザー向けの透明性のために存在し、エンジニアとユーザーの両方が参照できる。
 
-**最終更新: 2026-05-12 (v0.1.33)**
+**最終更新: 2026-05-13 (v0.1.50)**
 
 ---
 
@@ -26,14 +26,33 @@
 | `note_saved` | メモ保存 (将来) | content |
 
 - 最大 500件まで保存 (超過時は古いものから削除)
+- 保存期間設定により、古い MemoryEvent を自動整理
 - ローカル `localStorage` のみ
 - 外部送信: なし
+
+### 保存期間ポリシー (v0.1.50)
+
+設定画面の「記憶」タブで保存期間を選べる。
+
+| 設定 | 内容 |
+|---|---|
+| 7日 | 7日より古い MemoryEvent を削除 |
+| 30日 | デフォルト・推奨 |
+| 90日 | 長めに保存 |
+| 無期限 (`0`) | 自動削除しない |
+
+- アプリ起動時に1回、保存期間を超えた MemoryEvent を自動整理する
+- 「今すぐ整理」ボタンで手動cleanupできる
+- retention は MemoryEvent 全タイプを対象にする
+- timestamp が不正な既存イベントは互換性のため削除対象にしない
+- 500件の件数上限は従来通り維持する
 
 ### DailySummary (MemoryEvent から毎回計算)
 
 DailySummary は localStorage に直接保存しない。
 MemoryEvent から `buildDailySummary()` でオンデマンドに計算する。
 そのため、MemoryEvent を削除すれば DailySummary も自動的にリセットされる。
+保存期間で古いイベントを削除した場合、過去のサマリーも保存済みイベントの範囲で再計算される。
 
 ---
 
@@ -59,10 +78,12 @@ MemoryEvent から `buildDailySummary()` でオンデマンドに計算する。
 
 | 操作 | 内容 |
 |---|---|
+| 保存期間変更 | 7日 / 30日 / 90日 / 無期限 |
+| 今すぐ整理 | 現在の保存期間に基づいて古い MemoryEvent を削除 |
 | 発話ログのみ削除 | `speech_shown` イベントのみ削除 |
 | すべての記憶を削除 | 全 MemoryEvent を削除 |
 
-削除はすべて確認ダイアログあり。削除後は元に戻せない。
+破壊的な削除は確認ダイアログあり。削除後は元に戻せない。
 
 ---
 
@@ -74,6 +95,8 @@ src/systems/memory/memoryStore.ts
   └─ getRecentEvents()    — 最新N件取得
   └─ getAllEvents()        — 全件取得
   └─ getEventsByType()    — タイプ別取得
+  └─ countExpiredEvents()  — 保存期間を超えたイベント数を集計
+  └─ pruneExpiredEvents()  — 保存期間を超えたイベントを削除
   └─ clearEvents()        — 全削除
   └─ clearEventsByType()  — タイプ別削除
   └─ getMemoryStats()     — 統計集計

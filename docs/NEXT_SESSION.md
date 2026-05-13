@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.49)**
+**最終更新: 2026-05-13 (v0.1.50)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.49
-**フェーズ:** First-run Onboarding 実機QA通過
-**全体進捗:** 約 83%
+**バージョン:** v0.1.50
+**フェーズ:** Memory Retention Policy 実装完了 (実機確認待ち)
+**全体進捗:** 約 84%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.49)
-✅ cargo build  → Finished dev profile (v0.1.49)
-✅ GitHub Actions / Windows Installer → v0.1.49 成功済み
+✅ npm run build → ✓ built (v0.1.50)
+✅ cargo build  → Finished dev profile (v0.1.50)
+✅ GitHub Actions / Windows Installer → v0.1.49 成功済み。v0.1.50 は tag push 後に確認
 ```
 
 ---
@@ -56,6 +56,46 @@
 | Hotfix: Always Expanded Transparent Window | speech表示/非表示でwindow heightを変えず、常時expanded height + 明示speech hit testへ変更 | ✅ v0.1.47 |
 | Hotfix: Compact Speech Layout | v0.1.47の常時410pxを撤回し、speech時も常時compact 280px内に収める | ✅ v0.1.48 |
 | First-run Onboarding | ローカルファースト・AI設定・自律発話・デバッグ方針を初回設定で案内 | ✅ v0.1.49 |
+| Memory Retention Policy | ローカル記憶の保存期間設定・起動時cleanup・手動整理UI | ✅ v0.1.50 |
+
+---
+
+## v0.1.50 実装詳細
+
+### A: Memory Retention Policy
+
+- `CompanionSettings` に `memoryRetentionDays` を追加
+- デフォルトは `30` 日
+- 選択肢
+  - 7日
+  - 30日
+  - 90日
+  - 無期限 (`0`)
+- 対象は MemoryEvent 全タイプ
+- 500件の件数上限は従来通り維持
+- timestamp が不正な既存イベントは互換性のため残す
+
+### B: cleanup実装
+
+- `memoryStore.ts` に `countExpiredEvents()` / `pruneExpiredEvents()` を追加
+- 起動時に `pruneExpiredEvents(settings.memoryRetentionDays)` を1回実行
+- cleanup後に `app_start` を記録する
+- DailySummary は保存済み MemoryEvent から再計算される
+
+### C: MemoryPage UI
+
+- 保存期間セクションを追加
+- 削除対象件数プレビューを追加
+- 「今すぐ整理」で手動cleanupできる
+- cleanup後に stats / event list / DailySummary を再読み込み
+- 発話ログのみ削除、すべて削除、フィルタ表示は維持
+
+### D: 維持したもの
+
+- v0.1.48 compact `200x280` speech layout
+- v0.1.49 First-run Onboarding
+- UpdatePage / DebugPage / TransparencyPage
+- ContextMenu / click-through / drag / voice long press / Active App / Ollama
 
 ---
 
@@ -515,18 +555,9 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.50)
+## 次のフェーズ候補 (v0.1.51)
 
-### 優先候補 A: Memory Retention Policy ← **推奨**
-
-**目的:** 古いイベントを自動的に整理する仕組み。
-
-**実装すべき内容:**
-1. 設定: `memoryRetentionDays` (デフォルト30日)
-2. 起動時に古い speech_shown / state_changed を削除
-3. MemoryPage に設定UI追加
-
-### 優先候補 B: Emotion Sprite Set
+### 優先候補 A: Emotion Sprite Set ← **推奨**
 
 **目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
 
@@ -535,13 +566,23 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 C: RuleProvider daily summary活用強化
+### 優先候補 B: RuleProvider daily summary活用強化
 
 **目的:** DailySummaryをfallback / RuleProvider応答に軽く反映し、ローカル文脈の継続感を上げる。
 
 **注意:**
 - PromptBuilder / QualityFilter / Ollama品質は大きく触らない
 - source: ollama の挙動を壊さない
+
+### 優先候補 C: v0.1.50 残QA修正
+
+**目的:** 保存期間UI / cleanup挙動の実機QAで出た問題を優先修正する。
+
+**確認すべき内容:**
+1. 7/30/90/無期限が保存されるか
+2. 削除対象件数が表示されるか
+3. 「今すぐ整理」で古い記録が削除されるか
+4. MemoryPage既存機能と主要回帰がないか
 
 ---
 
