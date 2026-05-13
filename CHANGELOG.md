@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.1.45] — 2026-05-13
+
+### Changed (Diagnostic: Sprite Render Debug Instrumentation)
+
+#### A: Character内部のスプライト描画debugを追加
+
+- **目的**: v0.1.44 の実機debugで、speech表示時も `stage` / `wrapper` は viewport 内に収まっていることが確認された
+- **判断**: 現在の見切れは window / viewport / work area clamp ではなく、Character内部の `<img>` 描画、sprite URL、PNG alpha bbox、CSS animation / transform / object-fit / WebView合成を疑う
+- **Character.tsx**: sprite `<img>` に `character-sprite-img` class と `data-sprite-url` を追加
+- **DebugOverlay.tsx**: debug mode ON時に以下を表示
+  - `effectiveState`
+  - current sprite URL
+  - img rect
+  - naturalWidth / naturalHeight / complete
+  - CSS animationName / animationDuration
+  - CSS transform / transformOrigin
+  - objectFit / objectPosition
+  - canvasで測定した alpha bbox
+  - alpha bbox の画面上rect
+  - img / alpha が viewport を超えた場合の `OVER`
+
+#### B: 見た目修正はまだ入れない
+
+- v0.1.45 は診断版であり、speech時キャラ見切れ修正完了版ではない
+- window height増加、speechSafetyLift、Character全体の上方向補正は入れていない
+- 実機スクショで `speaking.png` / `nat=160x160` / img・alpha bottom / `char-speak` の状態を確認してから修正方針を決める
+
 ## [0.1.44] — 2026-05-13
 
 ### Fixed (Hotfix: Settings Updater / Debug Mode / Hit Test QA)

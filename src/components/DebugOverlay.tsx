@@ -25,6 +25,34 @@ type ViewportSnapshot = {
   visualHeight: number | null;
 };
 
+type AlphaBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  coverage: number;
+};
+
+type ImageSnapshot = {
+  rect: RectSnapshot | null;
+  alphaRect: RectSnapshot | null;
+  naturalWidth: number;
+  naturalHeight: number;
+  currentSrc: string;
+  dataUrl: string | null;
+  complete: boolean;
+  objectFit: string;
+  objectPosition: string;
+  transform: string;
+  transformOrigin: string;
+  animationName: string;
+  animationDuration: string;
+  overflow: string;
+  effectiveState: string;
+  alphaBox: AlphaBox | null;
+  alphaError: string | null;
+};
+
 interface DebugOverlayProps {
   enabled: boolean;
   state: CompanionState;
@@ -96,6 +124,132 @@ function fmtRect(rect: RectSnapshot | null): string {
   return `${rect.left},${rect.top} ${rect.width}x${rect.height} b=${rect.bottom}`;
 }
 
+function shortSrc(src: string): string {
+  if (!src) return "-";
+  try {
+    const url = new URL(src, window.location.href);
+    return url.pathname;
+  } catch {
+    return src;
+  }
+}
+
+function measureAlphaBox(img: HTMLImageElement): { box: AlphaBox | null; error: string | null } {
+  if (!img.complete || img.naturalWidth <= 0 || img.naturalHeight <= 0) {
+    return { box: null, error: "not-ready" };
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return { box: null, error: "no-canvas" };
+
+  try {
+    ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    let minX = canvas.width;
+    let minY = canvas.height;
+    let maxX = -1;
+    let maxY = -1;
+    let count = 0;
+
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const alpha = data[(y * canvas.width + x) * 4 + 3];
+        if (alpha > 8) {
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+          count += 1;
+        }
+      }
+    }
+
+    if (maxX < minX || maxY < minY) return { box: null, error: null };
+    return {
+      box: {
+        x: minX,
+        y: minY,
+        width: maxX - minX + 1,
+        height: maxY - minY + 1,
+        coverage: count / (canvas.width * canvas.height),
+      },
+      error: null,
+    };
+  } catch (e) {
+    return { box: null, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+function mapAlphaRect(rect: RectSnapshot | null, img: HTMLImageElement, box: AlphaBox | null): RectSnapshot | null {
+  if (!rect || !box || img.naturalWidth <= 0 || img.naturalHeight <= 0) return null;
+  const left = rect.left + (box.x / img.naturalWidth) * rect.width;
+  const top = rect.top + (box.y / img.naturalHeight) * rect.height;
+  const width = (box.width / img.naturalWidth) * rect.width;
+  const height = (box.height / img.naturalHeight) * rect.height;
+  return {
+    left: Math.round(left),
+    top: Math.round(top),
+    right: Math.round(left + width),
+    bottom: Math.round(top + height),
+    width: Math.round(width),
+    height: Math.round(height),
+  };
+}
+
+function snapshotImage(): ImageSnapshot {
+  const img = document.querySelector(".character-sprite-img") as HTMLImageElement | null;
+  if (!img) {
+    return {
+      rect: null,
+      alphaRect: null,
+      naturalWidth: 0,
+      naturalHeight: 0,
+      currentSrc: "",
+      dataUrl: null,
+      complete: false,
+      objectFit: "",
+      objectPosition: "",
+      transform: "",
+      transformOrigin: "",
+      animationName: "",
+      animationDuration: "",
+      overflow: "",
+      effectiveState: "",
+      alphaBox: null,
+      alphaError: "no-img",
+    };
+  }
+
+  const rect = snapshotRect(img);
+  const style = window.getComputedStyle(img);
+  const parentStyle = img.parentElement ? window.getComputedStyle(img.parentElement) : null;
+  const animEl = img.closest(".character-anim") as HTMLElement | null;
+  const { box, error } = measureAlphaBox(img);
+
+  return {
+    rect,
+    alphaRect: mapAlphaRect(rect, img, box),
+    naturalWidth: img.naturalWidth,
+    naturalHeight: img.naturalHeight,
+    currentSrc: img.currentSrc || img.src,
+    dataUrl: img.dataset.spriteUrl ?? null,
+    complete: img.complete,
+    objectFit: style.objectFit,
+    objectPosition: style.objectPosition,
+    transform: parentStyle?.transform ?? style.transform,
+    transformOrigin: parentStyle?.transformOrigin ?? style.transformOrigin,
+    animationName: parentStyle?.animationName ?? style.animationName,
+    animationDuration: parentStyle?.animationDuration ?? style.animationDuration,
+    overflow: parentStyle?.overflow ?? style.overflow,
+    effectiveState: animEl?.dataset.state ?? "",
+    alphaBox: box,
+    alphaError: error,
+  };
+}
+
 export function DebugOverlay({
   enabled,
   state,
@@ -132,6 +286,7 @@ export function DebugOverlay({
   const [speechRect, setSpeechRect] = useState<RectSnapshot | null>(null);
   const [updateRect, setUpdateRect] = useState<RectSnapshot | null>(null);
   const [hitRect, setHitRect] = useState<RectSnapshot | null>(null);
+  const [imgInfo, setImgInfo] = useState<ImageSnapshot>(() => snapshotImage());
 
   useEffect(() => {
     if (!active) return;
@@ -165,6 +320,7 @@ export function DebugOverlay({
       setSpeechRect(snapshotRect(speechLayerRef.current));
       setUpdateRect(snapshotRect(updateBadgeRef.current));
       setHitRect(snapshotRect(document.querySelector(".character-hit-target")));
+      setImgInfo(snapshotImage());
     };
 
     sample();
@@ -181,6 +337,8 @@ export function DebugOverlay({
   const viewportH = viewport.innerHeight || viewport.clientHeight || viewport.visualHeight || 0;
   const wrapperOverflow = !!wrapperRect && viewportH > 0 && wrapperRect.bottom > viewportH;
   const stageOverflow = !!stageRect && viewportH > 0 && stageRect.bottom > viewportH;
+  const imgOverflow = !!imgInfo.rect && viewportH > 0 && imgInfo.rect.bottom > viewportH;
+  const alphaOverflow = !!imgInfo.alphaRect && viewportH > 0 && imgInfo.alphaRect.bottom > viewportH;
   const aiAgeSec = lastAIResult.updatedAt ? Math.round((Date.now() - lastAIResult.updatedAt) / 1000) : null;
 
   return (
@@ -198,12 +356,14 @@ export function DebugOverlay({
       <RectBox rect={speechRect} color="#5ac8fa" label="speech" />
       <RectBox rect={updateRect} color="#ff6b9a" label="update" />
       <RectBox rect={hitRect} color="#c77dff" label="hit" />
+      <RectBox rect={imgInfo.rect} color="#ff8c3a" label="img" />
+      <RectBox rect={imgInfo.alphaRect} color="#00ffd5" label="alpha" />
       <div
         style={{
           position: "absolute",
           left: 4,
           top: 4,
-          maxWidth: 192,
+          maxWidth: 196,
           background: "rgba(0,0,0,0.78)",
           color: "#b8ffb8",
           fontSize: 9,
@@ -215,13 +375,21 @@ export function DebugOverlay({
           borderRadius: 4,
         }}
       >
-        <div>state: {state} speech={String(hasSpeech)} drag={String(isDragging)}</div>
+        <div>state: {state} eff={imgInfo.effectiveState || "-"} speech={String(hasSpeech)} drag={String(isDragging)}</div>
         <div>scale={scale.toFixed(2)} expected={windowW}x{windowH}</div>
         <div>vh inner={viewport.innerWidth}x{viewport.innerHeight} client={viewport.clientWidth}x{viewport.clientHeight}</div>
         <div>visual={viewport.visualWidth ?? "n/a"}x{viewport.visualHeight ?? "n/a"}</div>
         <div>char={characterW}x{characterH} bottomPad={bottomPad} gap={speechBubbleGap}</div>
         <div>stage: {fmtRect(stageRect)} {stageOverflow ? "OVER" : ""}</div>
         <div>wrap: {fmtRect(wrapperRect)} {wrapperOverflow ? "OVER" : ""}</div>
+        <div>img: {fmtRect(imgInfo.rect)} {imgOverflow ? "OVER" : ""}</div>
+        <div>nat={imgInfo.naturalWidth}x{imgInfo.naturalHeight} ok={String(imgInfo.complete)}</div>
+        <div>alpha: {imgInfo.alphaBox ? `${imgInfo.alphaBox.x},${imgInfo.alphaBox.y} ${imgInfo.alphaBox.width}x${imgInfo.alphaBox.height} ${(imgInfo.alphaBox.coverage * 100).toFixed(1)}%` : imgInfo.alphaError ?? "n/a"} {alphaOverflow ? "OVER" : ""}</div>
+        <div>alphaRect: {fmtRect(imgInfo.alphaRect)}</div>
+        <div>sprite: {shortSrc(imgInfo.currentSrc || imgInfo.dataUrl || "")}</div>
+        <div>anim={imgInfo.animationName}/{imgInfo.animationDuration} ov={imgInfo.overflow}</div>
+        <div>fit={imgInfo.objectFit} pos={imgInfo.objectPosition}</div>
+        <div>tf={imgInfo.transform === "none" ? "none" : "yes"} origin={imgInfo.transformOrigin}</div>
         <div>speech: {fmtRect(speechRect)}</div>
         <div>update: {fmtRect(updateRect)} v={updateAvailableVersion ?? "-"} installing={String(installing)}</div>
         <div>ai: {lastAIResult.source}{lastAIResult.model ? `/${lastAIResult.model}` : ""}{aiAgeSec !== null ? ` ${aiAgeSec}s` : ""}</div>

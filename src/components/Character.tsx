@@ -67,7 +67,9 @@ function SpriteImage({
 
   return (
     <img
+      className="character-sprite-img"
       src={urls[urlIndex]}
+      data-sprite-url={urls[urlIndex]}
       width={width}
       height={height}
       style={{ imageRendering: "pixelated" }}

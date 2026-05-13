@@ -8,8 +8,58 @@
 > v0.1.42 では v0.1.41 実機確認で残った speech表示時の沈み込みを hotfix。
 > v0.1.43 では v0.1.42 実機確認で残った speech bubble のwindow top寄りすぎを hotfix。
 > v0.1.44 では設定画面更新導線、UpdateBadge hit test、ユーザーON/OFF可能なdebug modeを追加。
+> v0.1.45 では v0.1.44 debug結果を受け、Character内部のimg/sprite/alpha bbox診断を追加。
 
-**更新: 2026-05-13 (v0.1.44)**
+**更新: 2026-05-13 (v0.1.45)**
+
+---
+
+## v0.1.45 での追加診断 (実機確認待ち)
+
+### 問題N: stage / wrapperはviewport内だが、speech表示時に見た目だけ下半分が消える
+
+**v0.1.44 実機debug結果:**
+- idle時: viewport `200x280`、stage/wrapper bottom `256`、下余白約24px
+- speech時: viewport `200x410`、stage/wrapper bottom `386`、下余白約24px
+- speech中drag時も stage/wrapper bottom `386` で viewport内
+- したがって、現時点では window / viewport / work area clamp が直接原因ではなさそう
+
+**次の調査対象:**
+- Character内部の `<img>`
+- current sprite URL
+- `effectiveState`
+- naturalWidth / naturalHeight
+- PNG alpha bbox
+- CSS animation / transform / transform-origin
+- object-fit / object-position
+- 透明WebView上の描画/合成
+
+**v0.1.45 での追加:**
+- `Character.tsx`: sprite img に `character-sprite-img` と `data-sprite-url` を追加
+- `DebugOverlay.tsx`:
+  - `effectiveState`
+  - current sprite URL
+  - img rect
+  - img natural size / complete
+  - animationName / animationDuration
+  - transform / transformOrigin
+  - objectFit / objectPosition
+  - canvas alpha bbox と画面上alpha rect
+  - img / alpha の `OVER` 表示
+
+**注意:**
+- v0.1.45 は診断版で、見た目修正完了版ではない
+- window height増加やspeech liftは入れていない
+
+**実機確認手順:**
+1. デバッグモードONでspeech表示する
+2. spriteが本当に `speaking.png` か確認
+3. `nat=160x160` か確認
+4. img rect bottomがviewport内か確認
+5. alpha rect bottomがviewport内か確認
+6. `anim=char-speak` の時だけ見切れるか確認
+7. alpha bboxが画像端まで詰まっているか確認
+8. 見切れている状態のスクショを残す
 
 ---
 

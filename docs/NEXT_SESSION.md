@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.44)**
+**最終更新: 2026-05-13 (v0.1.45)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.44
-**フェーズ:** Hotfix — Settings Updater / Debug Mode / Hit Test QA 完了 (実機確認待ち)
+**バージョン:** v0.1.45
+**フェーズ:** Diagnostic Hotfix — Sprite Render Debug Instrumentation 完了 (実機確認待ち)
 **全体進捗:** 約 79%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.44)
-✅ cargo build  → Finished dev profile (v0.1.44)
-✅ GitHub Actions / Windows Installer → v0.1.43 成功済み。v0.1.44 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.45)
+✅ cargo build  → Finished dev profile (v0.1.45)
+✅ GitHub Actions / Windows Installer → v0.1.44 成功済み。v0.1.45 は tag push 後に確認
 ```
 
 ---
@@ -51,6 +51,40 @@
 | Hotfix: Speech Resize Bottom Anchor | rootをviewport基準化・character-stage absolute bottom anchor・resize拡大順序修正 | ✅ v0.1.42 |
 | Hotfix: Speech Bubble Relative Anchor | speech bubbleをwindow top基準からキャラ頭上基準へ変更 | ✅ v0.1.43 |
 | Hotfix: Settings Updater / Debug Mode / Hit Test QA | 設定画面更新導線・UpdateBadge hit test・debug overlay追加 | ✅ v0.1.44 |
+| Diagnostic: Sprite Render Debug Instrumentation | Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 | ✅ v0.1.45 |
+
+---
+
+## v0.1.45 実装詳細
+
+### A: v0.1.44 実機debug結果
+
+- speech表示時も `stage` / `wrapper` は viewport 内に収まっていた
+- idle: viewport `200x280`、stage/wrapper bottom `256`
+- speech: viewport `200x410`、stage/wrapper bottom `386`
+- bottom余白は約24pxあり、window / viewport / work area clamp は直接原因ではなさそう
+
+### B: Character内部debug
+
+- `src/components/Character.tsx`
+  - sprite `<img>` に `character-sprite-img` class と `data-sprite-url` を追加
+- `src/components/DebugOverlay.tsx`
+  - `effectiveState`
+  - current sprite URL
+  - img rect
+  - img naturalWidth / naturalHeight / complete
+  - CSS animationName / animationDuration
+  - CSS transform / transformOrigin
+  - objectFit / objectPosition
+  - canvasで測った alpha bbox
+  - alpha bbox の画面上rect
+  - img / alpha の viewport超過 `OVER`
+
+### C: 注意
+
+- v0.1.45 は診断版
+- window height増加、speech lift、見た目の大きな補正は入れていない
+- 次回QAで `speaking.png` / `nat=160x160` / `alphaRect` / `char-speak` を確認し、修正方針を決める
 
 ---
 
@@ -344,18 +378,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.44)
+## 次のフェーズ候補 (v0.1.46)
 
-### 優先候補 A: v0.1.43 実機確認 ← **最優先**
+### 優先候補 A: v0.1.45 実機debug確認 → sprite描画修正 ← **最優先**
 
-1. 吹き出しがキャラの頭上付近に出るか
-2. 吹き出しがwindow上端に離れすぎて出ないか
-3. 吹き出し表示時にキャラが下に沈まないか
-4. ドラッグ後の反応吹き出し位置が自然か
-5. 右クリックメニューが見切れないか
-6. 吹き出し非表示時、上部透明領域で背面URLをクリックできるか
-7. キャラ本体クリック / drag / voice long press が動くか
-8. Ollama返答とActive App取得が壊れていないか
+1. デバッグモードONでspeech表示する
+2. `sprite` が `speaking.png` か確認
+3. `nat=160x160` か確認
+4. `img` rect bottomがviewport内か確認
+5. `alphaRect` bottomがviewport内か確認
+6. `anim=char-speak` の時だけ見切れるか確認
+7. alpha bboxが画像端まで詰まっているか確認
+8. 見切れている状態のスクショを残す
 
 ### 優先候補 B: First-run Onboarding
 
