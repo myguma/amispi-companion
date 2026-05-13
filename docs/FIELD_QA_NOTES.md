@@ -15,8 +15,33 @@
 > v0.1.49 では v0.1.48 実機確認結果を反映し、First-run Onboardingを追加。
 > v0.1.49 実機QAで First-run Onboarding、compact speech layout、主要操作の安定を確認。
 > v0.1.50 ではローカル記憶の保存期間設定と起動時/手動cleanupを追加。
+> v0.1.51 では DailySummary / RuleProvider 活用を強化し、ローカル記憶を短い文脈反応へ反映。
 
-**更新: 2026-05-13 (v0.1.50)**
+**更新: 2026-05-13 (v0.1.51)**
+
+---
+
+## v0.1.51 での更新内容
+
+### DailySummary / RuleProvider 活用強化
+
+**追加内容:**
+- `todaySpeechCount` を MemorySummary に追加
+- RuleProvider の手動反応で今日のクリック回数 / 起動回数を短く反映
+- 今日すでに発話が多い場合、idle / observation の自律反応を控える
+- 直近発話と同じ固定文を避ける候補選択に調整
+- observation / idle の固定文から説明・助言っぽさを減らした
+
+**発話方針:**
+- 「今日は、よく呼ばれるね」程度の軽い文脈に留める
+- 作業時間の細かい指摘、診断、休憩指示はしない
+- retentionで古いイベントが消えていても壊れない
+
+**field QA pending:**
+- 文脈反応が監視感・管理感を出していないか
+- 自律発話が控えめになっているか
+- 同じ固定文が続きにくいか
+- Ollama / fallback / MemoryPage / Onboarding / Update / Debug / Transparency の回帰
 
 ---
 

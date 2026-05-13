@@ -12,9 +12,10 @@ import { recordReaction } from "./reactionHistory";
 import { cryEngine } from "../audio/FileCryEngine";
 import { getSettings } from "../../settings/store";
 import type { ReactionTrigger } from "./types";
-import { getRecentEvents } from "../../systems/memory/memoryStore";
+import { getAllEvents } from "../../systems/memory/memoryStore";
 import { buildCompanionContext } from "../../systems/ai/buildCompanionContext";
 import { getAIResponse as getNewAIResponse } from "../ai/AIProviderManager";
+import { buildMemorySummary } from "../memory/buildMemorySummary";
 
 // deepFocus / gaming / watchingVideo 中は自律発話を抑制する
 const SILENT_KINDS: readonly InferredActivity[] = ["deepFocus", "gaming", "watchingVideo"];
@@ -60,9 +61,13 @@ export function useObservationReactions(
     prevSnapshotRef.current = snapshot;
 
     const currentKind = delta.nextInferredKind;
+    const allEvents = getAllEvents();
+    const memory = buildMemorySummary(allEvents);
+    const talkedEnoughToday = memory.todaySpeechCount >= Math.max(6, s.maxAutonomousReactionsPerHour * 3);
 
     // 固定テキストによる発火 (AI 失敗時の fallback)
     const fire = (trigger: ReactionTrigger, tags?: string[]): boolean => {
+      if (talkedEnoughToday) return false;
       const r = selectReaction({
         trigger,
         tags,
@@ -94,9 +99,9 @@ export function useObservationReactions(
 
     // AI-first helper: AI を試み、失敗時は fire() にフォールバック
     const tryAIOrFire = async (trigger: ReactionTrigger, tags?: string[]): Promise<boolean> => {
+      if (talkedEnoughToday) return false;
       try {
-        const events = getRecentEvents(20);
-        const ctx    = buildCompanionContext("observation", snapshot, events, s);
+        const ctx    = buildCompanionContext("observation", snapshot, allEvents, s);
         const output = await getNewAIResponse(ctx);
         if (output.shouldSpeak && output.text) {
           triggerSpeak(output.text);

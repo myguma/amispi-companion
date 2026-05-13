@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CompanionState, StateConfig, VoiceUIState } from "../types/companion";
 import { DEFAULT_STATE_CONFIG } from "../types/companion";
-import { logEvent, getRecentEvents, pruneExpiredEvents } from "../systems/memory/memoryStore";
+import { logEvent, getAllEvents, pruneExpiredEvents } from "../systems/memory/memoryStore";
 import { pickDialogue, pickTimedGreeting } from "../systems/dialogue/dialogueData";
 import { selectReaction } from "../companion/reactions/selectReaction";
 import { recordReaction } from "../companion/reactions/reactionHistory";
@@ -14,6 +14,7 @@ import { cryEngine } from "../companion/audio/FileCryEngine";
 import type { ReactionTrigger } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
+import { buildMemorySummary } from "../companion/memory/buildMemorySummary";
 import { getAIResponse as getNewAIResponse } from "../companion/ai/AIProviderManager";
 import { buildCompanionContext } from "../systems/ai/buildCompanionContext";
 import { canSpeak } from "../companion/speech/SpeechPolicy";
@@ -147,7 +148,12 @@ export function useCompanionState(
         if (!isSilent) {
           let text: string | null = null;
           const s      = getSettings();
-          const events = getRecentEvents(20);
+          const events = getAllEvents();
+          const memory = buildMemorySummary(events);
+          if (memory.todaySpeechCount >= Math.max(6, s.maxAutonomousReactionsPerHour * 3)) {
+            scheduleIdleSpeech();
+            return;
+          }
           const ctx    = buildCompanionContext("idle", snapshotRef.current, events, s);
           const policy = canSpeak("idle", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
@@ -173,7 +179,7 @@ export function useCompanionState(
     setState("thinking");
 
     const s      = getSettings();
-    const events = getRecentEvents(20);
+    const events = getAllEvents();
     const ctx    = buildCompanionContext("click", snapshotRef.current, events, s);
 
     // SpeechPolicy で発話可否チェック
@@ -222,7 +228,7 @@ export function useCompanionState(
     setState("thinking");
 
     const s      = getSettings();
-    const events = getRecentEvents(20);
+    const events = getAllEvents();
     const ctx    = buildCompanionContext("voice", snapshotRef.current, events, s, transcript);
 
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
@@ -276,7 +282,7 @@ export function useCompanionState(
     setState("thinking");
 
     const s      = getSettings();
-    const events = getRecentEvents(20);
+    const events = getAllEvents();
     let transcript = "";
 
     try {
@@ -390,7 +396,7 @@ export function useCompanionState(
 
       // AI-first: 起動挨拶も Ollama/AI を先に試みる
       const s      = getSettings();
-      const events = getRecentEvents(20);
+      const events = getAllEvents();
       const ctx    = buildCompanionContext("return", snapshotRef.current, events, s);
       const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 

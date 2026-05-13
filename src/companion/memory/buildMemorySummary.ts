@@ -6,6 +6,7 @@ import { buildDailySummary } from "./dailySummary";
 
 export type CompanionMemorySummary = {
   todayClickCount: number;
+  todaySpeechCount: number;
   recentSpeechCount: number;
   sessionCountToday: number;
   lastSessionBreak: "none" | "short" | "hours" | "longDay";
@@ -26,6 +27,7 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
   const todayEvents = events.filter((e) => isTodayMs(e.timestamp));
 
   const todayClickCount   = todayEvents.filter((e) => e.type === "character_clicked").length;
+  const todaySpeechCount  = todayEvents.filter((e) => e.type === "speech_shown").length;
   const sessionCountToday = todayEvents.filter((e) => e.type === "app_start").length;
   const recentSpeechCount = events.slice(-50).filter((e) => e.type === "speech_shown").length;
   const lastSessionBreak  = classifyBreak();
@@ -34,6 +36,7 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
 
   const summary = buildNaturalSummary({
     todayClickCount,
+    todaySpeechCount,
     sessionCountToday,
     recentSpeechCount,
     lastSessionBreak,
@@ -41,11 +44,12 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
     activeHoursToday: daily.activeHoursToday,
   });
 
-  return { todayClickCount, recentSpeechCount, sessionCountToday, lastSessionBreak, shortNaturalSummary: summary };
+  return { todayClickCount, todaySpeechCount, recentSpeechCount, sessionCountToday, lastSessionBreak, shortNaturalSummary: summary };
 }
 
 function buildNaturalSummary(s: {
   todayClickCount: number;
+  todaySpeechCount: number;
   sessionCountToday: number;
   recentSpeechCount: number;
   lastSessionBreak: string;

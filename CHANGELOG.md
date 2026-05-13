@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.51] — 2026-05-13
+
+### Added (Daily Summary Context Reactions)
+
+- **buildMemorySummary.ts**: `todaySpeechCount` を追加し、今日の発話量を安全に参照できるようにした
+- **RuleProvider.ts**:
+  - 今日のクリック回数 / 起動回数を、クリック・音声など手動反応の短い文脈に反映
+  - 例: 「今日は、よく呼ばれるね」「また来たね」
+  - 自律発話では今日の発話数が多い場合に発話を控える
+  - 直近発話と同一の固定文を避ける候補選択へ調整
+  - observation / idle の固定文を短くし、管理・助言っぽい表現を減らした
+- **useCompanionState.ts / useObservationReactions.ts**:
+  - `getAllEvents()` から memory summary を作り、retention後のローカル記憶と整合
+  - 今日すでに発話が多い場合、自律 idle / observation 反応を抑制
+
+### Maintained
+
+- PromptBuilder / QualityFilter / Ollama の大改造なし
+- compact `200x280` speech layout / hit test / character rendering は変更なし
+- Onboarding / Update / Debug / Transparency / Memory Retention Policy は維持
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。文脈反応の自然さ、発話頻度、固定文の重複は field QA pending
+
 ## [0.1.50] — 2026-05-13
 
 ### Added (Memory Retention Policy)

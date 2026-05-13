@@ -44,15 +44,15 @@ const VOICE_BY_ACTIVITY: Readonly<Record<InferredActivity, readonly string[]>> =
 // 空配列 = このactivityでは発話しない
 const OBSERVATION_BY_ACTIVITY: Readonly<Partial<Record<InferredActivity, readonly string[]>>> = {
   deepFocus:      [],
-  coding:         ["コードの中にいる。今は流れを切らない方がよさそう"],
-  composing:      ["音の部屋にいるね。今日は形を触っている感じ"],
-  browsing:       ["調べものが少し長い。ひとつだけ手に戻すなら、今でも間に合う"],
-  reading:        ["読む時間に入ってる。急がなくてよさそう"],
+  coding:         ["コードの中にいるみたい", "同じ場所に、少し長くいるみたい"],
+  composing:      ["音の部屋にいるね", "音の方に、しばらくいるみたい"],
+  browsing:       ["調べものの中にいるね", "同じ場所を見てるみたい"],
+  reading:        ["読む時間に入ってる", "静かに読んでるみたい"],
   watchingVideo:  [],
-  listeningMusic: ["音が流れてる。今日は耳の方で考えてるみたい"],
+  listeningMusic: ["音が流れてる", "耳の方で考えてるみたい"],
   gaming:         [],
-  idle:           ["少し離れてたみたい。戻るなら小さくでいい"],
-  away:           ["席を外してた気配。まだ何も急がなくていい"],
+  idle:           ["少し間がある", "ここにいるよ"],
+  away:           ["席を外してた気配", "少し離れてたみたい"],
   breakLikely:    ["少し間がある"],
 };
 
@@ -70,9 +70,24 @@ const DESKTOP_PILE = [
 // 重複回避ロールバッファ
 // ────────────────────────────────────────────────
 
-function pickFromPool(pool: readonly string[], history: string[], maxRecent = 2): string | null {
+function normalizeLine(line: string): string {
+  return line.replace(/[、。！？…\s]/g, "");
+}
+
+function recentSpeechTexts(ctx: CompanionContext, limit = 5): string[] {
+  return ctx.recentEvents
+    .filter((e) => e.type === "speech_shown" && typeof e.data?.text === "string")
+    .slice(-limit)
+    .map((e) => String(e.data?.text));
+}
+
+function pickFromPool(pool: readonly string[], history: string[], maxRecent = 3, recentTexts: readonly string[] = []): string | null {
   if (pool.length === 0) return null;
-  const available = pool.filter((l) => !history.includes(l));
+  const recentNormalized = recentTexts.map(normalizeLine);
+  const available = pool.filter((l) => {
+    const normalized = normalizeLine(l);
+    return !history.includes(l) && !recentNormalized.includes(normalized);
+  });
   const candidates = available.length > 0 ? available : [...pool];
   const picked = candidates[Math.floor(Math.random() * candidates.length)];
   history.push(picked);
@@ -96,6 +111,8 @@ export class RuleProvider implements AIProvider {
   async respond(ctx: CompanionContext): Promise<AIProviderOutput> {
     const sp  = ctx.speechSettings;
     const obs = ctx.observation;
+    const memory = ctx.memorySummary;
+    const recentTexts = recentSpeechTexts(ctx);
 
     // ── SpeechPolicy チェック ─────────────────────────────
     if (sp.doNotDisturb)                                          return { shouldSpeak: false, reason: "dnd" };
@@ -118,16 +135,19 @@ export class RuleProvider implements AIProvider {
     ) {
       // voiceInput があれば voice 専用プールを使う
       const useVoice = ctx.trigger === "voice" && !!ctx.voiceInput;
-      const pool = useVoice ? VOICE_BY_ACTIVITY[kind] : CLICK_BY_ACTIVITY[kind];
+      const pool = [
+        ...contextualManualPool(memory),
+        ...(useVoice ? VOICE_BY_ACTIVITY[kind] : CLICK_BY_ACTIVITY[kind]),
+      ];
 
       // confidence が低い場合はより汎用的な返答にフォールバック
       if (confidence < 0.5) {
         const fallbacks = ["...なに？", "ここにいるよ", "呼んだ？"];
-        const text = pickFromPool(fallbacks, this._history);
+        const text = pickFromPool(fallbacks, this._history, 3, recentTexts);
         return { text: text ?? "...なに？", shouldSpeak: true, emotion: "aware" };
       }
 
-      const text = pickFromPool(pool, this._history);
+      const text = pickFromPool(pool, this._history, 3, recentTexts);
       return { text: text ?? "...なに？", shouldSpeak: true, emotion: "aware" };
     }
 
@@ -137,11 +157,17 @@ export class RuleProvider implements AIProvider {
       if (kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo") {
         return { shouldSpeak: false, reason: "silent_mode" };
       }
+      if (memory.todaySpeechCount >= Math.max(6, sp.maxAutonomousReactionsPerHour * 3)) {
+        return { shouldSpeak: false, reason: "talked_enough_today" };
+      }
 
-      const pool = OBSERVATION_BY_ACTIVITY[kind];
+      const pool = [
+        ...contextualIdlePool(memory),
+        ...(OBSERVATION_BY_ACTIVITY[kind] ?? []),
+      ];
       if (!pool || pool.length === 0) return { shouldSpeak: false };
 
-      const text = pickFromPool(pool, this._history);
+      const text = pickFromPool(pool, this._history, 3, recentTexts);
       if (!text) return { shouldSpeak: false };
       return { text, shouldSpeak: true, emotion: "idle" };
     }
@@ -150,11 +176,11 @@ export class RuleProvider implements AIProvider {
     if (ctx.trigger === "observation") {
       // folder pile 優先
       if (dlCount > 20) {
-        const text = pickFromPool(DOWNLOADS_PILE, this._history);
+        const text = pickFromPool(DOWNLOADS_PILE, this._history, 3, recentTexts);
         return { text: text ?? DOWNLOADS_PILE[0], shouldSpeak: true, emotion: "aware" };
       }
       if (dtCount > 15) {
-        const text = pickFromPool(DESKTOP_PILE, this._history);
+        const text = pickFromPool(DESKTOP_PILE, this._history, 3, recentTexts);
         return { text: text ?? DESKTOP_PILE[0], shouldSpeak: true, emotion: "aware" };
       }
 
@@ -166,11 +192,37 @@ export class RuleProvider implements AIProvider {
       // activity 別の observation 発話
       const pool = OBSERVATION_BY_ACTIVITY[kind];
       if (!pool || pool.length === 0) return { shouldSpeak: false };
-      const text = pickFromPool(pool, this._history);
+      const text = pickFromPool(pool, this._history, 3, recentTexts);
       if (!text) return { shouldSpeak: false };
       return { text, shouldSpeak: true, emotion: "idle" };
     }
 
     return { shouldSpeak: false };
   }
+}
+
+function contextualManualPool(memory: CompanionContext["memorySummary"]): string[] {
+  const pool: string[] = [];
+  if (memory.todayClickCount >= 8) {
+    pool.push("今日は、よく呼ばれるね", "また呼んだ。ここにいるよ");
+  } else if (memory.todayClickCount >= 4) {
+    pool.push("今日は何度か会ってるね");
+  }
+
+  if (memory.sessionCountToday >= 3) {
+    pool.push("また来たね", "今日は何度か戻ってきてる");
+  }
+
+  return pool;
+}
+
+function contextualIdlePool(memory: CompanionContext["memorySummary"]): string[] {
+  const pool: string[] = [];
+  if (memory.sessionCountToday >= 2 && memory.todaySpeechCount < 4) {
+    pool.push("今日も、ここにいるね");
+  }
+  if (memory.todayClickCount >= 6 && memory.todaySpeechCount < 5) {
+    pool.push("今日は、よく呼ばれるね");
+  }
+  return pool;
 }

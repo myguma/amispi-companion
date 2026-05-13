@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.50)**
+**最終更新: 2026-05-13 (v0.1.51)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.50
-**フェーズ:** Memory Retention Policy 実装完了 (実機確認待ち)
-**全体進捗:** 約 84%
+**バージョン:** v0.1.51
+**フェーズ:** DailySummary / RuleProvider 活用強化 (field QA pending)
+**全体進捗:** 約 85%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.50)
-✅ cargo build  → Finished dev profile (v0.1.50)
-✅ GitHub Actions / Windows Installer → v0.1.49 成功済み。v0.1.50 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.51)
+✅ cargo build  → Finished dev profile (v0.1.51)
+✅ GitHub Actions / Windows Installer → v0.1.50 成功済み。v0.1.51 は tag push 後に確認
 ```
 
 ---
@@ -57,6 +57,42 @@
 | Hotfix: Compact Speech Layout | v0.1.47の常時410pxを撤回し、speech時も常時compact 280px内に収める | ✅ v0.1.48 |
 | First-run Onboarding | ローカルファースト・AI設定・自律発話・デバッグ方針を初回設定で案内 | ✅ v0.1.49 |
 | Memory Retention Policy | ローカル記憶の保存期間設定・起動時cleanup・手動整理UI | ✅ v0.1.50 |
+| DailySummary Context Reactions | 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 | ✅ v0.1.51 |
+
+---
+
+## v0.1.51 実装詳細
+
+### A: DailySummary / RuleProvider 活用強化
+
+- `CompanionMemorySummary` に `todaySpeechCount` を追加
+- RuleProvider の手動反応に、今日のクリック回数 / 起動回数を短く反映
+- 例:
+  - 「今日は、よく呼ばれるね」
+  - 「また来たね」
+  - 「今日は何度か会ってるね」
+- observation / idle の固定文を短くし、管理・助言っぽい表現を減らした
+- 直近発話と同じ固定文を避ける候補選択へ調整
+
+### B: 自律発話を控えめにする条件
+
+- 今日すでに発話が多い場合、idle / observation の自律反応を抑制
+- manual click / voice / wake 反応は殺さない
+- retentionで古いイベントが消えていても、保存済み MemoryEvent の範囲で安全に再計算する
+
+### C: Field QA pending
+
+- 文脈反応が監視感・管理感を出していないか
+- 同じ発話が続きにくいか
+- 自律発話が控えめになっているか
+- Ollama source / fallback挙動が壊れていないか
+
+### D: 触っていないもの
+
+- compact `200x280` speech layout
+- character rendering / hit test geometry
+- PromptBuilder / QualityFilter / Ollama provider の大改造
+- Onboarding / Update / Debug / Transparency / MemoryPage UI
 
 ---
 
@@ -555,9 +591,20 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.51)
+## 次のフェーズ候補 (v0.1.52)
 
-### 優先候補 A: Emotion Sprite Set ← **推奨**
+### 優先候補 A: Reaction Quality QA ← **推奨**
+
+**目的:** v0.1.51で増えた文脈反応を整理し、発話品質を安定させる。
+
+**実装すべき内容:**
+1. RuleProvider固定文・fallback文をさらに短くする
+2. 「今日」「長時間」「作業」などの言及頻度を抑える
+3. 直近発話との重複判定を強化
+4. RESPONSE_QUALITY_GUIDE.md を更新
+5. QualityFilterを軽微に強化する
+
+### 優先候補 B: Emotion Sprite Set
 
 **目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
 
@@ -566,22 +613,14 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 B: RuleProvider daily summary活用強化
+### 優先候補 C: v0.1.51 残QA修正
 
-**目的:** DailySummaryをfallback / RuleProvider応答に軽く反映し、ローカル文脈の継続感を上げる。
-
-**注意:**
-- PromptBuilder / QualityFilter / Ollama品質は大きく触らない
-- source: ollama の挙動を壊さない
-
-### 優先候補 C: v0.1.50 残QA修正
-
-**目的:** 保存期間UI / cleanup挙動の実機QAで出た問題を優先修正する。
+**目的:** 文脈反応・保存期間UI / cleanup挙動の実機QAで出た問題を優先修正する。
 
 **確認すべき内容:**
-1. 7/30/90/無期限が保存されるか
-2. 削除対象件数が表示されるか
-3. 「今すぐ整理」で古い記録が削除されるか
+1. 文脈反応が監視感を出していないか
+2. 自律発話がうるさくないか
+3. 7/30/90/無期限が保存されるか
 4. MemoryPage既存機能と主要回帰がないか
 
 ---
