@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.3.0)**
+**最終更新: 2026-05-13 (v0.3.1)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.3.0
-**フェーズ:** Whisper Push-to-Talk MVP (automated checks passed / field QA pending)
+**バージョン:** v0.3.1
+**フェーズ:** Voice QA Hardening (automated checks passed / field QA pending)
 **全体進捗:** 約 92%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.3.0)
-✅ cargo build  → Finished dev profile (v0.3.0)
-✅ GitHub Actions / Windows Installer → v0.2.3 成功済み。v0.3.0 は tag push 後に確認
+✅ npm run build → ✓ built (v0.3.1)
+✅ cargo build  → Finished dev profile (v0.3.1)
+✅ GitHub Actions / Windows Installer → v0.3.1 tag workflowはtag push後に確認
 ```
 
 ---
@@ -67,6 +67,26 @@
 | Expressiveness QA | operational emotionが表示stateを過剰に上書きしないよう調整 | ✅ v0.2.2 |
 | Voice Implementation Plan | Whisper Push-to-Talk MVPの範囲・privacy・QA項目を固定 | ✅ v0.2.3 |
 | Whisper Push-to-Talk MVP | Rust commandでローカルWhisper CLIへ接続 | ✅ v0.3.0 / field QA pending |
+| Voice QA Hardening | Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 | ✅ v0.3.1 / field QA pending |
+
+---
+
+## v0.3.1 実装詳細
+
+### A: Voice QA Hardening
+
+- `voiceRecordingError()` で録音失敗時に `voiceError` へ入り、短い固定文で状況を返す
+- Whisper未設定 / STT timeout / no speech / その他失敗時に、AI応答へ進まず `voiceReady` / `voiceOff` へ復帰する
+- Whisper CLI設定UIに、一時音声ファイル、ローカル実行、録音形式互換性の注意を追記
+- compact `200x280` window / hit test / character layout / Ollama prompt は変更なし
+
+### B: Field QA pending
+
+- Windows実機でMediaRecorder出力がWhisper CLIに読めるか
+- Whisper binary / model pathが環境ごとに動くか
+- マイク権限拒否 / timeout / executable失敗時の短い案内表示
+- 一時音声ファイルが残らないか
+- long press / drag / click干渉
 
 ---
 

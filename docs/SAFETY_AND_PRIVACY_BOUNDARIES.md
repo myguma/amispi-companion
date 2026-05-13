@@ -88,7 +88,7 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 
 ## 音声入力の安全境界 (Phase 6+)
 
-**v0.3.0更新:** Whisper Push-to-Talk MVPを下記境界内で実装。常時マイク監視、wake word、クラウドSTT、音声ファイル永続保存は引き続き非目標。
+**v0.3.1更新:** Whisper Push-to-Talk MVPは下記境界内で実装済み。失敗時復帰案内を強化したが、常時マイク監視、wake word、クラウドSTT、音声ファイル永続保存は引き続き非目標。
 
 **許可される動作:**
 - Push-to-talk のみ: キャラクター長押し 500ms 以上のみ録音開始
@@ -100,7 +100,7 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 - transcript は long-term memory に保存しない (speech_shown には source を記録可)
 - 一時ファイルを使う場合 (Phase 6b-real-2 以降): 処理完了後に必ず削除
 - whisper.cpp はユーザー指定のローカル executable のみ — クラウド API 禁止
-- STT 処理失敗時はフォールバック (発話しないか reaction fallback)
+- STT 処理失敗時は短い固定案内へ戻し、アプリ全体は止めない
 
 **禁止事項:**
 - 常時マイク監視 (voiceInputEnabled = true でも長押し操作なしに録音しない)
@@ -137,8 +137,8 @@ stderr: ログのみ (外部送信なし)
 timeout: 設定の whisperTimeoutMs (デフォルト 30s)
 ```
 
-**v0.3.0 field QA pending:**
-- Whisper binary / model path未設定時にクラッシュしない
+**v0.3.1 field QA pending:**
+- Whisper binary / model path未設定時に短い案内へ戻る
 - 権限拒否 / マイクなし / 録音失敗から復帰する
 - 一時音声ファイルが成功/失敗/timeout時に削除される
 - transcriptのみがUIへ戻り、生音声は保存されない

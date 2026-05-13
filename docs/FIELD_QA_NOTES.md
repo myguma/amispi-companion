@@ -25,8 +25,28 @@
 > v0.2.2 では Expressiveness QA として、operational emotionが描画stateを過剰に上書きしないよう調整。
 > v0.2.3 では Whisper Push-to-Talk MVPの範囲・安全境界・QA項目をdocsで固定。
 > v0.3.0 では Whisper Push-to-Talk MVPをRust commandへ接続。実機音声QAは未実施。
+> v0.3.1 では Voice QA hardeningとして、Whisper未設定/録音失敗/STT失敗時の復帰案内を整理。
 
-**更新: 2026-05-13 (v0.3.0)**
+**更新: 2026-05-13 (v0.3.1)**
+
+---
+
+## v0.3.1 での更新内容
+
+### Voice QA Hardening
+
+**実装内容:**
+- 録音失敗時に `voiceError` へ入り、短い固定文で状況を返す
+- Whisper未設定 / timeout / no speech / その他STT失敗時に、transcriptなしでAI応答へ進まないよう整理
+- 失敗後は `voiceReady` / `voiceOff` へ戻り、アプリ全体は止めない
+- VoicePageにWhisper CLI実行方式、一時音声ファイル、録音形式互換性の注意を追加
+
+**field QA pending:**
+- マイク権限拒否 / 録音失敗時の短い案内表示
+- Whisper binary/model未設定時の案内表示
+- Whisper CLIがWebView録音形式を読めるか
+- timeout / no speech時の復帰
+- 一時音声ファイルが残らないか
 
 ---
 

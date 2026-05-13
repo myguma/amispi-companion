@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-13 (v0.3.0)**
+**最終更新: 2026-05-13 (v0.3.1)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -24,7 +24,17 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
 | Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | ✅ v0.3.0 MVP / field QA pending |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | 📋 v0.3.1 以降 |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v0.3.1 hardening / field QA pending |
+
+---
+
+## v0.3.1 QA hardening
+
+- 録音失敗時は `voiceError` に入り、短い固定文で状況を返す
+- Whisper未設定 / timeout / no speech / その他STT失敗時はAI応答へ進まず、`voiceReady` / `voiceOff` へ復帰する
+- Whisper CLI設定UIに、一時音声ファイルと録音形式互換性の注意を追加
+- 実機音声認識は未確認。binary/model/path/MediaRecorder MIME type/マイク権限/一時ファイル削除は field QA pending
+- 常時マイク監視 / wake word / クラウドSTT / 音声保存なしの原則は維持
 
 ---
 

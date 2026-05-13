@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.1] — 2026-05-13
+
+### Fixed (Voice QA Hardening)
+
+- **useCompanionState.ts**:
+  - 録音失敗 / STT未設定 / timeout / no speech時に `voiceError` へ入り、短い固定文で状況を返すように調整
+  - Whisper未設定やSTT失敗時も `voiceReady` / `voiceOff` へ復帰し、アプリ全体を止めない経路を明確化
+  - transcriptが空のままAI応答へ進まないように維持
+- **VoicePage.tsx**:
+  - Whisper CLIの実行方式、一時音声ファイル、実機QAが必要な録音形式互換性を説明に追加
+
+### Maintained
+
+- Push-to-Talkのみ。常時マイク監視 / wake word / クラウドSTT / 音声保存なし
+- compact `200x280` window / hit test / character layout は変更なし
+- PromptBuilder / QualityFilter / Ollama prompt は変更なし
+
+### Field QA
+
+- Automated build / cargo build passed; release workflow is checked after tag push
+- Whisper binary/model、MediaRecorder MIME type、マイク権限、実音声認識、一時ファイル削除は field QA pending
+
 ## [0.3.0] — 2026-05-13
 
 ### Added (Whisper Push-to-Talk MVP)

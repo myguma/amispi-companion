@@ -161,6 +161,7 @@ export function VoicePage() {
               <SectionHead title="Whisper CLI 設定" />
               <div style={{ fontSize: 11, color: "#6a40d0", padding: "4px 0 8px", borderBottom: "1px solid #f0f0f0" }}>
                 ローカル whisper.cpp を起動して文字起こしします。未設定・失敗時はアプリ全体を止めず、音声入力だけ失敗扱いになります。
+                実機では whisper.cpp build が WebView の録音形式を読めるか確認してください。
               </div>
 
               <TextInput
@@ -188,6 +189,15 @@ export function VoicePage() {
                   onChange={(e) => update({ whisperTimeoutMs: Math.max(5, Number(e.target.value)) * 1000 })}
                   style={{ width: 80, padding: "4px 8px", fontSize: 12, border: "1px solid #ddd", borderRadius: 4 }}
                 />
+              </div>
+
+              <div style={{ fontSize: 11, color: "#777", lineHeight: 1.7, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+                実行時は一時音声ファイルを作成し、処理後に削除します。Whisper CLI は
+                <code style={{ margin: "0 3px" }}>-m</code>
+                <code style={{ margin: "0 3px" }}>-f</code>
+                <code style={{ margin: "0 3px" }}>-otxt</code>
+                <code style={{ margin: "0 3px" }}>-of</code>
+                を使って呼び出されます。
               </div>
             </>
           )}

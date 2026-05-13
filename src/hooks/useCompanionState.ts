@@ -24,6 +24,7 @@ import type { ObservationSnapshot } from "../observation/types";
 import { EMPTY_SNAPSHOT } from "../observation/types";
 import { inferActivity } from "../companion/activity/inferActivity";
 import { getSTTAdapter } from "../systems/voice/STTAdapterManager";
+import type { STTError } from "../systems/voice/STTAdapter";
 
 export type { VoiceUIState };  // 後方互換のため再エクスポート
 
@@ -39,6 +40,21 @@ interface UseCompanionStateReturn {
   voiceListeningStart: () => void;
   voiceRecordingError: (err: string) => void;
   voiceUIState: VoiceUIState;
+}
+
+function voiceErrorLine(error: STTError | string): string {
+  const normalized = String(error).toLowerCase();
+  if (normalized.includes("permission") || normalized.includes("denied") || normalized.includes("notallowed")) {
+    return "マイク、使えなかった。";
+  }
+  if (normalized.includes("notfound") || normalized.includes("device") || normalized.includes("microphone")) {
+    return "マイク、見つからなかった。";
+  }
+  if (normalized.includes("too_long")) return "少し長かったみたい。";
+  if (normalized.includes("timeout")) return "声の解析、時間がかかった。";
+  if (normalized.includes("unavailable")) return "Whisperの設定、まだみたい。";
+  if (normalized.includes("no_speech") || normalized.includes("empty")) return "うまく聞き取れなかった。";
+  return "声、うまく拾えなかった。";
 }
 
 export function useCompanionState(
@@ -288,11 +304,12 @@ export function useCompanionState(
   const voiceRecordingError = useCallback((err: string) => {
     console.warn("[Voice] recording error:", err);
     setVoiceUIState("voiceError");
+    triggerSpeak(voiceErrorLine(err), "concerned");
     const s = getSettings();
     setTimeout(() => {
       setVoiceUIState(s.voiceInputEnabled ? "voiceReady" : "voiceOff");
     }, 3_000);
-  }, []);
+  }, [triggerSpeak]);
 
   // ──────────────────────────────────────────
   // Voice: Blob → STT → AI → 返答
@@ -306,6 +323,7 @@ export function useCompanionState(
     const s      = getSettings();
     const events = getAllEvents();
     let transcript = "";
+    let sttError: STTError | null = null;
 
     try {
       const adapter = getSTTAdapter();
@@ -314,15 +332,25 @@ export function useCompanionState(
         if (result.ok) {
           // 200文字で安全に切り詰め
           transcript = result.result.text.trim().slice(0, 200);
+          if (!transcript) sttError = "no_speech";
+        } else {
+          sttError = result.error;
         }
+      } else {
+        sttError = "unavailable";
       }
-    } catch {
-      // STT エラー → empty → fallback
+    } catch (err) {
+      console.warn("[Voice] STT error:", err);
+      sttError = "error";
     }
 
     if (!transcript) {
-      setVoiceUIState("voiceReady");
-      setState("idle");
+      setVoiceUIState("voiceError");
+      triggerSpeak(voiceErrorLine(sttError ?? "no_speech"), "concerned");
+      setTimeout(() => {
+        const latest = getSettings();
+        setVoiceUIState(latest.voiceInputEnabled ? "voiceReady" : "voiceOff");
+      }, 3_000);
       return;
     }
 

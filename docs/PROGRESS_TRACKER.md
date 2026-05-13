@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.3.0)**
+**最終更新: 2026-05-13 (v0.3.1)**
 
 ---
 
@@ -19,14 +19,14 @@
 | fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
 | 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
-| 音声入力 (Voice) | 62% | Whisper Push-to-Talk MVPをRust commandへ接続。実機音声QAは未実施 |
+| 音声入力 (Voice) | 66% | Whisper Push-to-Talk MVPをRust commandへ接続し、未設定/失敗時の復帰案内を強化。実機音声QAは未実施 |
 | キャラクター表現 | 91% | compact描画安定を維持し、追加表情だけsprite fallbackするようQA調整 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 96% | v0.2.3 Voice implementation plan更新 |
 | Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
-| **総合** | **~92%** | v0.3.0でWhisper Push-to-Talk MVPを実装。automated checks passed / field QA pending |
+| **総合** | **~92%** | v0.3.1でVoice QA hardening。automated checks passed / field QA pending |
 
 ---
 
@@ -68,13 +68,14 @@
 | v0.2.2 | Expressiveness QA: operational emotionはstateを上書きせず、追加表情のみvisual override |
 | v0.2.3 | Voice Implementation Plan: Push-to-Talk Whisper MVPの範囲・privacy・QA項目を固定 |
 | v0.3.0 | Whisper Push-to-Talk MVP: Rust commandでローカルWhisper CLIへ接続 |
+| v0.3.1 | Voice QA Hardening: Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 |
 
 ---
 
 ## 開発ルール
 
 1. **完成判定基準が最優先** — docs/PRODUCT_COMPLETION_ROADMAP.md を参照する
-2. **音声は凍結中** — WhisperCli Rust sidecar は Milestone A 完了後に再開
+2. **音声はPush-to-Talk限定** — WhisperCliはlocal-only。常時監視 / wake word / クラウドSTTは禁止
 3. **絶対原則を守る** — クラウド送信・常時監視・自動実行は実装しない
 4. **キャラクター名をコードに埋め込まない**
 5. **npm run build + cargo build が通ること**
@@ -82,22 +83,14 @@
 
 ---
 
-## 次の目標: v0.2.x 候補
+## 次の目標: v1.0 release candidate
 
-優先候補A: **Voice QA Hardening** ← **推奨**
-- Whisper未設定・失敗・timeout時の案内整理
-- 一時音声ファイル削除とfield QA項目の強化
-
-優先候補B: **Voice QA Hardening**
-- Whisper失敗時UI
-- 一時音声ファイル削除確認
-
-優先候補C: **残QA修正**
-- v0.1.51〜v0.1.53 の文脈反応 / quiet-focus-DND / 保存期間UI 挙動を実機確認
-- compact 200x280 character layout維持を確認
+優先候補A: **v1.0.0-rc.1 Release Candidate** ← **推奨**
+- 新機能追加なしでdocs / Known Issues / QA checklistを整理
+- field QA pendingを隠さずRCとして区切る
 
 | 作業 | 優先度 |
 |------|--------|
-| Voice QA Hardening | 高 |
-| v0.1.55 release polish / 残QA修正 | 中 |
-| Whisper Rust sidecar (Phase 6b-real-2) | 低 |
+| v1.0.0-rc.1 Release Candidate | 高 |
+| Voice実機QA | 高 |
+| 残QA修正 | 中 |
