@@ -260,16 +260,38 @@ html,
   align-items: center;
   justify-content: center;
   transform-origin: center bottom;
+  overflow: visible;
+  isolation: isolate;
+  backface-visibility: hidden;
 }
 
 .character-wrapper {
   transform-origin: center bottom;
+  overflow: visible;
+  isolation: isolate;
+  backface-visibility: hidden;
 }
 
-.character-anim img {
+.character-sprite-surface {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.character-anim img,
+.character-sprite-img {
   display: block;
   width: 100%;
   height: 100%;
+  pointer-events: none;
 }
 
 .character-anim--sprite[data-state="thinking"] {

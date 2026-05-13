@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.1.46] — 2026-05-13
+
+### Fixed (Hotfix: Sprite Render Surface)
+
+#### A: expanded transparent WebViewでのsprite描画欠け対策
+
+- **v0.1.45 debug結果**: speech表示時も `stage` / `wrapper` / `img` / `alpha` は viewport 内に収まっていた
+- **判断**: window / viewport / work area clamp / stage配置 / wrapper配置 / sprite alpha bbox は直接原因ではなさそう
+- **Character.tsx**: spriteの実表示を `<img>` から `background-image` の `div.character-sprite-surface` に変更
+  - `<img>` は preload / fallback / debug用に透明状態で保持
+  - `backgroundSize: 100% 100%`
+  - `backgroundPosition: center bottom`
+  - `imageRendering: pixelated`
+  - `transform: translateZ(0)`
+  - `backfaceVisibility: hidden`
+  - `willChange: transform`
+- **index.css**: `character-wrapper` / `character-anim` / sprite surface に `overflow: visible`、`isolation: isolate`、`backface-visibility` を追加
+- **DebugOverlay.tsx**: `renderMode=background` と sprite surface rect を表示
+
+#### B: 維持したもの
+
+- window height増加、speechSafetyLift、work area clamp変更は行っていない
+- v0.1.45 の img / alpha bbox debug は維持
+- root `100vw/100vh`、character-stage bottom anchor、speech bubble頭上基準、UpdateBadge hit test、設定画面アップデートは維持
+
 ## [0.1.45] — 2026-05-13
 
 ### Changed (Diagnostic: Sprite Render Debug Instrumentation)

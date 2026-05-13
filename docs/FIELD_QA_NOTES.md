@@ -9,8 +9,35 @@
 > v0.1.43 では v0.1.42 実機確認で残った speech bubble のwindow top寄りすぎを hotfix。
 > v0.1.44 では設定画面更新導線、UpdateBadge hit test、ユーザーON/OFF可能なdebug modeを追加。
 > v0.1.45 では v0.1.44 debug結果を受け、Character内部のimg/sprite/alpha bbox診断を追加。
+> v0.1.46 では v0.1.45 debug結果を受け、sprite実表示をbackground surfaceへ切り替え。
 
-**更新: 2026-05-13 (v0.1.45)**
+**更新: 2026-05-13 (v0.1.46)**
+
+---
+
+## v0.1.46 での修正内容 (実機確認待ち)
+
+### 問題O: expanded transparent WebViewでsprite下半分が視覚的に消える
+
+**v0.1.45 実機debug結果:**
+- speech表示時も `stage` / `wrapper` / `img` / `alpha` は viewport 内
+- `OVER` は出ていない
+- 発話中dragでは `effectiveState=touched` / `sprite=touched.png` でも同様に消える
+- compact `200x280` では speech=true でも見切れない
+- したがって `speaking.png` 固有、`char-speak` 固有、window / viewport / clamp が直接原因ではなさそう
+
+**v0.1.46 での修正:**
+- sprite実表示を `<img>` から `background-image` surface に変更
+- `<img>` は preload / fallback / natural size / alpha bbox debug 用に保持
+- surfaceに `translateZ(0)` / `backfaceVisibility` / `willChange` を付け、透明WebViewのexpanded resize後も独立した描画面として再合成されやすくした
+- debug overlayに `renderMode=background` と `surface` rectを追加
+
+**実機確認手順:**
+1. speech表示時にキャラ下半分が消えないか確認
+2. speech中dragでも消えないか確認
+3. `renderMode=background` が出ているか確認
+4. `speaking.png` / `touched.png` の両方で問題ないか確認
+5. 吹き出し位置・drag・右クリック・click-through・設定アップデートが壊れていないか確認
 
 ---
 

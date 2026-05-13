@@ -2,7 +2,7 @@
 // スプライト画像があれば使用し、なければSVGフォールバックを表示する
 // どのキャラクター名・ロアにも依存しない
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { CompanionState, CharacterConfig, VoiceUIState } from "../types/companion";
 import { DEFAULT_CHARACTER_CONFIG } from "../types/companion";
 import type { CompanionEmotion } from "../companion/reactions/types";
@@ -49,8 +49,8 @@ function getSpriteUrl(
   ];
 }
 
-/** スプライト画像を試みる。失敗したらSVGフォールバックを使う */
-function SpriteImage({
+/** スプライト画像をpreloadし、表示はbackground surfaceで行う */
+function SpriteSurface({
   urls,
   width,
   height,
@@ -63,26 +63,61 @@ function SpriteImage({
 }) {
   const [urlIndex, setUrlIndex] = useState(0);
 
+  useEffect(() => {
+    setUrlIndex(0);
+  }, [urls[0]]);
+
   if (urlIndex >= urls.length) return null;
+  const currentUrl = urls[urlIndex];
 
   return (
-    <img
-      className="character-sprite-img"
-      src={urls[urlIndex]}
-      data-sprite-url={urls[urlIndex]}
-      width={width}
-      height={height}
-      style={{ imageRendering: "pixelated" }}
-      onError={() => {
-        if (urlIndex + 1 >= urls.length) {
-          onFallback();
-        } else {
-          setUrlIndex((i) => i + 1);
-        }
-      }}
-      alt=""
-      draggable={false}
-    />
+    <>
+      <div
+        className="character-sprite-surface"
+        data-render-mode="background"
+        data-sprite-url={currentUrl}
+        style={{
+          width,
+          height,
+          backgroundImage: `url("${currentUrl}")`,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center bottom",
+          imageRendering: "pixelated",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+          willChange: "transform",
+        }}
+        aria-hidden="true"
+      />
+      <img
+        className="character-sprite-img"
+        src={currentUrl}
+        data-render-mode="background-preload"
+        data-sprite-url={currentUrl}
+        width={width}
+        height={height}
+        style={{
+          imageRendering: "pixelated",
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0,
+          pointerEvents: "none",
+        }}
+        onError={() => {
+          if (urlIndex + 1 >= urls.length) {
+            onFallback();
+          } else {
+            setUrlIndex((i) => i + 1);
+          }
+        }}
+        alt=""
+        draggable={false}
+        aria-hidden="true"
+      />
+    </>
   );
 }
 
@@ -220,17 +255,27 @@ export function Character({
         cursor: "pointer",
         position: "relative",
         pointerEvents: "none",
-        transform: facingRight ? "scaleX(-1)" : undefined,
+        transform: facingRight ? "translateZ(0) scaleX(-1)" : "translateZ(0)",
         transition: "transform 0.1s ease",
+        overflow: "visible",
+        isolation: "isolate",
+        backfaceVisibility: "hidden",
       }}
     >
       <div
         className={animClass}
         data-state={effectiveState}
-        style={{ width: "100%", height: "100%", position: "relative" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          overflow: "visible",
+          isolation: "isolate",
+          backfaceVisibility: "hidden",
+        }}
       >
         {!useFallback ? (
-          <SpriteImage
+          <SpriteSurface
             urls={spriteUrls}
             width={displayWidth}
             height={displayHeight}

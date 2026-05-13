@@ -35,6 +35,7 @@ type AlphaBox = {
 
 type ImageSnapshot = {
   rect: RectSnapshot | null;
+  surfaceRect: RectSnapshot | null;
   alphaRect: RectSnapshot | null;
   naturalWidth: number;
   naturalHeight: number;
@@ -49,6 +50,7 @@ type ImageSnapshot = {
   animationDuration: string;
   overflow: string;
   effectiveState: string;
+  renderMode: string;
   alphaBox: AlphaBox | null;
   alphaError: string | null;
 };
@@ -204,6 +206,7 @@ function snapshotImage(): ImageSnapshot {
   if (!img) {
     return {
       rect: null,
+      surfaceRect: snapshotRect(document.querySelector(".character-sprite-surface")),
       alphaRect: null,
       naturalWidth: 0,
       naturalHeight: 0,
@@ -218,33 +221,38 @@ function snapshotImage(): ImageSnapshot {
       animationDuration: "",
       overflow: "",
       effectiveState: "",
+      renderMode: "",
       alphaBox: null,
       alphaError: "no-img",
     };
   }
 
+  const surface = document.querySelector(".character-sprite-surface") as HTMLElement | null;
   const rect = snapshotRect(img);
   const style = window.getComputedStyle(img);
+  const surfaceStyle = surface ? window.getComputedStyle(surface) : null;
   const parentStyle = img.parentElement ? window.getComputedStyle(img.parentElement) : null;
   const animEl = img.closest(".character-anim") as HTMLElement | null;
   const { box, error } = measureAlphaBox(img);
 
   return {
     rect,
+    surfaceRect: snapshotRect(surface),
     alphaRect: mapAlphaRect(rect, img, box),
     naturalWidth: img.naturalWidth,
     naturalHeight: img.naturalHeight,
     currentSrc: img.currentSrc || img.src,
     dataUrl: img.dataset.spriteUrl ?? null,
     complete: img.complete,
-    objectFit: style.objectFit,
-    objectPosition: style.objectPosition,
-    transform: parentStyle?.transform ?? style.transform,
-    transformOrigin: parentStyle?.transformOrigin ?? style.transformOrigin,
+    objectFit: surfaceStyle?.backgroundSize ?? style.objectFit,
+    objectPosition: surfaceStyle?.backgroundPosition ?? style.objectPosition,
+    transform: surfaceStyle?.transform ?? parentStyle?.transform ?? style.transform,
+    transformOrigin: surfaceStyle?.transformOrigin ?? parentStyle?.transformOrigin ?? style.transformOrigin,
     animationName: parentStyle?.animationName ?? style.animationName,
     animationDuration: parentStyle?.animationDuration ?? style.animationDuration,
-    overflow: parentStyle?.overflow ?? style.overflow,
+    overflow: surfaceStyle?.overflow ?? parentStyle?.overflow ?? style.overflow,
     effectiveState: animEl?.dataset.state ?? "",
+    renderMode: surface?.dataset.renderMode ?? img.dataset.renderMode ?? "img",
     alphaBox: box,
     alphaError: error,
   };
@@ -338,6 +346,7 @@ export function DebugOverlay({
   const wrapperOverflow = !!wrapperRect && viewportH > 0 && wrapperRect.bottom > viewportH;
   const stageOverflow = !!stageRect && viewportH > 0 && stageRect.bottom > viewportH;
   const imgOverflow = !!imgInfo.rect && viewportH > 0 && imgInfo.rect.bottom > viewportH;
+  const surfaceOverflow = !!imgInfo.surfaceRect && viewportH > 0 && imgInfo.surfaceRect.bottom > viewportH;
   const alphaOverflow = !!imgInfo.alphaRect && viewportH > 0 && imgInfo.alphaRect.bottom > viewportH;
   const aiAgeSec = lastAIResult.updatedAt ? Math.round((Date.now() - lastAIResult.updatedAt) / 1000) : null;
 
@@ -356,6 +365,7 @@ export function DebugOverlay({
       <RectBox rect={speechRect} color="#5ac8fa" label="speech" />
       <RectBox rect={updateRect} color="#ff6b9a" label="update" />
       <RectBox rect={hitRect} color="#c77dff" label="hit" />
+      <RectBox rect={imgInfo.surfaceRect} color="#ff4fd8" label="surface" />
       <RectBox rect={imgInfo.rect} color="#ff8c3a" label="img" />
       <RectBox rect={imgInfo.alphaRect} color="#00ffd5" label="alpha" />
       <div
@@ -382,6 +392,8 @@ export function DebugOverlay({
         <div>char={characterW}x{characterH} bottomPad={bottomPad} gap={speechBubbleGap}</div>
         <div>stage: {fmtRect(stageRect)} {stageOverflow ? "OVER" : ""}</div>
         <div>wrap: {fmtRect(wrapperRect)} {wrapperOverflow ? "OVER" : ""}</div>
+        <div>renderMode={imgInfo.renderMode || "-"}</div>
+        <div>surface: {fmtRect(imgInfo.surfaceRect)} {surfaceOverflow ? "OVER" : ""}</div>
         <div>img: {fmtRect(imgInfo.rect)} {imgOverflow ? "OVER" : ""}</div>
         <div>nat={imgInfo.naturalWidth}x{imgInfo.naturalHeight} ok={String(imgInfo.complete)}</div>
         <div>alpha: {imgInfo.alphaBox ? `${imgInfo.alphaBox.x},${imgInfo.alphaBox.y} ${imgInfo.alphaBox.width}x${imgInfo.alphaBox.height} ${(imgInfo.alphaBox.coverage * 100).toFixed(1)}%` : imgInfo.alphaError ?? "n/a"} {alphaOverflow ? "OVER" : ""}</div>

@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.45)**
+**最終更新: 2026-05-13 (v0.1.46)**
 
 ---
 
@@ -20,13 +20,13 @@
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 80% | stage/wrapperはviewport内と判明。v0.1.45でimg/sprite/alpha bbox診断を追加 |
+| キャラクター表現 | 81% | expanded transparent WebView対策としてsprite表示をbackground surfaceへ変更。実機確認待ち |
 | 設定 UI | 95% | TabErrorBoundaryに加え、アップデート/デバッグタブ追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 80% | v0.1.45 diagnostic docs更新 |
+| リリース品質 (docs) | 81% | v0.1.46 hotfix docs更新 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~79%** | v0.1.45 は診断版。speech見切れ修正完了ではないため控えめ評価 |
+| **総合** | **~80%** | v0.1.46 hotfix実装完了。speech見切れ改善は実機確認待ち |
 
 ---
 
@@ -53,6 +53,7 @@
 | v0.1.43 | Hotfix: speech bubbleをwindow top基準からcharacter-stage上基準へ変更・bubble hit test整合 |
 | v0.1.44 | Hotfix: 設定画面更新導線・UpdateBadge hit test・debugModeEnabled / layout overlay追加 |
 | v0.1.45 | Diagnostic: Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 |
+| v0.1.46 | Hotfix: sprite実表示をbackground surfaceへ変更・renderMode debug追加 |
 
 ---
 
@@ -67,12 +68,12 @@
 
 ---
 
-## 次の目標: v0.1.46 候補
+## 次の目標: v0.1.47 候補
 
-優先候補A: **v0.1.45 実機debug確認 → sprite描画修正** ← **推奨**
-- speech表示時の `sprite` / `nat` / `img` / `alphaRect` / `anim` を確認
-- `speaking.png` と alpha bbox が原因ならsprite assetまたは描画bbox方針を最小修正
-- CSS animation / transform が原因ならCharacter内部だけを最小修正
+優先候補A: **v0.1.46 実機確認 → 残QA修正** ← **推奨**
+- speech表示時とspeech中dragで下半分が消えないか確認
+- `renderMode=background` と `surface` rectを確認
+- 改善したら First-run Onboarding に進めるか判断
 
 優先候補B: **First-run Onboarding**
 - speech見切れが解決または原因明確化できたら着手

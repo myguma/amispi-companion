@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.45)**
+**最終更新: 2026-05-13 (v0.1.46)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.45
-**フェーズ:** Diagnostic Hotfix — Sprite Render Debug Instrumentation 完了 (実機確認待ち)
+**バージョン:** v0.1.46
+**フェーズ:** Hotfix — Sprite Render Surface Fix 完了 (実機確認待ち)
 **全体進捗:** 約 79%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.45)
-✅ cargo build  → Finished dev profile (v0.1.45)
-✅ GitHub Actions / Windows Installer → v0.1.44 成功済み。v0.1.45 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.46)
+✅ cargo build  → Finished dev profile (v0.1.46)
+✅ GitHub Actions / Windows Installer → v0.1.45 成功済み。v0.1.46 は tag push 後に確認
 ```
 
 ---
@@ -52,6 +52,36 @@
 | Hotfix: Speech Bubble Relative Anchor | speech bubbleをwindow top基準からキャラ頭上基準へ変更 | ✅ v0.1.43 |
 | Hotfix: Settings Updater / Debug Mode / Hit Test QA | 設定画面更新導線・UpdateBadge hit test・debug overlay追加 | ✅ v0.1.44 |
 | Diagnostic: Sprite Render Debug Instrumentation | Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 | ✅ v0.1.45 |
+| Hotfix: Sprite Render Surface Fix | sprite実表示をbackground surfaceへ変更し、透明WebView expanded時の描画欠け対策 | ✅ v0.1.46 |
+
+---
+
+## v0.1.46 実装詳細
+
+### A: v0.1.45 debug結果
+
+- speech表示時も `stage` / `wrapper` / `img` / `alpha` は viewport 内だった
+- `speaking.png` 固有ではなく、speech中dragの `touched.png` でも視覚的に下半分が消えた
+- compact `200x280` では speech=true でも見切れず、expanded transparent WebView状態の描画/合成問題が本命になった
+
+### B: sprite render surface
+
+- `Character.tsx`
+  - 実表示を `<img>` から `div.character-sprite-surface` の `background-image` に変更
+  - `<img>` は preload / fallback / debug 用に透明状態で保持
+  - state変更時に preload URL index をリセット
+- `index.css`
+  - `character-wrapper` / `character-anim` / sprite surface に `overflow: visible`、`isolation: isolate`、`backface-visibility` を追加
+- `DebugOverlay.tsx`
+  - `renderMode=background`
+  - `surface` rect
+  - img / alpha debug は維持
+
+### C: 触っていないもの
+
+- window height、speech lift、work area clamp
+- Ollama / Active App / ContextMenu / PromptBuilder / QualityFilter
+- speech bubble頭上基準、UpdateBadge hit test、設定画面アップデート
 
 ---
 
@@ -378,18 +408,15 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.46)
+## 次のフェーズ候補 (v0.1.47)
 
-### 優先候補 A: v0.1.45 実機debug確認 → sprite描画修正 ← **最優先**
+### 優先候補 A: v0.1.46 実機確認 → 残QA修正 ← **最優先**
 
-1. デバッグモードONでspeech表示する
-2. `sprite` が `speaking.png` か確認
-3. `nat=160x160` か確認
-4. `img` rect bottomがviewport内か確認
-5. `alphaRect` bottomがviewport内か確認
-6. `anim=char-speak` の時だけ見切れるか確認
-7. alpha bboxが画像端まで詰まっているか確認
-8. 見切れている状態のスクショを残す
+1. speech表示時にキャラ下半分が消えないか確認
+2. speech中dragでも消えないか確認
+3. debug overlayで `renderMode=background` が出るか確認
+4. `speaking.png` / `touched.png` の両方で問題ないか確認
+5. 吹き出し位置・drag・右クリック・click-through・設定アップデートが壊れていないか確認
 
 ### 優先候補 B: First-run Onboarding
 
