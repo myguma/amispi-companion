@@ -37,6 +37,16 @@ function ActionButton({
   );
 }
 
+function ErrorHint({ error }: { error: string | null }) {
+  if (!error) return null;
+  return (
+    <div style={{ marginTop: 6, color: "#8a5a5a", fontSize: 11, lineHeight: 1.6 }}>
+      ネットワーク接続、GitHub Releasesへの到達、またはインストール済みアプリの署名設定を確認してください。
+      companion上の通知が押せない場合も、このタブから再試行できます。
+    </div>
+  );
+}
+
 export function UpdatePage() {
   const [currentVersion, setCurrentVersion] = useState("…");
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -121,6 +131,7 @@ export function UpdatePage() {
             </div>
           )}
           {error && <div style={{ marginTop: 4, wordBreak: "break-word" }}>{error}</div>}
+          <ErrorHint error={error} />
         </div>
         <div style={{ fontSize: 11, color: "#999", lineHeight: 1.7 }}>
           companion上の更新通知が押せない場合でも、この設定画面から更新できます。

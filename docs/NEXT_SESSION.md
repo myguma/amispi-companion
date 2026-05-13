@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.54)**
+**最終更新: 2026-05-13 (v0.1.55)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.54
-**フェーズ:** Memory Export / Data Control Polish (field QA pending)
-**全体進捗:** 約 88%
+**バージョン:** v0.1.55
+**フェーズ:** Release Polish (field QA pending)
+**全体進捗:** 約 89%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.54)
-✅ cargo build  → Finished dev profile (v0.1.54)
-✅ GitHub Actions / Windows Installer → v0.1.53 成功済み。v0.1.54 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.55)
+✅ cargo build  → Finished dev profile (v0.1.55)
+✅ GitHub Actions / Windows Installer → v0.1.54 成功済み。v0.1.55 は tag push 後に確認
 ```
 
 ---
@@ -61,6 +61,25 @@
 | Reaction Quality QA | 固定文短縮・fallback重複回避・QualityFilter追加強化 | ✅ v0.1.52 |
 | Quiet / Focus / DND Hardening | quiet/focus/DND時の自律発話抑制経路を整理 | ✅ v0.1.53 |
 | Memory Export / Data Control Polish | MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 | ✅ v0.1.54 |
+| Release Polish | Node.js 24 opt-in・Update/Ollama失敗案内・Known Issues作成 | ✅ v0.1.55 |
+
+---
+
+## v0.1.55 実装詳細
+
+### A: Release Polish
+
+- Release workflowに `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` を追加し、Node.js 20 deprecation noticeに先回り
+- UpdatePageの失敗表示に、ネットワーク / GitHub Releases / 署名設定を確認する案内を追加
+- AIPageのOllama接続失敗表示に、Ollama起動 / Base URL / model pull確認の案内を追加
+- docs/KNOWN_ISSUES.md を追加し、daily-use beta前の実機依存リスクを整理
+
+### B: Field QA pending
+
+- v0.1.55 Release workflowでNode.js 20 deprecation annotationが消えるか
+- 設定画面UpdatePageの実機更新 / 失敗表示
+- Ollama未起動・model missing時の表示
+- compact 200x280 character layout / click-through / UpdateBadge / Debug / Transparency の回帰
 
 ---
 
@@ -660,18 +679,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.55)
+## 次のフェーズ候補 (v0.2.0)
 
-### 優先候補 A: Release Polish ← **推奨**
+### 優先候補 A: Daily-use Beta docs consolidation ← **推奨**
 
-**目的:** 普通のWindowsアプリとしての不安を減らす。
+**目的:** v0.1.x安定化を daily-use beta として区切る。
 
 **実装すべき内容:**
-1. GitHub Actions Node.js 20 deprecation notice 対応
-2. update失敗時の表示改善
-3. Ollama未起動時の案内改善
-4. version表示の一貫性確認
-5. Known Issues の枠を作る
+1. v0.2.0 beta 合格条件をチェックリスト化
+2. docs/PRODUCT_COMPLETION_ROADMAP.md を v0.2.0 現在地へ更新
+3. PROGRESS_TRACKER / NEXT_SESSION / FIELD_QA_NOTES / CHANGELOG を整理
+4. Known Issues を daily-use beta 向けに更新
+5. 実機依存項目は field QA pending と明記
 
 ### 優先候補 B: Emotion Sprite Set
 
@@ -682,15 +701,15 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 C: v0.1.54 残QA修正
+### 優先候補 C: v0.1.55 残QA修正
 
-**目的:** memory export / quiet-focus-DND / reaction quality 実機QAで出た問題を優先修正する。
+**目的:** release polish / memory export / quiet-focus-DND 実機QAで出た問題を優先修正する。
 
 **確認すべき内容:**
-1. JSON exportが保存できるか
-2. export JSONの件数・期間・タイプ別件数が正しいか
-3. quiet/focus/DNDが実機で自然か
-4. Ollama sourceが不必要にfallback化していないか
+1. v0.1.55 Release workflow annotationがどう変わったか
+2. UpdatePageの失敗表示が分かりやすいか
+3. Ollama未起動時の案内が分かりやすいか
+4. JSON export / quiet/focus/DNDが実機で自然か
 5. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
 
 ---

@@ -19,8 +19,27 @@
 > v0.1.52 では Reaction Quality QA として固定文・fallback・QualityFilterを整理。
 > v0.1.53 では Quiet / Focus / DND hardening として、自律発話抑制経路を整理。
 > v0.1.54 では MemoryEvent JSON export と data control polish を追加。
+> v0.1.55 では Release polish としてNode.js 24 opt-in、Update/Ollama失敗案内、Known Issuesを追加。
 
-**更新: 2026-05-13 (v0.1.54)**
+**更新: 2026-05-13 (v0.1.55)**
+
+---
+
+## v0.1.55 での更新内容
+
+### Release Polish
+
+**追加内容:**
+- Release workflowに `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` を追加
+- UpdatePageの失敗時案内を改善
+- Ollama接続失敗時の案内を改善
+- docs/KNOWN_ISSUES.md を追加
+
+**field QA pending:**
+- v0.1.55 Release workflowでNode.js 20 deprecation annotationが消えるか
+- 設定画面からの更新確認/インストール失敗時表示
+- Ollama未起動 / model missing時の案内表示
+- compact 200x280 character layout / click-through / Update / Debug / Transparency の回帰
 
 ---
 

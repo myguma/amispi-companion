@@ -246,6 +246,12 @@ function OllamaTestSection({ baseUrl, model, timeoutMs }: {
               エラー: {connError}
             </div>
           )}
+          {connStatus === "ng" && (
+            <div style={{ color: "#8a6a30", fontSize: 11, lineHeight: 1.6, marginTop: 4 }}>
+              Ollamaが起動しているか、Base URLが <code>http://127.0.0.1:11434</code> のままか、
+              設定中のモデルを `ollama pull` 済みかを確認してください。
+            </div>
+          )}
           {models !== null && models.length === 0 && (
             <div style={{ color: "#e08030", fontSize: 11 }}>
               モデルなし — ollama pull でモデルを取得してください

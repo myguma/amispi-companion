@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.1.55] — 2026-05-13
+
+### Changed (Release Polish)
+
+- **.github/workflows/release.yml**:
+  - GitHub Actions Node.js 20 deprecation notice 対応として `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` を追加
+- **UpdatePage.tsx**:
+  - 更新確認 / インストール失敗時の案内を追加
+  - ネットワーク、GitHub Releases、署名設定を確認する導線を表示
+- **AIPage.tsx**:
+  - Ollama接続失敗時に、Ollama起動・Base URL・model pull確認の案内を表示
+- **docs/KNOWN_ISSUES.md**:
+  - daily-use beta前の既知リスクと field QA pending 項目を新規作成
+
+### Maintained
+
+- installer / updater の方式は全面変更なし
+- compact `200x280` speech layout / character rendering / hit test geometry は変更なし
+- Onboarding / Memory Retention / Memory Export / Debug / Transparency は維持
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。Node 24 opt-in後のRelease workflow annotation、updater実機更新、Ollama未起動時の表示は field QA pending
+
 ## [0.1.54] — 2026-05-13
 
 ### Added (Memory Export / Data Control Polish)

@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.54)**
+**最終更新: 2026-05-13 (v0.1.55)**
 
 ---
 
@@ -24,9 +24,9 @@
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 91% | v0.1.54 Memory export / data control polish を反映 |
-| Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~88%** | v0.1.54でローカル記憶のJSON exportを追加。field QA pending |
+| リリース品質 (docs) | 93% | Known Issues追加・Update/Ollama失敗案内を改善 |
+| Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
+| **総合** | **~89%** | v0.1.55でrelease polishを追加。field QA pending |
 
 ---
 
@@ -62,6 +62,7 @@
 | v0.1.52 | Reaction Quality QA: 固定文短縮・fallback重複回避・QualityFilter追加強化・RESPONSE_QUALITY_GUIDE更新 |
 | v0.1.53 | Quiet / Focus / DND Hardening: idle/observationの抑制経路整理・DND中の短い手動反応化 |
 | v0.1.54 | Memory Export / Data Control Polish: MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 |
+| v0.1.55 | Release Polish: Node.js 24 opt-in・Update/Ollama失敗案内・KNOWN_ISSUES作成 |
 
 ---
 
@@ -76,13 +77,12 @@
 
 ---
 
-## 次の目標: v0.1.55 候補
+## 次の目標: v0.2.0 候補
 
-優先候補A: **Release Polish** ← **推奨**
-- GitHub Actions Node.js 20 deprecation notice 対応
-- update失敗時の表示改善
-- Ollama未起動時の案内改善
-- version表示の一貫性確認
+優先候補A: **Daily-use Beta docs consolidation** ← **推奨**
+- v0.2.0 beta 合格条件をチェックリスト化
+- PRODUCT_COMPLETION_ROADMAP / PROGRESS_TRACKER / NEXT_SESSION / FIELD_QA_NOTES / CHANGELOG を整理
+- 実機依存項目は field QA pending と明記
 
 優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
@@ -94,7 +94,7 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| Release polish | 高 |
+| v0.2.0 daily-use beta docs consolidation | 高 |
 | Emotion sprite set | 中 |
-| v0.1.53 quiet-focus-DND / 残QA修正 | 中 |
+| v0.1.55 release polish / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |
