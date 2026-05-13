@@ -270,9 +270,9 @@ export function OnboardingPage({ onDone }: { onDone?: () => void }) {
             max={10}
             onChange={(v) => update({ maxAutonomousReactionsPerHour: v })}
           />
-          <Toggle label="Quiet Mode" note="自律発話・鳴き声を大幅に減らします" checked={settings.quietMode} onChange={(v) => update({ quietMode: v })} />
-          <Toggle label="Focus Mode" note="提案系の発話を止めます" checked={settings.focusMode} onChange={(v) => update({ focusMode: v })} />
-          <Toggle label="Do Not Disturb" note="手動呼び出し以外を止めます" checked={settings.doNotDisturb} onChange={(v) => update({ doNotDisturb: v })} />
+          <Toggle label="Quiet Mode" note="自律発話と観測反応を止め、クリック反応は残します" checked={settings.quietMode} onChange={(v) => update({ quietMode: v })} />
+          <Toggle label="Focus Mode" note="集中を切りそうな自律発話を控えます" checked={settings.focusMode} onChange={(v) => update({ focusMode: v })} />
+          <Toggle label="Do Not Disturb" note="クリックなどの手動反応以外を止めます" checked={settings.doNotDisturb} onChange={(v) => update({ doNotDisturb: v })} />
         </Card>
       )}
 

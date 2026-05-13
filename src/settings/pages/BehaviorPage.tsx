@@ -75,9 +75,9 @@ export function BehaviorPage() {
   return (
     <div>
       <SectionHead title="モード" />
-      <Toggle label="おとなしくする (Quiet Mode)" note="自律発話・鳴き声を大幅に減らす" checked={s.quietMode} onChange={(v) => update({ quietMode: v })} />
-      <Toggle label="集中モード (Focus Mode)" note="提案系の発話を無効にする" checked={s.focusMode} onChange={(v) => update({ focusMode: v })} />
-      <Toggle label="邪魔しない (Do Not Disturb)" note="manualCall 以外すべて無効" checked={s.doNotDisturb} onChange={(v) => update({ doNotDisturb: v })} />
+      <Toggle label="おとなしくする (Quiet Mode)" note="自律発話と観測反応を止めます。クリック反応は残ります" checked={s.quietMode} onChange={(v) => update({ quietMode: v })} />
+      <Toggle label="集中モード (Focus Mode)" note="集中を切りそうな自律発話を控えます" checked={s.focusMode} onChange={(v) => update({ focusMode: v })} />
+      <Toggle label="邪魔しない (Do Not Disturb)" note="クリックなどの手動反応以外は黙ります" checked={s.doNotDisturb} onChange={(v) => update({ doNotDisturb: v })} />
 
       <SectionHead title="自動抑制" />
       <Toggle label="全画面中は黙る" checked={s.suppressWhenFullscreen} onChange={(v) => update({ suppressWhenFullscreen: v })} />

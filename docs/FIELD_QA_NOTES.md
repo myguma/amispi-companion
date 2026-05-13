@@ -17,8 +17,28 @@
 > v0.1.50 ではローカル記憶の保存期間設定と起動時/手動cleanupを追加。
 > v0.1.51 では DailySummary / RuleProvider 活用を強化し、ローカル記憶を短い文脈反応へ反映。
 > v0.1.52 では Reaction Quality QA として固定文・fallback・QualityFilterを整理。
+> v0.1.53 では Quiet / Focus / DND hardening として、自律発話抑制経路を整理。
 
-**更新: 2026-05-13 (v0.1.52)**
+**更新: 2026-05-13 (v0.1.53)**
+
+---
+
+## v0.1.53 での更新内容
+
+### Quiet / Focus / DND Hardening
+
+**修正内容:**
+- quietMode中は手動以外の idle / observation 発話を抑制
+- focusMode中は集中を切りそうな idle / observation 発話と `avoidDuringFocus` reaction を抑制
+- doNotDisturb中のクリック / voice はOllama呼び出しを避け、短い固定反応へ寄せた
+- idle自律発話で SpeechPolicy deny 後に fallback が喋る経路を修正
+- Settings / Onboarding の説明を実挙動に合わせた
+
+**field QA pending:**
+- quietModeで自律発話と観測反応が止まるか
+- focusModeで発話頻度が下がるか
+- DND中にクリック / voice long press 以外で喋らないか
+- compact 200x280 character layout / click-through / Update / Debug / Transparency の回帰
 
 ---
 

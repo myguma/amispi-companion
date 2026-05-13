@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.52)**
+**最終更新: 2026-05-13 (v0.1.53)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.52
-**フェーズ:** Reaction Quality QA (field QA pending)
-**全体進捗:** 約 86%
+**バージョン:** v0.1.53
+**フェーズ:** Quiet / Focus / DND Hardening (field QA pending)
+**全体進捗:** 約 87%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.52)
-✅ cargo build  → Finished dev profile (v0.1.52)
-✅ GitHub Actions / Windows Installer → v0.1.51 成功済み。v0.1.52 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.53)
+✅ cargo build  → Finished dev profile (v0.1.53)
+✅ GitHub Actions / Windows Installer → v0.1.52 成功済み。v0.1.53 は tag push 後に確認
 ```
 
 ---
@@ -59,6 +59,28 @@
 | Memory Retention Policy | ローカル記憶の保存期間設定・起動時cleanup・手動整理UI | ✅ v0.1.50 |
 | DailySummary Context Reactions | 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 | ✅ v0.1.51 |
 | Reaction Quality QA | 固定文短縮・fallback重複回避・QualityFilter追加強化 | ✅ v0.1.52 |
+| Quiet / Focus / DND Hardening | quiet/focus/DND時の自律発話抑制経路を整理 | ✅ v0.1.53 |
+
+---
+
+## v0.1.53 実装詳細
+
+### A: Quiet / Focus / DND Hardening
+
+- `SpeechPolicy` で quietMode 中の非手動発話を抑制
+- focusMode 中は idle / observation 由来の自律発話を抑制
+- `selectReaction` で focusMode 中に `avoidDuringFocus` reaction を選ばないようにした
+- observation AI-first経路が quiet / DND をすり抜けないようにした
+- idle自律発話で SpeechPolicy が拒否したあと fallback が喋る経路を修正
+- DND中のクリック / voice はOllama呼び出しを避け、短い固定反応へ寄せた
+- Settings / Onboarding のモード説明を実挙動に合わせた
+
+### B: Field QA pending
+
+- quietMode中に自律発話・観測反応が止まるか
+- focusMode中に自律発話頻度が十分下がるか
+- DND中にクリック / voice long press 以外で喋らないか
+- click-through / compact `200x280` character layout / Update / Debug / Transparency の回帰がないか
 
 ---
 
@@ -617,18 +639,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.53)
+## 次のフェーズ候補 (v0.1.54)
 
-### 優先候補 A: Quiet / Focus / DND Hardening ← **推奨**
+### 優先候補 A: Memory Export / Data Control Polish ← **推奨**
 
-**目的:** 黙るべき時に黙るコンパニオンにする。
+**目的:** ローカル記憶の透明性を上げ、必要なら持ち出せるようにする。
 
 **実装すべき内容:**
-1. quietMode中は自律発話を止める
-2. focusMode中は自律発話頻度を下げる
-3. doNotDisturb中はクリック以外ほぼ黙る
-4. Onboarding / Settings の説明と整合
-5. Debug/Transparency上で抑制理由が分かる範囲を検討
+1. MemoryEvent JSON export
+2. export前に件数・期間・タイプを表示
+3. export JSONに schemaVersion / appVersion / exportedAt を入れる
+4. 保存期間 / 削除 / export の関係をMemoryPageで説明
+5. docs/MEMORY_AND_DATA_CONTROL.md を更新
 
 ### 優先候補 B: Emotion Sprite Set
 
@@ -639,15 +661,16 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 C: v0.1.52 残QA修正
+### 優先候補 C: v0.1.53 残QA修正
 
-**目的:** reaction quality 実機QAで出た問題を優先修正する。
+**目的:** quiet / focus / DND と reaction quality 実機QAで出た問題を優先修正する。
 
 **確認すべき内容:**
-1. クリック反応が自然か
-2. 自律発話がうるさくないか
-3. Ollama sourceが不必要にfallback化していないか
-4. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
+1. quietMode中に自律発話が止まるか
+2. focusMode中に発話頻度が十分下がるか
+3. DND中にクリック以外ほぼ黙るか
+4. Ollama sourceが不必要にfallback化していないか
+5. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
 
 ---
 

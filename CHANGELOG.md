@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.53] — 2026-05-13
+
+### Added (Quiet / Focus / DND Hardening)
+
+- **SpeechPolicy.ts**:
+  - `quietMode` 中は手動以外の発話を抑制
+  - `focusMode` 中は idle / observation 由来の自律発話を抑制
+  - `doNotDisturb` は手動反応以外を抑制する方針を維持
+- **selectReaction.ts / useObservationReactions.ts**:
+  - focusMode 中は `avoidDuringFocus` の固定反応を選ばない
+  - quiet / DND 中に observation AI が先に喋る経路を止めた
+- **useCompanionState.ts**:
+  - idle自律発話で SpeechPolicy が拒否したあと fallback が喋ってしまう経路を修正
+  - DND中の手動クリック/voiceはOllama呼び出しを避け、短い固定反応へ寄せた
+  - quiet / DND中の起動挨拶を抑制
+- **BehaviorPage / OnboardingPage**:
+  - quiet / focus / DND の説明を実挙動に合わせて更新
+
+### Maintained
+
+- compact `200x280` speech layout / character rendering / hit test geometry は変更なし
+- Onboarding / Update / Debug / Transparency / Memory Retention Policy は維持
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。quiet / focus / DND の実際の発話抑制、クリック反応、voice long press は field QA pending
+
 ## [0.1.52] — 2026-05-13
 
 ### Fixed (Reaction Quality Hardening)

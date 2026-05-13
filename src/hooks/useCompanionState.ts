@@ -157,15 +157,20 @@ export function useCompanionState(
           const ctx    = buildCompanionContext("idle", snapshotRef.current, events, s);
           const policy = canSpeak("idle", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
-          if (policy.allowed) {
-            try {
-              const output = await getNewAIResponse(ctx);
-              if (output.shouldSpeak && output.text) text = output.text;
-            } catch { /* AI エラー → reaction fallback */ }
+          if (!policy.allowed) {
+            scheduleIdleSpeech();
+            return;
           }
 
-          text ??= fireReaction("randomIdle") ?? pickDialogue("random_idle");
-          triggerSpeak(text);
+          try {
+            const output = await getNewAIResponse(ctx);
+            if (output.shouldSpeak && output.text) text = output.text;
+          } catch { /* AI エラー → reaction fallback */ }
+
+          text ??= fireReaction("randomIdle");
+          if (text) {
+            triggerSpeak(text);
+          }
         }
       }
       scheduleIdleSpeech();
@@ -192,7 +197,7 @@ export function useCompanionState(
     );
 
     let text: string | null = null;
-    if (policy.allowed) {
+    if (policy.allowed && !s.doNotDisturb) {
       try {
         const output = await getNewAIResponse(ctx);
         if (output.shouldSpeak && output.text) text = output.text;
@@ -237,7 +242,7 @@ export function useCompanionState(
     setVoiceUIState("voiceResponding");
 
     try {
-      if (policy.allowed) {
+      if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
           if (output.shouldSpeak && output.text) text = output.text;
@@ -311,7 +316,7 @@ export function useCompanionState(
     setVoiceUIState("voiceResponding");
 
     try {
-      if (policy.allowed) {
+      if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
           if (output.shouldSpeak && output.text) text = output.text;
@@ -396,6 +401,8 @@ export function useCompanionState(
 
       // AI-first: 起動挨拶も Ollama/AI を先に試みる
       const s      = getSettings();
+      if (s.doNotDisturb || s.quietMode) return;
+
       const events = getAllEvents();
       const ctx    = buildCompanionContext("return", snapshotRef.current, events, s);
       const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());

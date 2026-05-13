@@ -117,7 +117,12 @@ export class RuleProvider implements AIProvider {
     // ── SpeechPolicy チェック ─────────────────────────────
     if (sp.doNotDisturb)                                          return { shouldSpeak: false, reason: "dnd" };
     if (obs.fullscreenLikely && sp.suppressWhenFullscreen)        return { shouldSpeak: false, reason: "fullscreen" };
-    if (sp.quietMode && ctx.trigger === "idle")                   return { shouldSpeak: false, reason: "quiet" };
+    if (sp.quietMode && (ctx.trigger === "idle" || ctx.trigger === "observation")) {
+      return { shouldSpeak: false, reason: "quiet" };
+    }
+    if (sp.focusMode && (ctx.trigger === "idle" || ctx.trigger === "observation")) {
+      return { shouldSpeak: false, reason: "focus" };
+    }
 
     const kind       = ctx.activityInsight.kind;
     const confidence = ctx.activityInsight.confidence;

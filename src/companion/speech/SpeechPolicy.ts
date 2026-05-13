@@ -36,7 +36,11 @@ export function canSpeak(
 
   if (settings.doNotDisturb && !isManual) return { allowed: false, reason: "dnd" };
 
-  if (settings.quietMode && trigger === "idle") return { allowed: false, reason: "quiet" };
+  if (settings.quietMode && !isManual) return { allowed: false, reason: "quiet" };
+
+  if (settings.focusMode && (trigger === "idle" || trigger === "observation")) {
+    return { allowed: false, reason: "focus" };
+  }
 
   if (
     settings.suppressWhenFullscreen &&

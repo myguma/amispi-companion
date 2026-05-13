@@ -100,6 +100,8 @@ export function useObservationReactions(
     // AI-first helper: AI を試み、失敗時は fire() にフォールバック
     const tryAIOrFire = async (trigger: ReactionTrigger, tags?: string[]): Promise<boolean> => {
       if (talkedEnoughToday) return false;
+      if (s.doNotDisturb || s.quietMode) return false;
+      if (s.focusMode) return fire(trigger, tags);
       try {
         const ctx    = buildCompanionContext("observation", snapshot, allEvents, s);
         const output = await getNewAIResponse(ctx);

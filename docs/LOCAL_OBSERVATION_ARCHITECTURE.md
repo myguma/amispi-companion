@@ -125,8 +125,9 @@ canSpeak(trigger, settings, snapshot, lastSpeechAt)
 
 NOT allowed if:
 - settings.doNotDisturb && trigger is not manual/voice
-- settings.quietMode && trigger === "idle"
-- settings.focusMode && interruptibility === "avoidDuringFocus"
+- settings.quietMode && trigger is not manual/voice
+- settings.focusMode && trigger is idle/observation
+- reaction interruptibility === "avoidDuringFocus" is skipped while focusMode is on
 - settings.suppressWhenFullscreen && snapshot.fullscreenLikely && !isManual
 - countInLastHour() >= settings.maxAutonomousReactionsPerHour && !isManual
 - lastSpeechAt && Date.now() - lastSpeechAt < MIN_SPEECH_INTERVAL_MS && !isManual

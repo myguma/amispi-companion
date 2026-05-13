@@ -16,7 +16,7 @@ export function selectReaction(ctx: SelectCtx): Reaction | null {
   const isManual = MANUAL_TRIGGERS.includes(trigger);
 
   if (policy.doNotDisturb && !isManual) return null;
-  if (policy.quietMode && trigger === "randomIdle") return null;
+  if (policy.quietMode && !isManual) return null;
   if (ctx.isFullscreen && policy.suppressWhenFullscreen && !isManual) return null;
 
   if (!isManual && countInLastHour() >= policy.maxAutonomousReactionsPerHour) {
@@ -25,6 +25,7 @@ export function selectReaction(ctx: SelectCtx): Reaction | null {
 
   const candidates = REACTIONS.filter((r) => {
     if (r.trigger !== trigger) return false;
+    if (policy.suppressWhenFocus && !isManual && r.interruptibility === "avoidDuringFocus") return false;
     if (isOnCooldown(r.id, r.cooldownMs)) return false;
     if (ctx.tags && ctx.tags.length > 0) {
       // trigger に tag がある場合は tag が一致するものだけ
