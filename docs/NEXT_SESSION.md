@@ -11,7 +11,7 @@
 ## 現在のステータス
 
 **バージョン:** v1.0.0
-**フェーズ:** Stable tag (automated checks required / v1.0.0 field QA not performed)
+**フェーズ:** Stable tag + v2 roadmap draft (v1.0.0 field QA not performed)
 **全体進捗:** 約 94%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -70,6 +70,16 @@
 | Voice QA Hardening | Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 | ✅ v0.3.1 / field QA pending |
 | Release Candidate | docs / Known Issues / QA checklist / release notes draft整理 | ✅ v1.0.0-rc.1 / field QA pending |
 | Stable | v1.0.0 stable notes / Known Issues / hotfix policy整理 | ✅ v1.0.0 / field QA not performed |
+| v2 Roadmap Draft | docs/V2_ROADMAP_DRAFT.md にv2候補と非目標を整理 | ✅ docs only |
+
+---
+
+## v2 Roadmap Draft
+
+- `docs/V2_ROADMAP_DRAFT.md` を追加
+- plugin architecture / richer personality profiles / optional local model management / advanced memory export-import / multi-character / appearance customization / advanced debugging toolsを候補として整理
+- v2でも cloud AI / cloud STT / always-on mic / screen capture / auto file operations / web search / keyboard-clipboard-browser-history monitoring は非目標として維持
+- 実装には進んでいない
 
 ---
 

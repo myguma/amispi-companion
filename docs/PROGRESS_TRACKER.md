@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v1.0.0)**
+**最終更新: 2026-05-13 (v1.0.0 + v2 draft)**
 
 ---
 
@@ -24,9 +24,9 @@
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 99% | v1.0.0 stable notes / Known Issues整理 |
+| リリース品質 (docs) | 99% | v1.0.0 stable notes / Known Issues / v2 roadmap draft整理 |
 | Windows installer / CI | 84% | Release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
-| **総合** | **~94%** | v1.0.0 stable tag。automated checks required / v1.0.0 field QA not performed |
+| **総合** | **~94%** | v1.0.0 stable tag + v2 roadmap draft。v1.0.0 field QA not performed |
 
 ---
 
@@ -71,6 +71,7 @@
 | v0.3.1 | Voice QA Hardening: Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 |
 | v1.0.0-rc.1 | Release Candidate: docs / Known Issues / QA checklist / release notes draft整理 |
 | v1.0.0 | Stable: v1.0.0 release notes / Known Issues / hotfix policy整理 |
+| docs | v2 roadmap draft: v2候補と非目標を整理。実装未着手 |
 
 ---
 
@@ -85,14 +86,15 @@
 
 ---
 
-## 次の目標: v2 roadmap draft
+## 次の目標: v1.0 field QA / v1.0.1 hotfix
 
-優先候補A: **v2 roadmap draft** ← **推奨**
-- v1.0.0後の候補をdocsだけで整理
-- v2実装には進まない
+優先候補A: **v1.0.0 field QA** ← **推奨**
+- 実機でstable tagの最小確認を行う
+- 問題があればv1.0.1 hotfixへ進む
 
 | 作業 | 優先度 |
 |------|--------|
-| v2 roadmap draft | 高 |
+| v1.0.0 field QA | 高 |
+| v1.0.1 hotfix | 必要時 |
 | Voice実機QA | 高 |
 | 残QA修正 | 中 |

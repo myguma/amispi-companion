@@ -140,7 +140,8 @@ Release Polish: 設定画面更新導線・DebugMode・First-run Onboarding・Me
 Presence: DailySummary文脈反応、固定文品質整理、quiet/focus/DND発話抑制、最小Emotion Sprite fallbackと過剰切替抑制を追加 (field QA pending)
 Voice: Whisper Push-to-Talk MVPをv0.3.0でRust commandへ接続し、v0.3.1で未設定/失敗時の復帰案内を強化。実機音声QAはpending
 Stable: v1.0.0でrelease notes / Known Issues / hotfix policyを整理。v1.0.0自体のfield QAは未実施
-残り: v2 roadmap draft、実機Voice QA、Optional TTSなど
+v2 planning: docs/V2_ROADMAP_DRAFT.md に候補と非目標を整理。実装には未着手
+残り: v1.0.0 field QA、実機Voice QA、Optional TTSなど
 ```
 
 ---

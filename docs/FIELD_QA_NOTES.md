@@ -28,6 +28,7 @@
 > v0.3.1 では Voice QA hardeningとして、Whisper未設定/録音失敗/STT失敗時の復帰案内を整理。
 > v1.0.0-rc.1 では新機能追加なしでrelease candidate checklist / release notes draft / Known Issuesを整理。
 > v1.0.0 ではstable tagとしてrelease notesを追加。v1.0.0自体のfield QAは未実施。
+> v1.0.0後に v2 roadmap draft を追加。実装には未着手。
 
 **更新: 2026-05-13 (v1.0.0)**
 
@@ -49,6 +50,10 @@
 - 実インストール環境のupdate
 - Whisper binary/model/path/MIME type/マイク権限/一時ファイル削除
 - Memory export file save
+
+**post-v1 docs:**
+- `docs/V2_ROADMAP_DRAFT.md` を追加
+- v2でもcloud AI / cloud STT / always-on mic / screen capture / auto file operations等は非目標として維持
 
 ---
 
