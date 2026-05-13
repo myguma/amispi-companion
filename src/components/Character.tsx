@@ -9,7 +9,7 @@ import type { CompanionEmotion } from "../companion/reactions/types";
 
 /**
  * CompanionEmotion → スプライト選択に使う CompanionState へのマッピング。
- * shy / concerned は専用スプライトがないため近いものにフォールバック。
+ * emotion専用スプライトがない場合も、近い既存stateへ安全にフォールバックする。
  */
 export function emotionToSpriteState(emotion: CompanionEmotion): CompanionState {
   switch (emotion) {
@@ -20,8 +20,9 @@ export function emotionToSpriteState(emotion: CompanionEmotion): CompanionState 
     case "speaking":  return "speaking";
     case "sleep":     return "sleep";
     case "waking":    return "waking";
-    case "shy":       return "idle";      // 専用スプライトなし → idle
-    case "concerned": return "touched";   // 専用スプライトなし → touched
+    case "happy":     return "touched";
+    case "shy":       return "idle";
+    case "concerned": return "touched";
     default:          return "idle";
   }
 }
@@ -35,18 +36,24 @@ interface CharacterProps {
   isDragging?: boolean;
   facingRight?: boolean;
   voiceUIState?: VoiceUIState;
+  emotion?: CompanionEmotion | null;
 }
 
-/** 状態に対応するスプライトURLを返す（なければフォールバック順で試みる） */
+/** 状態/感情に対応するスプライトURLを返す（なければフォールバック順で試みる） */
 function getSpriteUrl(
   characterId: string,
-  state: CompanionState
+  state: CompanionState,
+  emotion?: CompanionEmotion | null
 ): string[] {
   const base = `/characters/${characterId}`;
+  const urls = emotion
+    ? [`${base}/${emotion}.png`, `${base}/${emotionToSpriteState(emotion)}.png`]
+    : [`${base}/${state}.png`];
   return [
+    ...urls,
     `${base}/${state}.png`,
     `${base}/idle.png`,
-  ];
+  ].filter((url, index, all) => all.indexOf(url) === index);
 }
 
 /** スプライト画像をpreloadし、表示はbackground surfaceで行う */
@@ -228,11 +235,12 @@ export function Character({
   isDragging = false,
   facingRight = false,
   voiceUIState,
+  emotion,
 }: CharacterProps) {
   const [useFallback, setUseFallback] = useState(false);
 
-  const effectiveState: CompanionState = isDragging ? "touched" : state;
-  const spriteUrls = getSpriteUrl(config.id, effectiveState);
+  const effectiveState: CompanionState = isDragging ? "touched" : (emotion ? emotionToSpriteState(emotion) : state);
+  const spriteUrls = getSpriteUrl(config.id, effectiveState, isDragging ? null : emotion);
 
   const isVoiceActive =
     voiceUIState === "voiceListening" ||
@@ -265,6 +273,7 @@ export function Character({
       <div
         className={animClass}
         data-state={effectiveState}
+        data-emotion={emotion ?? ""}
         style={{
           width: "100%",
           height: "100%",

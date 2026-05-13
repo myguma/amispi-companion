@@ -45,7 +45,7 @@ export default function App() {
   const isFullscreen = snapshot.fullscreenLikely;
 
   const {
-    state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction,
+    state, speechText, spriteEmotion, onCharacterClick, triggerSpeak, triggerDragReaction,
     requestVoiceFromBlob, voiceListeningStart, voiceRecordingError,
     voiceUIState,
   } = useCompanionState(
@@ -359,6 +359,7 @@ export default function App() {
           isDragging={isDragging}
           facingRight={facingRight}
           voiceUIState={voiceUIState}
+          emotion={spriteEmotion}
         />
         <div
           className="character-hit-target drag-handle"

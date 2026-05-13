@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.2.1] — 2026-05-13
+
+### Added (Minimal Emotion Sprite Set)
+
+- **CompanionEmotion**:
+  - `happy` を追加
+- **Character.tsx**:
+  - `emotion` prop を追加
+  - `emotionToSpriteState()` を整理し、`happy` / `shy` / `concerned` を既存stateへ安全fallback
+  - sprite探索順を `emotion.png → fallback state.png → current state.png → idle.png` に変更
+  - 専用画像が存在しなくても表示が消えないように維持
+- **useCompanionState.ts / App.tsx**:
+  - AI/RuleProvider が返した `emotion` を Character に渡す最小経路を追加
+  - Ollamaがemotionを返さない場合は従来通りstateベース表示
+- **DebugOverlay.tsx**:
+  - `emo=` 表示を追加
+- **docs/EMOTION_SPRITE_SET.md**:
+  - emotion sprite fallback方針を追加
+
+### Maintained
+
+- window size / hit test / character-stage / compact speech layout は変更なし
+- sprite画像の新規制作なし
+- asset未存在時も既存spriteへfallback
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。emotion fallback、speaking/drag中のsprite表示、DebugOverlayの `emo=` 表示は field QA pending
+
 ## [0.2.0] — 2026-05-13
 
 ### Daily-use Beta

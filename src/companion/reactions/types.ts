@@ -27,6 +27,7 @@ export type CompanionEmotion =
   | "speaking"
   | "sleep"
   | "waking"
+  | "happy"
   | "shy"
   | "concerned";
 

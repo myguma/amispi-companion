@@ -21,8 +21,27 @@
 > v0.1.54 では MemoryEvent JSON export と data control polish を追加。
 > v0.1.55 では Release polish としてNode.js 24 opt-in、Update/Ollama失敗案内、Known Issuesを追加。
 > v0.2.0 では daily-use beta としてv0.1.x安定化をdocs/checklistに整理。
+> v0.2.1 では Emotion Sprite Set minimal として、emotion propとsafe fallbackを追加。
 
-**更新: 2026-05-13 (v0.2.0)**
+**更新: 2026-05-13 (v0.2.1)**
+
+---
+
+## v0.2.1 での更新内容
+
+### Minimal Emotion Sprite Set
+
+**追加内容:**
+- `happy` emotionを追加
+- `Character` に `emotion` propを追加
+- `emotion.png` が存在しない場合も既存spriteへfallback
+- AI/RuleProvider output の emotion を最小限Characterへ反映
+- DebugOverlayに `emo=` を追加
+
+**field QA pending:**
+- emotion専用画像なしでもspriteが消えないか
+- speaking / touched / drag中の表示が崩れないか
+- compact 200x280 character layout / click-through / hit test の回帰
 
 ---
 

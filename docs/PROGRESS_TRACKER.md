@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.0)**
+**最終更新: 2026-05-13 (v0.2.1)**
 
 ---
 
@@ -20,13 +20,13 @@
 | 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 88% | v0.1.48実機確認で idle / speech / drag / speech中drag の描画消失が解決 |
+| キャラクター表現 | 90% | compact描画安定を維持し、emotion sprite fallbackを最小追加 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 95% | v0.2.0 daily-use beta checklist / Known Issues / roadmapを整理 |
+| リリース品質 (docs) | 95% | v0.2.1 Emotion Sprite Set docs追加 |
 | Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
-| **総合** | **~90%** | v0.2.0 daily-use beta。automated checks passed / field QA pending |
+| **総合** | **~91%** | v0.2.1でemotion sprite fallbackを追加。automated checks passed / field QA pending |
 
 ---
 
@@ -64,6 +64,7 @@
 | v0.1.54 | Memory Export / Data Control Polish: MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 |
 | v0.1.55 | Release Polish: Node.js 24 opt-in・Update/Ollama失敗案内・KNOWN_ISSUES作成 |
 | v0.2.0 | Daily-use Beta: v0.1.x安定化をdocs/checklist/known issuesとして整理 |
+| v0.2.1 | Minimal Emotion Sprite Set: emotion prop・safe sprite fallback・DebugOverlay emo表示 |
 
 ---
 
@@ -80,10 +81,10 @@
 
 ## 次の目標: v0.2.x 候補
 
-優先候補A: **Emotion Sprite Set Minimal** ← **推奨**
-- happy / shy / concerned など最小3種類のfallback mapping
-- asset未存在でも既存spriteへ安全fallback
-- window / hit test / layoutは触らない
+優先候補A: **Expressiveness QA** ← **推奨**
+- 表情切替が過剰でないか確認
+- fallbackが自然か確認
+- speaking / touched / drag 中の表示が壊れないか確認
 
 優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
@@ -95,6 +96,6 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| Emotion sprite set minimal | 高 |
+| Expressiveness QA | 高 |
 | v0.1.55 release polish / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |

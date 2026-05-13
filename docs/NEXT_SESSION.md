@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.0)**
+**最終更新: 2026-05-13 (v0.2.1)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.2.0
-**フェーズ:** Daily-use Beta (automated checks passed / field QA pending)
-**全体進捗:** 約 90%
+**バージョン:** v0.2.1
+**フェーズ:** Minimal Emotion Sprite Set (automated checks passed / field QA pending)
+**全体進捗:** 約 91%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.2.0)
-✅ cargo build  → Finished dev profile (v0.2.0)
-✅ GitHub Actions / Windows Installer → v0.1.55 成功済み。v0.2.0 は tag push 後に確認
+✅ npm run build → ✓ built (v0.2.1)
+✅ cargo build  → Finished dev profile (v0.2.1)
+✅ GitHub Actions / Windows Installer → v0.2.0 成功済み。v0.2.1 は tag push 後に確認
 ```
 
 ---
@@ -63,6 +63,28 @@
 | Memory Export / Data Control Polish | MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 | ✅ v0.1.54 |
 | Release Polish | Node.js 24 opt-in・Update/Ollama失敗案内・Known Issues作成 | ✅ v0.1.55 |
 | Daily-use Beta | v0.1.x安定化をdocs/checklist/known issuesとして整理 | ✅ v0.2.0 |
+| Minimal Emotion Sprite Set | emotion prop・safe sprite fallback・DebugOverlay emo表示 | ✅ v0.2.1 |
+
+---
+
+## v0.2.1 実装詳細
+
+### A: Minimal Emotion Sprite Set
+
+- `CompanionEmotion` に `happy` を追加
+- `Character` に `emotion` prop を追加
+- `emotionToSpriteState()` で happy / shy / concerned を既存spriteへ安全fallback
+- sprite探索順を `emotion.png → fallback state.png → current state.png → idle.png` にした
+- `useCompanionState` が AI/RuleProvider output の `emotion` を保持し、`App` 経由で Character に渡す
+- DebugOverlayに `emo=` を表示
+- docs/EMOTION_SPRITE_SET.md を追加
+
+### B: Field QA pending
+
+- 専用emotion画像がなくても表示が消えないか
+- RuleProvider / mock の emotion が既存spriteへ自然に反映されるか
+- speaking / touched / drag中に表示が崩れないか
+- compact 200x280 character layout / hit test / click-through の回帰がないか
 
 ---
 
@@ -700,16 +722,16 @@
 
 ## 次のフェーズ候補 (v0.2.x)
 
-### 優先候補 A: Emotion Sprite Set Minimal ← **推奨**
+### 優先候補 A: Expressiveness QA ← **推奨**
 
-**目的:** window / hit test / layoutを触らず、表情の存在感を少し増やす。
+**目的:** Emotion Sprite追加後の表情・反応品質を整える。
 
 **実装すべき内容:**
-1. emotionToSpriteState の整理
-2. happy / shy / concerned など最小3種類のfallback mapping
-3. 画像未存在時は既存spriteへ安全fallback
-4. DebugOverlayに current emotion / sprite fallback 状態を軽く表示してもよい
-5. docsにEmotion Sprite Setの安全fallback方針を書く
+1. 表情切替がうるさすぎないように確認
+2. fallbackが自然か確認
+3. speaking / touched / drag 中の表示が壊れないか確認
+4. 表情と発話emotionの対応を整理
+5. docs更新
 
 ### 優先候補 B: Emotion Sprite Set
 

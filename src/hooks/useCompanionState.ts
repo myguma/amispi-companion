@@ -12,6 +12,7 @@ import { getTimeTag } from "../companion/reactions/reactionData";
 import { getSettings } from "../settings/store";
 import { cryEngine } from "../companion/audio/FileCryEngine";
 import type { ReactionTrigger } from "../companion/reactions/types";
+import type { CompanionEmotion } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
 import { buildMemorySummary } from "../companion/memory/buildMemorySummary";
@@ -29,8 +30,9 @@ export type { VoiceUIState };  // 後方互換のため再エクスポート
 interface UseCompanionStateReturn {
   state: CompanionState;
   speechText: string | null;
+  spriteEmotion: CompanionEmotion | null;
   onCharacterClick: () => void;
-  triggerSpeak: (text?: string) => void;
+  triggerSpeak: (text?: string, emotion?: CompanionEmotion | null) => void;
   triggerDragReaction: () => void;
   requestVoiceResponse: (transcript: string) => Promise<void>;
   requestVoiceFromBlob: (blob: Blob) => Promise<void>;
@@ -47,6 +49,7 @@ export function useCompanionState(
 ): UseCompanionStateReturn {
   const [state, setState] = useState<CompanionState>("idle");
   const [speechText, setSpeechText] = useState<string | null>(null);
+  const [spriteEmotion, setSpriteEmotion] = useState<CompanionEmotion | null>(null);
   const [voiceUIState, setVoiceUIState] = useState<VoiceUIState>("voiceOff");
 
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -117,9 +120,10 @@ export function useCompanionState(
   // 吹き出し表示
   // ──────────────────────────────────────────
   const triggerSpeak = useCallback(
-    (text?: string) => {
+    (text?: string, emotion?: CompanionEmotion | null) => {
       const line = text ?? pickDialogue("speaking_response");
       setSpeechText(line);
+      setSpriteEmotion(emotion ?? null);
       setState("speaking");
       lastSpeechAtRef.current = Date.now();
       logEvent("speech_shown", { text: line });
@@ -127,6 +131,7 @@ export function useCompanionState(
       if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
       speechTimerRef.current = setTimeout(() => {
         setSpeechText(null);
+        setSpriteEmotion(null);
         setState("idle");
         resetSleepTimer();
       }, config.speechBubbleDurationMs);
@@ -147,6 +152,7 @@ export function useCompanionState(
         const isSilent = kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo";
         if (!isSilent) {
           let text: string | null = null;
+          let emotion: CompanionEmotion | null = null;
           const s      = getSettings();
           const events = getAllEvents();
           const memory = buildMemorySummary(events);
@@ -164,12 +170,15 @@ export function useCompanionState(
 
           try {
             const output = await getNewAIResponse(ctx);
-            if (output.shouldSpeak && output.text) text = output.text;
+            if (output.shouldSpeak && output.text) {
+              text = output.text;
+              emotion = output.emotion ?? null;
+            }
           } catch { /* AI エラー → reaction fallback */ }
 
           text ??= fireReaction("randomIdle");
           if (text) {
-            triggerSpeak(text);
+            triggerSpeak(text, emotion);
           }
         }
       }
@@ -197,17 +206,21 @@ export function useCompanionState(
     );
 
     let text: string | null = null;
+    let emotion: CompanionEmotion | null = null;
     if (policy.allowed && !s.doNotDisturb) {
       try {
         const output = await getNewAIResponse(ctx);
-        if (output.shouldSpeak && output.text) text = output.text;
+        if (output.shouldSpeak && output.text) {
+          text = output.text;
+          emotion = output.emotion ?? null;
+        }
       } catch {
         // AI エラー → reaction fallback へ
       }
     }
 
     text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
-    triggerSpeak(text);
+    triggerSpeak(text, emotion);
   }, [triggerSpeak, fireReaction]);
 
   // ──────────────────────────────────────────
@@ -239,20 +252,24 @@ export function useCompanionState(
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
     let text: string | null = null;
+    let emotion: CompanionEmotion | null = null;
     setVoiceUIState("voiceResponding");
 
     try {
       if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
-          if (output.shouldSpeak && output.text) text = output.text;
+          if (output.shouldSpeak && output.text) {
+            text = output.text;
+            emotion = output.emotion ?? null;
+          }
         } catch {
           // AI エラー → reaction fallback
         }
       }
 
       text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
-      triggerSpeak(text);
+      triggerSpeak(text, emotion);
     } finally {
       setVoiceUIState("voiceReady");
     }
@@ -313,17 +330,21 @@ export function useCompanionState(
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
     let text: string | null = null;
+    let emotion: CompanionEmotion | null = null;
     setVoiceUIState("voiceResponding");
 
     try {
       if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
-          if (output.shouldSpeak && output.text) text = output.text;
+          if (output.shouldSpeak && output.text) {
+            text = output.text;
+            emotion = output.emotion ?? null;
+          }
         } catch { /* AI エラー → reaction fallback */ }
       }
       text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
-      triggerSpeak(text);
+      triggerSpeak(text, emotion);
     } finally {
       setVoiceUIState("voiceReady");
     }
@@ -366,6 +387,7 @@ export function useCompanionState(
       if (prev === "speaking") {
         const text = fireReaction("click") ?? pickDialogue("touch_reaction");
         setSpeechText(text);
+        setSpriteEmotion(null);
         resetSleepTimer();
         return "speaking";
       }
@@ -398,6 +420,7 @@ export function useCompanionState(
     const breakKind = classifyBreak();
     const greetTimer = setTimeout(async () => {
       let text: string | null = null;
+      let emotion: CompanionEmotion | null = null;
 
       // AI-first: 起動挨拶も Ollama/AI を先に試みる
       const s      = getSettings();
@@ -410,7 +433,10 @@ export function useCompanionState(
       if (policy.allowed) {
         try {
           const output = await getNewAIResponse(ctx);
-          if (output.shouldSpeak && output.text) text = output.text;
+          if (output.shouldSpeak && output.text) {
+            text = output.text;
+            emotion = output.emotion ?? null;
+          }
         } catch { /* AI エラー → reaction fallback */ }
       }
 
@@ -425,7 +451,7 @@ export function useCompanionState(
         text ??= fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
       }
 
-      triggerSpeak(text);
+      triggerSpeak(text, emotion);
     }, 1500);
 
     resetSleepTimer();
@@ -438,7 +464,7 @@ export function useCompanionState(
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    state, speechText, onCharacterClick, triggerSpeak, triggerDragReaction,
+    state, speechText, spriteEmotion, onCharacterClick, triggerSpeak, triggerDragReaction,
     requestVoiceResponse, requestVoiceFromBlob,
     voiceListeningStart, voiceRecordingError,
     voiceUIState,
