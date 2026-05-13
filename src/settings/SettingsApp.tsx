@@ -9,8 +9,10 @@ import { BehaviorPage } from "./pages/BehaviorPage";
 import { AIPage } from "./pages/AIPage";
 import { VoicePage } from "./pages/VoicePage";
 import { MemoryPage } from "./pages/MemoryPage";
+import { UpdatePage } from "./pages/UpdatePage";
+import { DebugPage } from "./pages/DebugPage";
 
-type Tab = "transparency" | "behavior" | "ai" | "voice" | "memory";
+type Tab = "transparency" | "behavior" | "ai" | "voice" | "memory" | "update" | "debug";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "transparency", label: "無明が見ているもの" },
@@ -18,6 +20,8 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "ai",           label: "AI エンジン" },
   { id: "voice",        label: "音声" },
   { id: "memory",       label: "記憶" },
+  { id: "update",       label: "アップデート" },
+  { id: "debug",        label: "デバッグ" },
 ];
 
 // タブごとのエラーをキャッチし、白画面を防ぐ
@@ -127,6 +131,8 @@ export function SettingsApp() {
           {tab === "ai"           && <AIPage />}
           {tab === "voice"        && <VoicePage />}
           {tab === "memory"       && <MemoryPage />}
+          {tab === "update"       && <UpdatePage />}
+          {tab === "debug"        && <DebugPage />}
         </TabErrorBoundary>
       </div>
 

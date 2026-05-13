@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   permissions: DEFAULT_PERMISSIONS,
 
   showOnStartup: true,
+  debugModeEnabled: false,
 
   aiEngine: "none",
   ollamaBaseUrl: "http://127.0.0.1:11434",

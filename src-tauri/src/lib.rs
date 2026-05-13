@@ -33,8 +33,15 @@ const CHARACTER_BOTTOM_PAD_LOGICAL: f64 = 24.0;
 const SPEECH_BUBBLE_GAP_LOGICAL: f64 = 8.0;
 #[cfg(windows)]
 const SPEECH_BUBBLE_HIT_H_LOGICAL: f64 = 96.0;
+#[cfg(windows)]
+const UPDATE_BADGE_GAP_LOGICAL: f64 = 4.0;
+#[cfg(windows)]
+const UPDATE_BADGE_HIT_W_LOGICAL: f64 = 96.0;
+#[cfg(windows)]
+const UPDATE_BADGE_HIT_H_LOGICAL: f64 = 28.0;
 
 static CONTEXT_MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
+static UPDATE_BADGE_VISIBLE: AtomicBool = AtomicBool::new(false);
 
 fn normalized_size_scale(value: Option<f64>) -> f64 {
     let n = value.unwrap_or(1.0);
@@ -275,10 +282,15 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                     let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * ui_scale * scale;
                     let bubble_gap = SPEECH_BUBBLE_GAP_LOGICAL * ui_scale * scale;
                     let bubble_hit_h = SPEECH_BUBBLE_HIT_H_LOGICAL * ui_scale * scale;
+                    let update_badge_gap = UPDATE_BADGE_GAP_LOGICAL * ui_scale * scale;
+                    let update_badge_w = UPDATE_BADGE_HIT_W_LOGICAL * ui_scale * scale;
+                    let update_badge_h = UPDATE_BADGE_HIT_H_LOGICAL * ui_scale * scale;
                     let unit = ui_scale * scale;
                     let speech_visible = size.height as f64 > char_h + (8.0 * unit);
 
                     let char_top = size.height as f64 - bottom_pad - sprite_h;
+                    let center_x = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale) / 2.0;
+
                     let bubble_bottom = char_top - bubble_gap;
                     let bubble_top = (bubble_bottom - bubble_hit_h).max(0.0);
                     let bubble_hit = speech_visible
@@ -287,7 +299,16 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                         && lx >= 8.0 * unit
                         && lx <= size.width as f64 - 8.0 * unit;
 
-                    let center_x = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale) / 2.0;
+                    let update_badge_bottom = char_top - update_badge_gap;
+                    let update_badge_top = update_badge_bottom - update_badge_h;
+                    let update_badge_left = center_x - update_badge_w / 2.0;
+                    let update_badge_right = center_x + update_badge_w / 2.0;
+                    let update_badge_hit = UPDATE_BADGE_VISIBLE.load(Ordering::Relaxed)
+                        && ly >= update_badge_top
+                        && ly <= update_badge_bottom
+                        && lx >= update_badge_left
+                        && lx <= update_badge_right;
+
                     let center_y = char_top + sprite_h * 0.52;
                     let rx = sprite_w * 0.39;
                     let ry = sprite_h * 0.46;
@@ -295,7 +316,7 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                     let dy = (ly - center_y) / ry;
                     let character_hit = dx * dx + dy * dy <= 1.0;
 
-                    bubble_hit || character_hit
+                    bubble_hit || character_hit || update_badge_hit
                 }
             } else {
                 false
@@ -320,6 +341,11 @@ fn set_ignore_cursor_events<R: Runtime>(
 #[tauri::command]
 fn set_context_menu_visible(visible: bool) {
     CONTEXT_MENU_VISIBLE.store(visible, Ordering::Relaxed);
+}
+
+#[tauri::command]
+fn set_update_badge_visible(visible: bool) {
+    UPDATE_BADGE_VISIBLE.store(visible, Ordering::Relaxed);
 }
 
 #[tauri::command]
@@ -577,6 +603,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_ignore_cursor_events,
             set_context_menu_visible,
+            set_update_badge_visible,
             move_window,
             get_app_version,
             quit_app,

@@ -32,6 +32,7 @@ export type CompanionSettings = {
   permissions: PermissionSettings;
 
   showOnStartup: boolean;
+  debugModeEnabled: boolean;
 
   // AI エンジン設定
   aiEngine: AIEngine;

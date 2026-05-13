@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.1.44] — 2026-05-13
+
+### Fixed (Hotfix: Settings Updater / Debug Mode / Hit Test QA)
+
+#### A: 設定画面から更新確認・インストールできる導線を追加
+
+- **背景**: v0.1.43 実機確認で companion window 上の UpdateBadge が表示されても押せないことがあった
+- **SettingsApp.tsx**: 「アップデート」タブを追加
+- **UpdatePage.tsx**: `get_app_version` / `check_for_updates` / `install_update` を使い、通常の設定ウィンドウから更新確認とインストール再起動を実行できるようにした
+- companion 上の UpdateBadge は補助通知として維持
+
+#### B: UpdateBadge の Windows hit test を追加
+
+- **原因候補**: UpdateBadge は DOM button だが、Rust 側 hit test が badge 領域を interactive にしていなかったため OS レベルでクリックが背面へ抜けた可能性が高い
+- **lib.rs**: `UPDATE_BADGE_VISIBLE` / `set_update_badge_visible(visible)` を追加
+- **App.tsx**: update badge の表示状態を Rust へ通知
+- **lib.rs**: `update_badge_hit` を character 上基準で追加し、表示中だけ `bubble_hit || character_hit || update_badge_hit` にした
+- 非表示時は hit area を作らず、上部透明領域 click-through は維持
+
+#### C: 設定ON/OFF可能なデバッグモードを追加
+
+- **settings/types.ts / defaults.ts**: `debugModeEnabled` を追加。デフォルトOFF
+- **SettingsApp.tsx / DebugPage.tsx**: 「デバッグ」タブを追加
+- **DebugOverlay.tsx**: 本番ビルドでも設定ON時だけ overlay を表示
+  - viewport / client / visualViewport
+  - character-stage / character-wrapper / speech-layer / update-badge / hit-target rect
+  - `wrapper.bottom` / `stage.bottom` が viewport を超えているか
+  - hasSpeech / isDragging / scale / expected window size
+  - updater state
+  - last AI result source (`ollama` / `fallback` / `mock` / `rule` / `none`)
+- overlay は `pointer-events: none` で通常操作を妨げない
+
+#### D: speech表示時のキャラ見切れは原因特定を優先
+
+- v0.1.43 実機確認で、吹き出し位置は改善したが、クリック後発話・自発発話・speech中dragでキャラ下半分が見切れることが判明
+- 原因はまだ断定しない
+  - expanded window時の work area clamp
+  - WebView viewport / outer / inner / CSS 100vh のズレ
+  - speaking animation bbox
+  - root `overflow:hidden`
+  - React layout と Rust hit test 定数のズレ
+- 今回は window height 増加や `SPEECH_CHARACTER_LIFT` の暫定補正は入れず、debug overlayで実機QA時に原因を見られる状態にした
+
+#### E: 維持したもの
+
+- v0.1.43 の speech bubble character relative anchor
+- v0.1.42 の root `100vw / 100vh`、character-stage bottom anchor、resize拡大順序
+- v0.1.41 の Character実描画 sizeScale 同期
+- ContextMenu / click-through / PNG透明余白hit改善 / drag / voice long press
+- Active App / Transparency UI / Ollama source と PromptBuilder / QualityFilter
+
 ## [0.1.43] — 2026-05-13
 
 ### Fixed (Hotfix: Speech Bubble Relative Anchor)

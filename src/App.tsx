@@ -23,10 +23,12 @@ import {
   COMPANION_WINDOW_W,
   CONTEXT_MENU_H,
   SPEECH_BUBBLE_GAP,
+  UPDATE_BADGE_GAP,
   normalizeCompanionScale,
 } from "./constants/companionLayout";
 import { useSettings } from "./settings/store";
 import { cryEngine } from "./companion/audio/FileCryEngine";
+import { getLastAIResult, subscribeLastAIResult } from "./companion/ai/AIProviderManager";
 import { useObservationReactions } from "./companion/reactions/useObservationReactions";
 import type { ObservationSnapshot } from "./observation/types";
 import { EMPTY_SNAPSHOT } from "./observation/types";
@@ -58,8 +60,10 @@ export default function App() {
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [lastAIResult, setLastAIResult] = useState(getLastAIResult());
   const characterStageRef = useRef<HTMLDivElement | null>(null);
   const speechLayerRef = useRef<HTMLDivElement | null>(null);
+  const updateBadgeRef = useRef<HTMLDivElement | null>(null);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -105,6 +109,11 @@ export default function App() {
       pttActiveRef.current = false;
     }
   }, [isDragging]);
+
+  useEffect(() => {
+    const unsub = subscribeLastAIResult(() => setLastAIResult({ ...getLastAIResult() }));
+    return unsub;
+  }, []);
 
   // 常時最前面
   useEffect(() => {
@@ -209,7 +218,9 @@ export default function App() {
   const windowH = Math.round((hasSpeech ? COMPANION_COMPACT_H + COMPANION_BUBBLE_H : COMPANION_COMPACT_H) * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
   const speechBubbleGap = Math.round(SPEECH_BUBBLE_GAP * scale);
+  const updateBadgeGap = Math.round(UPDATE_BADGE_GAP * scale);
   const menuSafeH = Math.round(CONTEXT_MENU_H * scale);
+  const updateBadgeVisible = updateAvailable !== null || installing;
 
   const contextMenuVisible = contextMenu !== null;
 
@@ -222,11 +233,20 @@ export default function App() {
   }, [contextMenuVisible]);
 
   useEffect(() => {
-    if (!import.meta.env.DEV) return;
+    if (!isTauri) return;
+    void invoke("set_update_badge_visible", { visible: updateBadgeVisible });
+    return () => {
+      void invoke("set_update_badge_visible", { visible: false });
+    };
+  }, [updateBadgeVisible]);
+
+  useEffect(() => {
+    if (!(import.meta.env.DEV || settings.debugModeEnabled)) return;
 
     const logLayout = (phase: string) => {
       const stageRect = characterStageRef.current?.getBoundingClientRect();
       const speechLayerRect = speechLayerRef.current?.getBoundingClientRect();
+      const updateBadgeRect = updateBadgeRef.current?.getBoundingClientRect();
       const wrapperRect = document.querySelector(".character-wrapper")?.getBoundingClientRect();
       const viewport = window.visualViewport;
       console.log("[companion-layout-debug]", {
@@ -241,8 +261,10 @@ export default function App() {
         visualViewport: viewport ? { width: viewport.width, height: viewport.height } : null,
         computed: { windowW, windowH, characterW, characterH, bottomPad, speechBubbleGap },
         speechLayerRect,
+        updateBadgeRect,
         stageRect,
         wrapperRect,
+        lastAIResult,
       });
     };
 
@@ -252,7 +274,7 @@ export default function App() {
       cancelAnimationFrame(raf);
       clearTimeout(timer);
     };
-  }, [hasSpeech, isDragging, scale, windowW, windowH, characterW, characterH, bottomPad, speechBubbleGap]);
+  }, [hasSpeech, isDragging, scale, windowW, windowH, characterW, characterH, bottomPad, speechBubbleGap, settings.debugModeEnabled, lastAIResult]);
 
   return (
     <div
@@ -268,7 +290,26 @@ export default function App() {
         pointerEvents: "none",
       }}
     >
-      <DebugOverlay state={state} speechText={speechText} />
+      <DebugOverlay
+        enabled={settings.debugModeEnabled}
+        state={state}
+        speechText={speechText}
+        hasSpeech={hasSpeech}
+        isDragging={isDragging}
+        scale={scale}
+        windowW={windowW}
+        windowH={windowH}
+        characterW={characterW}
+        characterH={characterH}
+        bottomPad={bottomPad}
+        speechBubbleGap={speechBubbleGap}
+        updateAvailableVersion={updateAvailable?.version ?? null}
+        installing={installing}
+        lastAIResult={lastAIResult}
+        characterStageRef={characterStageRef}
+        speechLayerRef={speechLayerRef}
+        updateBadgeRef={updateBadgeRef}
+      />
 
       {/* 吹き出し: コンテンツがある時だけ pointer-events: auto */}
       {(tinyText || speechText) && (
@@ -324,10 +365,10 @@ export default function App() {
       </div>
 
       {updateAvailable && (
-        <div style={{
+        <div ref={updateBadgeRef} style={{
           position: "absolute",
           left: "50%",
-          bottom: bottomPad + characterH + 4,
+          bottom: bottomPad + characterH + updateBadgeGap,
           transform: "translateX(-50%)",
           pointerEvents: "auto",
         }}>

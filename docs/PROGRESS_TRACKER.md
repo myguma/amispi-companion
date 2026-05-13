@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.43)**
+**最終更新: 2026-05-13 (v0.1.44)**
 
 ---
 
@@ -20,13 +20,13 @@
 | 記憶システム | 72% | DailySummary・MemoryViewer・削除機能実装済み |
 | 自律発話 (autonomous speech) | 85% | AI-first + 返答単調化修正 (trigger hint・直近発話) |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
-| キャラクター表現 | 79% | speech bubbleをキャラ頭上基準へ変更。実機確認待ち |
-| 設定 UI | 93% | TabErrorBoundary追加・TransparencyPage 防御的描画 |
+| キャラクター表現 | 80% | speech時見切れ原因をdebug overlayで確認可能にした。根本修正は実機debug待ち |
+| 設定 UI | 95% | TabErrorBoundaryに加え、アップデート/デバッグタブ追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
-| ウィンドウ hit test | 96% | 通常時は吹き出し+キャラ楕円、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 77% | v0.1.43 hotfix docs更新 |
+| ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
+| リリース品質 (docs) | 79% | v0.1.44 hotfix docs更新 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~78%** | v0.1.43 Hotfix 実装完了。吹き出し位置は実機確認前なので控えめ評価 |
+| **総合** | **~79%** | v0.1.44 Hotfix 実装完了。speech見切れはdebug結果待ちなので控えめ評価 |
 
 ---
 
@@ -51,6 +51,7 @@
 | v0.1.41 | Hotfix: Character実描画サイズをsizeScaleへ同期・visual bottom anchor修正・React/Rust hit bbox整合 |
 | v0.1.42 | Hotfix: speech resize bottom anchor・root viewport基準化・resize拡大順序修正・drag中speech resize抑制 |
 | v0.1.43 | Hotfix: speech bubbleをwindow top基準からcharacter-stage上基準へ変更・bubble hit test整合 |
+| v0.1.44 | Hotfix: 設定画面更新導線・UpdateBadge hit test・debugModeEnabled / layout overlay追加 |
 
 ---
 
@@ -65,25 +66,22 @@
 
 ---
 
-## 次の目標: v0.1.44 候補
+## 次の目標: v0.1.45 候補
 
-優先候補A: **v0.1.43 実機確認 → First-run Onboarding** ← **推奨**
-- 吹き出しがキャラ頭上付近に出るか、ContextMenu / click-through / drag / voice / Ollama / Active App が維持されているか確認
-- 問題なければ First-run Onboarding に進む
+優先候補A: **v0.1.44 実機debug確認 → 残QA修正** ← **推奨**
+- speech表示時に `wrapper` / `stage` が viewport を超えているか確認
+- UpdatePage / DebugPage / UpdateBadge hit test の実機確認
+- 見切れ原因が特定できたら最小修正
 
-優先候補B: **残QA修正**
-- v0.1.40 実機確認でキャラ常駐体験に残った問題があれば優先修正
+優先候補B: **First-run Onboarding**
+- speech見切れが解決または原因明確化できたら着手
 
-優先候補C: **First-run Onboarding**
-- 初回起動時に権限・Ollama・Voice・記憶の説明ウィザードを表示
-- localStorage `hasCompletedOnboarding` フラグで制御
-
-優先候補D: **Memory Retention Policy**
+優先候補C: **Memory Retention Policy**
 - `memoryRetentionDays` 設定 (デフォルト30日)
 - 起動時に古い speech_shown / state_changed を自動削除
 - MemoryPage に設定UI追加
 
-優先候補E: **Emotion Sprite Set**
+優先候補D: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
 - CryEngine sound + sprite 連動
 

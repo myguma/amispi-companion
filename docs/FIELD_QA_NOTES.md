@@ -7,12 +7,50 @@
 > v0.1.41 では v0.1.40 実機確認で残った character rendering anchor / scale 不一致を hotfix。
 > v0.1.42 では v0.1.41 実機確認で残った speech表示時の沈み込みを hotfix。
 > v0.1.43 では v0.1.42 実機確認で残った speech bubble のwindow top寄りすぎを hotfix。
+> v0.1.44 では設定画面更新導線、UpdateBadge hit test、ユーザーON/OFF可能なdebug modeを追加。
 
-**更新: 2026-05-13 (v0.1.43)**
+**更新: 2026-05-13 (v0.1.44)**
 
 ---
 
-## v0.1.43 での修正内容 (実機確認待ち)
+## v0.1.44 での修正内容 (実機確認待ち)
+
+### 問題M: UpdateBadgeが押せない / speech表示時の見切れ原因が未確定
+
+**v0.1.43 実機確認結果:**
+- 吹き出しはキャラ頭上付近に出るようになった
+- idle表示、idleからdrag、ContextMenu、click-through、キャラ本体クリック / drag / voice long press は維持
+- ただしクリック後発話、自発発話、吹き出し表示中dragでキャラ下半分が見切れる
+- companion上のUpdateBadgeが押せなかった
+
+**今回の判断:**
+- speech表示時の見切れ原因はまだ断定しない
+- window height増加や大きな暫定liftは入れず、実機で viewport / wrapper / speech / update badge の矩形を確認できるdebug modeを先に入れた
+
+**v0.1.44 での修正:**
+- 設定画面に「アップデート」タブを追加
+  - 現在バージョン表示
+  - 更新確認
+  - 更新がある場合のインストール再起動
+- `UPDATE_BADGE_VISIBLE` と `set_update_badge_visible` を追加し、UpdateBadge表示中だけRust hit testにbadge領域を追加
+- `debugModeEnabled` を追加し、設定画面の「デバッグ」タブからON/OFF可能にした
+- `DebugOverlay` を本番でも設定ON時だけ表示
+  - viewport / client / visualViewport
+  - character-stage / character-wrapper / speech-layer / update-badge / hit-target rect
+  - wrapper/stage bottom が viewport を超えているか
+  - updater state と last AI source
+- ContextMenu / Active App / Ollama / hit area / drag / voice long press は大きく変更なし
+
+**実機確認手順:**
+1. 設定画面でデバッグモードをON/OFFできるか確認
+2. ON時だけ本体windowに枠・座標情報が出るか確認
+3. 設定画面から更新確認・インストールできるか確認
+4. UpdateBadgeが表示された場合に押せるか確認
+5. speech表示時の見切れで `wrapper` / `stage` が `OVER` になるか確認
+
+---
+
+## v0.1.43 での修正内容 (実機確認済み)
 
 ### 問題L: キャラは沈んでいないが、吹き出しがwindow上端に出すぎる
 

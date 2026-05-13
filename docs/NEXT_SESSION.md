@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.43)**
+**最終更新: 2026-05-13 (v0.1.44)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.43
-**フェーズ:** Hotfix — Speech Bubble Relative Anchor 完了 (実機確認待ち)
-**全体進捗:** 約 78%
+**バージョン:** v0.1.44
+**フェーズ:** Hotfix — Settings Updater / Debug Mode / Hit Test QA 完了 (実機確認待ち)
+**全体進捗:** 約 79%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.43)
-✅ cargo build  → Finished dev profile (v0.1.43)
-✅ GitHub Actions / Windows Installer → v0.1.42 成功済み。v0.1.43 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.44)
+✅ cargo build  → Finished dev profile (v0.1.44)
+✅ GitHub Actions / Windows Installer → v0.1.43 成功済み。v0.1.44 は tag push 後に確認
 ```
 
 ---
@@ -50,6 +50,42 @@
 | Hotfix: Character Rendering Anchor | Character実描画サイズをsizeScaleに同期・visual bottom anchor明確化 | ✅ v0.1.41 |
 | Hotfix: Speech Resize Bottom Anchor | rootをviewport基準化・character-stage absolute bottom anchor・resize拡大順序修正 | ✅ v0.1.42 |
 | Hotfix: Speech Bubble Relative Anchor | speech bubbleをwindow top基準からキャラ頭上基準へ変更 | ✅ v0.1.43 |
+| Hotfix: Settings Updater / Debug Mode / Hit Test QA | 設定画面更新導線・UpdateBadge hit test・debug overlay追加 | ✅ v0.1.44 |
+
+---
+
+## v0.1.44 実装詳細
+
+### A: 設定画面からの更新導線
+
+- `src/settings/pages/UpdatePage.tsx` を追加
+- `SettingsApp.tsx` に「アップデート」タブを追加
+- `get_app_version` / `check_for_updates` / `install_update` を直接呼び、companion上のUpdateBadgeが押せない場合でも更新できるようにした
+
+### B: UpdateBadge hit test
+
+- `src-tauri/src/lib.rs` に `UPDATE_BADGE_VISIBLE` と `set_update_badge_visible(visible)` を追加
+- `App.tsx` から `updateAvailable !== null || installing` をRustへ通知
+- UpdateBadge表示中だけ、character上基準のbadge矩形をinteractiveに追加
+- 非表示時はhit areaを作らず、上部透明領域click-throughを維持
+
+### C: Debug mode
+
+- `debugModeEnabled` を設定へ追加。デフォルトOFF
+- `DebugPage.tsx` を追加し、ユーザーが実機QAでON/OFF可能にした
+- `DebugOverlay.tsx` を拡張
+  - viewport / character-stage / character-wrapper / speech-layer / update-badge / hit-target rect
+  - `wrapper.bottom` / `stage.bottom` のviewport超過表示
+  - updater state
+  - last AI source (`ollama` / `fallback` / `mock` / `rule` / `none`)
+- overlayは `pointer-events: none`
+
+### D: speech表示時の見切れ
+
+- v0.1.43実機確認で、speech表示時にキャラ下半分がまだ見切れることが判明
+- 原因はまだ未確定
+- v0.1.44では window height増加や暫定speech liftは入れず、debug overlayで原因を確認できる状態にした
+- 次回QAでは `wrapper` / `stage` がviewportを超えているか、speech true時だけviewport heightが想定とずれるかを確認する
 
 ---
 
