@@ -3,7 +3,7 @@
 > このドキュメントは無明がローカルに保存するデータの種類・保存先・削除方法を説明する。
 > ユーザー向けの透明性のために存在し、エンジニアとユーザーの両方が参照できる。
 
-**最終更新: 2026-05-13 (v0.1.50)**
+**最終更新: 2026-05-13 (v0.1.54)**
 
 ---
 
@@ -80,10 +80,32 @@ MemoryEvent から `buildDailySummary()` でオンデマンドに計算する。
 |---|---|
 | 保存期間変更 | 7日 / 30日 / 90日 / 無期限 |
 | 今すぐ整理 | 現在の保存期間に基づいて古い MemoryEvent を削除 |
+| JSONを書き出す | 現在保存されている MemoryEvent をローカルJSONとして保存 |
 | 発話ログのみ削除 | `speech_shown` イベントのみ削除 |
 | すべての記憶を削除 | 全 MemoryEvent を削除 |
 
 破壊的な削除は確認ダイアログあり。削除後は元に戻せない。
+
+### JSON export (v0.1.54)
+
+「JSONを書き出す」は、現在このPCに保存されている MemoryEvent をユーザーのローカルファイルとして保存する。
+外部送信は行わない。クラウド同期やRAG登録もしない。
+
+export JSON には以下を含める。
+
+| フィールド | 内容 |
+|---|---|
+| `schemaVersion` | export形式のバージョン。現在は `1` |
+| `appVersion` | 書き出し時のアプリバージョン |
+| `exportedAt` | ISO形式の書き出し日時 |
+| `retentionDays` | 書き出し時点の保存期間設定 |
+| `eventCount` | 書き出し対象の件数 |
+| `eventTypes` | タイプ別件数 |
+| `range` | 最古 / 最新イベント日時 |
+| `events` | MemoryEvent 本体 |
+
+import は v0.1.54 では実装しない。
+保存期間や削除操作で MemoryEvent を削除した後は、export対象にも含まれない。
 
 ---
 
@@ -95,6 +117,7 @@ src/systems/memory/memoryStore.ts
   └─ getRecentEvents()    — 最新N件取得
   └─ getAllEvents()        — 全件取得
   └─ getEventsByType()    — タイプ別取得
+  └─ buildMemoryExportPayload() — JSON export用payload生成
   └─ countExpiredEvents()  — 保存期間を超えたイベント数を集計
   └─ pruneExpiredEvents()  — 保存期間を超えたイベントを削除
   └─ clearEvents()        — 全削除
@@ -110,7 +133,7 @@ src/companion/memory/dailySummary.ts
   └─ 空配列でも安全に動作
 
 src/settings/pages/MemoryPage.tsx
-  └─ Memory Viewer UI
+  └─ Memory Viewer / retention / export UI
 ```
 
 ---
@@ -131,7 +154,7 @@ MemoryEvent を削除した後も以下は壊れない:
 
 - `tauri-plugin-store` または SQLite への移行
 - per-type retention policy (例: 発話ログは7日で自動削除)
-- メモリのエクスポート (JSON)
+- JSON import (exportは v0.1.54 で実装済み)
 - 日単位での削除
 
 ---
@@ -142,4 +165,5 @@ MemoryEvent を削除した後も以下は壊れない:
 無明の記憶はこのPC内にのみ保存されます。
 外部には送信されません。
 ここから確認・削除できます。
+必要ならJSONとしてこのPCに書き出せます。
 ```

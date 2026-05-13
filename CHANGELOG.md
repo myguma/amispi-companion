@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.54] — 2026-05-13
+
+### Added (Memory Export / Data Control Polish)
+
+- **memoryStore.ts**:
+  - `MemoryExportPayload` を追加
+  - `buildMemoryExportPayload(appVersion, retentionDays)` を追加
+  - export JSON に `schemaVersion` / `appVersion` / `exportedAt` / `retentionDays` / `eventCount` / `eventTypes` / `range` / `events` を含める
+- **MemoryPage.tsx**:
+  - 「エクスポート」セクションを追加
+  - export前に件数・期間・タイプ別件数を表示
+  - 「JSONを書き出す」で現在の MemoryEvent をローカルJSONとして保存
+  - import は未実装であること、外部送信しないことを明記
+- **docs/MEMORY_AND_DATA_CONTROL.md**:
+  - JSON export の内容と非目標を追記
+  - 保存期間 / 削除 / export の関係を整理
+
+### Maintained
+
+- Memory Retention Policy / 発話ログのみ削除 / 全削除 / フィルタ表示を維持
+- compact `200x280` speech layout / hit test / character rendering は変更なし
+- Onboarding / Update / Debug / Transparency / Ollama / Active App は変更なし
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。JSON export、保存期間UI、削除後のexport内容は field QA pending
+
 ## [0.1.53] — 2026-05-13
 
 ### Added (Quiet / Focus / DND Hardening)

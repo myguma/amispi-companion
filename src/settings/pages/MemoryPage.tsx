@@ -1,7 +1,8 @@
 // 無明の記憶 — Memory Viewer ページ
 // ローカルに保存された記憶イベント / 今日の活動サマリーの確認・削除UI
 
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { MemoryEvent, MemoryEventType } from "../../types/companion";
 import {
   getAllEvents,
@@ -10,8 +11,10 @@ import {
   getMemoryStats,
   countExpiredEvents,
   pruneExpiredEvents,
+  buildMemoryExportPayload,
   type MemoryStats,
   type MemoryRetentionResult,
+  type MemoryExportPayload,
 } from "../../systems/memory/memoryStore";
 import { buildDailySummary, type DailySummary } from "../../companion/memory/dailySummary";
 import { useSettings } from "../store";
@@ -37,6 +40,24 @@ function relativeTime(ts: number): string {
 /** タイムスタンプを時刻表示 */
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDateTime(ts: number): string {
+  return new Date(ts).toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatExportRange(events: MemoryEvent[]): string {
+  if (events.length === 0) return "記録なし";
+  const oldest = events[0]?.timestamp;
+  const newest = events[events.length - 1]?.timestamp;
+  if (typeof oldest !== "number" || typeof newest !== "number") return "期間不明";
+  return `${formatDateTime(oldest)} 〜 ${formatDateTime(newest)}`;
 }
 
 // イベントタイプの日本語ラベル・色
@@ -68,6 +89,7 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
 ];
 
 const DISPLAY_LIMIT = 50;
+const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 const RETENTION_OPTIONS: { value: number; label: string; description: string }[] = [
   { value: 7,  label: "7日",  description: "短めに保つ" },
@@ -224,6 +246,42 @@ function RetentionSummary({ result }: { result: MemoryRetentionResult }) {
   );
 }
 
+function ExportSummary({ events }: { events: MemoryEvent[] }) {
+  const typeCount = events.reduce<Record<string, number>>((acc, event) => {
+    acc[event.type] = (acc[event.type] ?? 0) + 1;
+    return acc;
+  }, {});
+  const labels = FILTER_OPTIONS
+    .filter((opt) => opt.value !== "all")
+    .map((opt) => `${opt.label}:${typeCount[opt.value] ?? 0}`)
+    .join(" / ");
+
+  return (
+    <div style={{ fontSize: 11, color: "#888", lineHeight: 1.7 }}>
+      <div>件数: <strong>{events.length}</strong> 件</div>
+      <div>期間: {formatExportRange(events)}</div>
+      <div>タイプ: {labels}</div>
+    </div>
+  );
+}
+
+function makeExportFileName(payload: MemoryExportPayload): string {
+  const stamp = payload.exportedAt.replace(/[:.]/g, "-");
+  return `amispi-memory-${stamp}.json`;
+}
+
+function downloadJson(payload: MemoryExportPayload): void {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = makeExportFileName(payload);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // ────────────────────────────────────────────────
 // MemoryPage 本体
 // ────────────────────────────────────────────────
@@ -243,10 +301,18 @@ export function MemoryPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [isDeleting, setIsDeleting] = useState(false);
   const [lastRetentionResult, setLastRetentionResult] = useState<MemoryRetentionResult | null>(null);
+  const [appVersion, setAppVersion] = useState("dev");
+  const [exportStatus, setExportStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isTauri) return;
+    invoke<string>("get_app_version").then(setAppVersion).catch(() => setAppVersion("?"));
+  }, []);
 
   const refresh = useCallback(() => {
     setData(loadPageData());
     setLastRetentionResult(null);
+    setExportStatus(null);
   }, []);
 
   const retentionPreview = countExpiredEvents(settings.memoryRetentionDays);
@@ -302,6 +368,13 @@ export function MemoryPage() {
     setLastRetentionResult(result);
     setData(loadPageData());
   }, [settings.memoryRetentionDays]);
+
+  const handleExport = useCallback(() => {
+    const events = getAllEvents();
+    const payload = buildMemoryExportPayload(appVersion, settings.memoryRetentionDays);
+    downloadJson(payload);
+    setExportStatus(`${events.length}件の記録をJSONとして保存しました`);
+  }, [appVersion, settings.memoryRetentionDays]);
 
   // フィルタ適用
   const filteredEvents = filter === "all"
@@ -378,6 +451,34 @@ export function MemoryPage() {
                   ? `${lastRetentionResult.deletedCount}件を整理しました`
                   : "無期限のため自動整理は無効です"}
               </span>
+            )}
+          </div>
+        </div>
+      </Section>
+
+      {/* エクスポート */}
+      <Section title="エクスポート">
+        <div style={{ background: "#f7fff8", borderRadius: 8, padding: "10px 14px", fontSize: 12, lineHeight: 1.8 }}>
+          <p style={{ color: "#666", margin: "0 0 10px" }}>
+            現在保存されている記録をJSONとしてこのPCに保存します。外部送信は行いません。
+            インポート機能はまだありません。
+          </p>
+          <ExportSummary events={[...data.allEvents].reverse()} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+            <button
+              onClick={handleExport}
+              style={{
+                fontSize: 12, padding: "5px 14px", border: "1px solid #bfe0c8",
+                borderRadius: 6, background: "white", color: "#2f7b4f", cursor: "pointer",
+              }}
+            >
+              JSONを書き出す
+            </button>
+            <span style={{ fontSize: 11, color: "#888" }}>
+              schemaVersion: 1 / appVersion: v{appVersion}
+            </span>
+            {exportStatus && (
+              <span style={{ fontSize: 11, color: "#4caf7d" }}>{exportStatus}</span>
             )}
           </div>
         </div>

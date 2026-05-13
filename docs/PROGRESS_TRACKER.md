@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.53)**
+**最終更新: 2026-05-13 (v0.1.54)**
 
 ---
 
@@ -17,16 +17,16 @@
 | AI コンテキスト構築 | 91% | trigger別ヒント・直近発話context・時刻偏重修正・記憶文脈を短く整理 |
 | AI プロバイダー (Ollama) | 94% | 127.0.0.1修正・temperature 0.5・QualityFilter追加強化 |
 | fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
-| 記憶システム | 78% | DailySummary・MemoryViewer・削除機能・保存期間ポリシー実装済み |
+| 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
 | キャラクター表現 | 88% | v0.1.48実機確認で idle / speech / drag / speech中drag の描画消失が解決 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 90% | v0.1.53 Quiet / Focus / DND hardening を反映 |
+| リリース品質 (docs) | 91% | v0.1.54 Memory export / data control polish を反映 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~87%** | v0.1.53で黙るべき時の自律発話抑制を強化。field QA pending |
+| **総合** | **~88%** | v0.1.54でローカル記憶のJSON exportを追加。field QA pending |
 
 ---
 
@@ -61,6 +61,7 @@
 | v0.1.51 | DailySummary context reactions: 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 |
 | v0.1.52 | Reaction Quality QA: 固定文短縮・fallback重複回避・QualityFilter追加強化・RESPONSE_QUALITY_GUIDE更新 |
 | v0.1.53 | Quiet / Focus / DND Hardening: idle/observationの抑制経路整理・DND中の短い手動反応化 |
+| v0.1.54 | Memory Export / Data Control Polish: MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 |
 
 ---
 
@@ -75,12 +76,13 @@
 
 ---
 
-## 次の目標: v0.1.54 候補
+## 次の目標: v0.1.55 候補
 
-優先候補A: **Memory Export / Data Control Polish** ← **推奨**
-- MemoryEvent JSON export
-- export前の件数・期間・タイプ表示
-- 保存期間 / 削除 / export の関係をMemoryPageで説明
+優先候補A: **Release Polish** ← **推奨**
+- GitHub Actions Node.js 20 deprecation notice 対応
+- update失敗時の表示改善
+- Ollama未起動時の案内改善
+- version表示の一貫性確認
 
 優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
@@ -92,7 +94,7 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| Memory export / data control polish | 高 |
+| Release polish | 高 |
 | Emotion sprite set | 中 |
 | v0.1.53 quiet-focus-DND / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |

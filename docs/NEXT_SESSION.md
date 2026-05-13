@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.53)**
+**最終更新: 2026-05-13 (v0.1.54)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.53
-**フェーズ:** Quiet / Focus / DND Hardening (field QA pending)
-**全体進捗:** 約 87%
+**バージョン:** v0.1.54
+**フェーズ:** Memory Export / Data Control Polish (field QA pending)
+**全体進捗:** 約 88%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.53)
-✅ cargo build  → Finished dev profile (v0.1.53)
-✅ GitHub Actions / Windows Installer → v0.1.52 成功済み。v0.1.53 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.54)
+✅ cargo build  → Finished dev profile (v0.1.54)
+✅ GitHub Actions / Windows Installer → v0.1.53 成功済み。v0.1.54 は tag push 後に確認
 ```
 
 ---
@@ -60,6 +60,27 @@
 | DailySummary Context Reactions | 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 | ✅ v0.1.51 |
 | Reaction Quality QA | 固定文短縮・fallback重複回避・QualityFilter追加強化 | ✅ v0.1.52 |
 | Quiet / Focus / DND Hardening | quiet/focus/DND時の自律発話抑制経路を整理 | ✅ v0.1.53 |
+| Memory Export / Data Control Polish | MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 | ✅ v0.1.54 |
+
+---
+
+## v0.1.54 実装詳細
+
+### A: Memory Export / Data Control Polish
+
+- `buildMemoryExportPayload(appVersion, retentionDays)` を追加
+- export JSON に `schemaVersion: 1`、アプリバージョン、書き出し日時、保存期間、件数、タイプ別件数、期間、MemoryEvent本体を含める
+- MemoryPageに「エクスポート」セクションを追加
+- export前に件数・期間・タイプ別件数を表示
+- 「JSONを書き出す」でブラウザ/Windows WebViewのローカル保存としてJSONを出力
+- importは未実装。外部送信・クラウド同期・RAG登録はしない
+
+### B: Field QA pending
+
+- 空イベント / 通常イベントありの両方でJSON exportできるか
+- 保存期間cleanup後のexport対象が期待通りか
+- 発話ログのみ削除 / 全削除 / フィルタ表示が壊れていないか
+- Onboarding / Update / Debug / Transparency / compact character layout の回帰がないか
 
 ---
 
@@ -639,18 +660,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.54)
+## 次のフェーズ候補 (v0.1.55)
 
-### 優先候補 A: Memory Export / Data Control Polish ← **推奨**
+### 優先候補 A: Release Polish ← **推奨**
 
-**目的:** ローカル記憶の透明性を上げ、必要なら持ち出せるようにする。
+**目的:** 普通のWindowsアプリとしての不安を減らす。
 
 **実装すべき内容:**
-1. MemoryEvent JSON export
-2. export前に件数・期間・タイプを表示
-3. export JSONに schemaVersion / appVersion / exportedAt を入れる
-4. 保存期間 / 削除 / export の関係をMemoryPageで説明
-5. docs/MEMORY_AND_DATA_CONTROL.md を更新
+1. GitHub Actions Node.js 20 deprecation notice 対応
+2. update失敗時の表示改善
+3. Ollama未起動時の案内改善
+4. version表示の一貫性確認
+5. Known Issues の枠を作る
 
 ### 優先候補 B: Emotion Sprite Set
 
@@ -661,14 +682,14 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 C: v0.1.53 残QA修正
+### 優先候補 C: v0.1.54 残QA修正
 
-**目的:** quiet / focus / DND と reaction quality 実機QAで出た問題を優先修正する。
+**目的:** memory export / quiet-focus-DND / reaction quality 実機QAで出た問題を優先修正する。
 
 **確認すべき内容:**
-1. quietMode中に自律発話が止まるか
-2. focusMode中に発話頻度が十分下がるか
-3. DND中にクリック以外ほぼ黙るか
+1. JSON exportが保存できるか
+2. export JSONの件数・期間・タイプ別件数が正しいか
+3. quiet/focus/DNDが実機で自然か
 4. Ollama sourceが不必要にfallback化していないか
 5. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
 

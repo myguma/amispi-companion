@@ -18,8 +18,27 @@
 > v0.1.51 では DailySummary / RuleProvider 活用を強化し、ローカル記憶を短い文脈反応へ反映。
 > v0.1.52 では Reaction Quality QA として固定文・fallback・QualityFilterを整理。
 > v0.1.53 では Quiet / Focus / DND hardening として、自律発話抑制経路を整理。
+> v0.1.54 では MemoryEvent JSON export と data control polish を追加。
 
-**更新: 2026-05-13 (v0.1.53)**
+**更新: 2026-05-13 (v0.1.54)**
+
+---
+
+## v0.1.54 での更新内容
+
+### Memory Export / Data Control Polish
+
+**追加内容:**
+- MemoryPageに「エクスポート」セクションを追加
+- JSON export前に件数・期間・タイプ別件数を表示
+- export JSONに `schemaVersion` / `appVersion` / `exportedAt` / `retentionDays` / `eventCount` / `eventTypes` / `range` / `events` を含める
+- docs/MEMORY_AND_DATA_CONTROL.md に export仕様を追記
+
+**field QA pending:**
+- 空イベントでもJSON exportできるか
+- MemoryEventありでJSON export内容が正しいか
+- 保存期間cleanup / 発話ログのみ削除 / 全削除後のexport対象が期待通りか
+- MemoryPage / compact 200x280 character layout / click-through / Update / Debug / Transparency の回帰
 
 ---
 
