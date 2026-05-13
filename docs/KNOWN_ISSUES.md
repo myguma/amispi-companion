@@ -11,7 +11,7 @@
 | 長時間常駐 | pending | v0.1.48以降のcompact 200x280 layoutは実機で安定確認済みだが、長時間連続起動は追加確認が必要 |
 | updater実機更新 | pending | 設定画面アップデート導線とRelease workflowは確認済み。実インストール環境の更新経路は継続QA |
 | Ollama未起動 / model missing | pending | UI案内は追加済み。環境別のエラー文言は継続QA |
-| Voice / Whisper | pending | Push-to-Talk入口はあるが、Whisper実接続は未完成。v0.2.3で実装範囲とQA項目を固定 |
+| Voice / Whisper | pending | v0.3.0でWhisper CLI接続MVPを実装。Windows実機のbinary/model/MIME type/権限/一時ファイル削除はfield QA pending |
 | Windows transparent WebView | watch | 410px expanded windowは不採用。compact 200x280 fixedを設計制約として維持 |
 | v0.2.0 daily-use beta | pending | automated checksでのbeta区切り。v0.2.0自体のfield QAは未実施 |
 

@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-13 (v0.2.3)**
+**最終更新: 2026-05-13 (v0.3.0)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -23,8 +23,30 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a | 設定・状態・導線・mock transcript | ✅ 完了 (v0.1.28) |
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
-| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | 📋 v0.2.3 で実装計画固定 / 実装は v0.3.0 |
+| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | ✅ v0.3.0 MVP / field QA pending |
 | Phase 6c | UX 強化・フィードバック・DND 整合 | 📋 v0.3.1 以降 |
+
+---
+
+## v0.3.0 実装内容
+
+- `transcribe_with_whisper` Tauri commandを追加
+- WebView録音BlobをbytesとしてRustへ渡す
+- Rust側で一時音声ファイルを作成する
+- Whisper CLIをshell経由ではなく `std::process::Command` の引数配列で起動する
+- `-m <model> -f <audio> -otxt -of <output_base>` を基本引数として使う
+- timeout時はprocess killを試みる
+- 成功/失敗に関係なく一時ディレクトリ削除を試みる
+- transcriptテキストだけをReactへ返す
+
+### v0.3.0 field QA pending
+
+- Windows上のMediaRecorderが生成する `audio/webm` を、使用するwhisper.cpp binaryが読めるか
+- binaryによって `-otxt` / `-of` / `-f` 引数が一致するか
+- Whisper model pathの指定が正しいか
+- マイク権限拒否・録音失敗・timeoutから復帰するか
+- temp dirに音声ファイルが残らないか
+- long press中にdrag/clickと干渉しないか
 
 ---
 
@@ -238,12 +260,14 @@ Tauri sidecar に ffmpeg を含める → webm → wav → whisper
 ### Rust コマンド skeleton
 
 ```rust
-// src-tauri/src/voice/mod.rs (Phase 6b-real-2 で実装)
+// src-tauri/src/lib.rs (v0.3.0 MVP)
 #[tauri::command]
 async fn transcribe_with_whisper(
-    app: tauri::AppHandle,
+    executable_path: String,
+    model_path: String,
     audio_bytes: Vec<u8>,
     mime_type: String,
+    timeout_ms: u64,
 ) -> Result<String, String> {
     // 1. temp dir に音声ファイルを書き出す
     // 2. 必要なら WAV 変換

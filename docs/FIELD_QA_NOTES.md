@@ -24,8 +24,30 @@
 > v0.2.1 では Emotion Sprite Set minimal として、emotion propとsafe fallbackを追加。
 > v0.2.2 では Expressiveness QA として、operational emotionが描画stateを過剰に上書きしないよう調整。
 > v0.2.3 では Whisper Push-to-Talk MVPの範囲・安全境界・QA項目をdocsで固定。
+> v0.3.0 では Whisper Push-to-Talk MVPをRust commandへ接続。実機音声QAは未実施。
 
-**更新: 2026-05-13 (v0.2.3)**
+**更新: 2026-05-13 (v0.3.0)**
+
+---
+
+## v0.3.0 での更新内容
+
+### Whisper Push-to-Talk MVP
+
+**実装内容:**
+- `transcribe_with_whisper` Tauri commandを追加
+- WebView録音BlobをbytesとしてRustへ渡す
+- Rust側で一時音声ファイルを作成し、Whisper CLIをshellなしで起動
+- timeout時はprocess killを試みる
+- 成功/失敗に関係なく一時ディレクトリ削除を試みる
+- transcriptだけを既存voice response経路へ戻す
+
+**field QA pending:**
+- Windows実機でMediaRecorder MIME typeをWhisper CLIが読めるか
+- whisper.cpp binaryの引数差
+- マイク許可拒否 / 録音失敗 / timeout時の復帰
+- 一時音声ファイルが残らないか
+- long press / drag / click干渉
 
 ---
 

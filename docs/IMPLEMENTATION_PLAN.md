@@ -183,9 +183,10 @@ SpeechBubble / TinyWhisper / Cry
 - `src/settings/pages/VoicePage.tsx` — STT エンジン選択 UI
 - `src/App.tsx` — 実録音パイプラインへ切替
 
-### Phase 6b-real-2 — WhisperCli Rust Sidecar Integration ← **v0.3.0予定**
+### Phase 6b-real-2 — WhisperCli Rust Sidecar Integration ✅ v0.3.0 MVP
 
-v0.2.3で実装範囲を固定済み。Push-to-Talkのみ、常時マイク監視なし、クラウドSTTなし、音声ファイル永続保存なしを維持する。
+v0.2.3で実装範囲を固定し、v0.3.0でRust command接続MVPを追加。
+Push-to-Talkのみ、常時マイク監視なし、クラウドSTTなし、音声ファイル永続保存なしを維持する。
 
 - `src-tauri/src/voice/mod.rs` — `transcribe_with_whisper` Tauri コマンド
 - WebM Blob → bytes → Rust → 一時 WAV 書き出し

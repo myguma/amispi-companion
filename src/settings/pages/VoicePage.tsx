@@ -69,7 +69,7 @@ const MODE_OPTIONS: { v: VoiceInputMode; label: string; note: string }[] = [
 
 const STT_OPTIONS: { v: STTEngine; label: string; note: string }[] = [
   { v: "mock",       label: "Mock (開発用)",   note: "実際の録音はするが STT は固定テキストを返す" },
-  { v: "whisperCli", label: "Whisper CLI",    note: "ローカル whisper.cpp executable を使用 (要設定)" },
+  { v: "whisperCli", label: "Whisper CLI",    note: "ローカル whisper.cpp executable を使用 (要path/model設定)" },
 ];
 
 export function VoicePage() {
@@ -159,8 +159,8 @@ export function VoicePage() {
           {s.sttEngine === "whisperCli" && (
             <>
               <SectionHead title="Whisper CLI 設定" />
-              <div style={{ fontSize: 11, color: "#e08030", padding: "4px 0 8px", borderBottom: "1px solid #f0f0f0" }}>
-                ⚠ Whisper CLI は Phase 6b-real-2 で統合予定。現在は path 設定のみ有効で、STT は Mock にフォールバックします。
+              <div style={{ fontSize: 11, color: "#6a40d0", padding: "4px 0 8px", borderBottom: "1px solid #f0f0f0" }}>
+                ローカル whisper.cpp を起動して文字起こしします。未設定・失敗時はアプリ全体を止めず、音声入力だけ失敗扱いになります。
               </div>
 
               <TextInput

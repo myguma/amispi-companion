@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.3)**
+**最終更新: 2026-05-13 (v0.3.0)**
 
 ---
 
@@ -19,14 +19,14 @@
 | fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
 | 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
-| 音声入力 (Voice) | 45% | 実録音OK・Whisper Push-to-Talk MVP計画をv0.2.3で固定。STT実接続は未実装 |
+| 音声入力 (Voice) | 62% | Whisper Push-to-Talk MVPをRust commandへ接続。実機音声QAは未実施 |
 | キャラクター表現 | 91% | compact描画安定を維持し、追加表情だけsprite fallbackするようQA調整 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 96% | v0.2.3 Voice implementation plan更新 |
 | Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
-| **総合** | **~91%** | v0.2.3でWhisper実接続前の安全境界とQAを固定。automated checks passed / field QA pending |
+| **総合** | **~92%** | v0.3.0でWhisper Push-to-Talk MVPを実装。automated checks passed / field QA pending |
 
 ---
 
@@ -67,6 +67,7 @@
 | v0.2.1 | Minimal Emotion Sprite Set: emotion prop・safe sprite fallback・DebugOverlay emo表示 |
 | v0.2.2 | Expressiveness QA: operational emotionはstateを上書きせず、追加表情のみvisual override |
 | v0.2.3 | Voice Implementation Plan: Push-to-Talk Whisper MVPの範囲・privacy・QA項目を固定 |
+| v0.3.0 | Whisper Push-to-Talk MVP: Rust commandでローカルWhisper CLIへ接続 |
 
 ---
 
@@ -83,10 +84,9 @@
 
 ## 次の目標: v0.2.x 候補
 
-優先候補A: **Whisper Push-to-Talk MVP** ← **推奨**
-- Push-to-Talkのみ
-- 常時マイク監視なし
-- Whisper binary/model未設定でも壊れない実接続
+優先候補A: **Voice QA Hardening** ← **推奨**
+- Whisper未設定・失敗・timeout時の案内整理
+- 一時音声ファイル削除とfield QA項目の強化
 
 優先候補B: **Voice QA Hardening**
 - Whisper失敗時UI
@@ -98,6 +98,6 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| Whisper Push-to-Talk MVP | 高 |
+| Voice QA Hardening | 高 |
 | v0.1.55 release polish / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |

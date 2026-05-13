@@ -1,4 +1,10 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -216,6 +222,130 @@ async fn ollama_chat(
             .send_json(body)
             .map_err(|e| e.to_string())?;
         resp.into_string().map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+// ──────────────────────────────────────────────────────────
+// Whisper CLI STT (Push-to-Talk only)
+// ──────────────────────────────────────────────────────────
+
+fn audio_extension_from_mime(mime_type: &str) -> &'static str {
+    let m = mime_type.to_ascii_lowercase();
+    if m.contains("wav") {
+        "wav"
+    } else if m.contains("ogg") || m.contains("opus") {
+        "ogg"
+    } else if m.contains("mpeg") || m.contains("mp3") {
+        "mp3"
+    } else if m.contains("webm") {
+        "webm"
+    } else {
+        "audio"
+    }
+}
+
+fn unique_voice_temp_dir() -> Result<PathBuf, String> {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_millis();
+    let dir = std::env::temp_dir().join(format!(
+        "amispi-voice-{}-{stamp}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
+}
+
+fn read_transcript(output_base: &Path, stdout_text: &str) -> Result<String, String> {
+    let txt_path = output_base.with_extension("txt");
+    if let Ok(text) = fs::read_to_string(&txt_path) {
+        let trimmed = text.trim();
+        if !trimmed.is_empty() {
+            return Ok(trimmed.to_string());
+        }
+    }
+
+    let trimmed_stdout = stdout_text.trim();
+    if !trimmed_stdout.is_empty() {
+        return Ok(trimmed_stdout.to_string());
+    }
+
+    Err("no speech detected".to_string())
+}
+
+#[tauri::command]
+async fn transcribe_with_whisper(
+    executable_path: String,
+    model_path: String,
+    audio_bytes: Vec<u8>,
+    mime_type: String,
+    timeout_ms: u64,
+) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        let executable_path = executable_path.trim();
+        let model_path = model_path.trim();
+        if executable_path.is_empty() {
+            return Err("Whisper executable path is empty".to_string());
+        }
+        if model_path.is_empty() {
+            return Err("Whisper model path is empty".to_string());
+        }
+        if audio_bytes.is_empty() {
+            return Err("audio input is empty".to_string());
+        }
+
+        let temp_dir = unique_voice_temp_dir()?;
+        let ext = audio_extension_from_mime(&mime_type);
+        let input_path = temp_dir.join(format!("input.{ext}"));
+        let output_base = temp_dir.join("transcript");
+
+        let result = (|| {
+            fs::write(&input_path, &audio_bytes).map_err(|e| e.to_string())?;
+
+            let mut child = Command::new(executable_path)
+                .arg("-m")
+                .arg(model_path)
+                .arg("-f")
+                .arg(&input_path)
+                .arg("-otxt")
+                .arg("-of")
+                .arg(&output_base)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .map_err(|e| format!("failed to start Whisper CLI: {e}"))?;
+
+            let timeout = Duration::from_millis(timeout_ms.clamp(1_000, 120_000));
+            let started = Instant::now();
+            loop {
+                if let Some(_status) = child.try_wait().map_err(|e| e.to_string())? {
+                    let output = child.wait_with_output().map_err(|e| e.to_string())?;
+                    let stdout_text = String::from_utf8_lossy(&output.stdout).to_string();
+                    if !output.status.success() {
+                        let stderr_text = String::from_utf8_lossy(&output.stderr);
+                        return Err(format!(
+                            "Whisper CLI failed: {}",
+                            stderr_text.trim().chars().take(400).collect::<String>()
+                        ));
+                    }
+                    return read_transcript(&output_base, &stdout_text);
+                }
+
+                if started.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return Err("Whisper CLI timed out".to_string());
+                }
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        })();
+
+        let _ = fs::remove_dir_all(&temp_dir);
+        result
     })
     .await
     .map_err(|e| e.to_string())?
@@ -613,6 +743,7 @@ pub fn run() {
             resize_companion,
             ollama_list_models,
             ollama_chat,
+            transcribe_with_whisper,
             get_active_app_debug,
         ])
         .run(tauri::generate_context!())

@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0] — 2026-05-13
+
+### Added (Whisper Push-to-Talk MVP)
+
+- **Rust backend**:
+  - `transcribe_with_whisper` commandを追加
+  - Push-to-Talkで得た音声bytesを一時ファイルへ書き出し、Whisper CLIを `std::process::Command` で起動
+  - shell経由ではなく引数配列で呼び出す
+  - timeout時はprocess killを試み、一時ディレクトリを削除
+  - transcriptテキストのみをReactへ返す
+- **WhisperCliSTTAdapter.ts**:
+  - Blob/ArrayBufferをbytesへ変換し、Tauri commandへ接続
+  - executable/model未設定、timeout、no speech、その他エラーを安全にSTT errorへ変換
+- **VoicePage.tsx**:
+  - Whisper CLIがローカル実行MVPとして接続されたことに合わせて説明を更新
+
+### Maintained
+
+- Push-to-Talkのみ。常時マイク監視 / wake word / クラウドSTT / 音声保存なし
+- compact `200x280` window / hit test / character layout は変更なし
+- Whisper未設定時もアプリ全体は壊れない
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- Whisper binary/model実行、MediaRecorder MIME type、マイク権限、音声認識精度、一時ファイル削除は field QA pending
+
 ## [0.2.3] — 2026-05-13
 
 ### Docs (Voice Implementation Plan)

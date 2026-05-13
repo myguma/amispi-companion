@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.3)**
+**最終更新: 2026-05-13 (v0.3.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.2.3
-**フェーズ:** Voice Implementation Plan (automated checks passed / field QA pending)
-**全体進捗:** 約 91%
+**バージョン:** v0.3.0
+**フェーズ:** Whisper Push-to-Talk MVP (automated checks passed / field QA pending)
+**全体進捗:** 約 92%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.2.3)
-✅ cargo build  → Finished dev profile (v0.2.3)
-✅ GitHub Actions / Windows Installer → v0.2.2 成功済み。v0.2.3 は tag push 後に確認
+✅ npm run build → ✓ built (v0.3.0)
+✅ cargo build  → Finished dev profile (v0.3.0)
+✅ GitHub Actions / Windows Installer → v0.2.3 成功済み。v0.3.0 は tag push 後に確認
 ```
 
 ---
@@ -66,6 +66,30 @@
 | Minimal Emotion Sprite Set | emotion prop・safe sprite fallback・DebugOverlay emo表示 | ✅ v0.2.1 |
 | Expressiveness QA | operational emotionが表示stateを過剰に上書きしないよう調整 | ✅ v0.2.2 |
 | Voice Implementation Plan | Whisper Push-to-Talk MVPの範囲・privacy・QA項目を固定 | ✅ v0.2.3 |
+| Whisper Push-to-Talk MVP | Rust commandでローカルWhisper CLIへ接続 | ✅ v0.3.0 / field QA pending |
+
+---
+
+## v0.3.0 実装詳細
+
+### A: Whisper Push-to-Talk MVP
+
+- `transcribe_with_whisper` Tauri commandを追加
+- WebViewの録音Blobをbytesへ変換しRustへ渡す
+- Rust側で一時音声ファイルを作成
+- Whisper CLIを `std::process::Command` でshellなし実行
+- transcript txtファイルまたはstdoutから文字起こしを読む
+- timeout時はprocess killを試みる
+- 成功/失敗に関係なく一時ディレクトリ削除を試みる
+- `WhisperCliSTTAdapter` が既存 `requestVoiceResponse` 経路へ transcript を戻す
+
+### B: Field QA pending
+
+- Windows実機でMediaRecorder出力がWhisper CLIに読めるか
+- Whisper binary / model pathが環境ごとに動くか
+- マイク権限拒否 / timeout / executable失敗時の復帰
+- 一時音声ファイルが残らないか
+- long press / drag / click干渉
 
 ---
 
