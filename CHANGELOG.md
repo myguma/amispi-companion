@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.1.48] — 2026-05-13
+
+### Fixed (Hotfix: Compact Speech Layout)
+
+#### A: v0.1.47 always expanded window化を撤回
+
+- **v0.1.47 実機結果**: 常時 `200x410` では idle / speech / drag / speech中drag の全状態でキャラ下半分が消えた
+- **判断**: 410px高の transparent companion window 下部にspriteを置く設計自体が現在の実機環境では危険
+- **App.tsx / lib.rs / tauri.conf.json**: companion window height を常時 compact `280px` に戻した
+- speech表示時も `410px` へ広げず、dynamic resizeも行わない
+
+#### B: compact window内speech layout
+
+- **App.tsx**: expected `windowH` を常時 `COMPANION_COMPACT_H` に変更
+- **lib.rs**: `resize_companion` の target height を常に character window height に固定
+- **index.css**: speech bubble を compact window 内に収めるため最大高さを制限し、本文を最大3行で省略
+- speech bubble は引き続き character-stage の頭上基準に表示
+
+#### C: 維持したもの
+
+- `SPEECH_VISIBLE: AtomicBool` による明示hit test状態
+- window height推測に戻さず、speech=false時の上部透明領域click-throughを維持
+- v0.1.47 の DebugOverlay / ContextMenu 重なり修正
+- v0.1.46 の background render surface / sprite debug
+- 設定画面アップデート、UpdateBadge hit test、DebugMode
+- ContextMenu / drag / voice long press / Active App / Ollama
+
 ## [0.1.47] — 2026-05-13
 
 ### Fixed (Hotfix: Always Expanded Transparent Window)

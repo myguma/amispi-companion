@@ -11,12 +11,44 @@
 > v0.1.45 では v0.1.44 debug結果を受け、Character内部のimg/sprite/alpha bbox診断を追加。
 > v0.1.46 では v0.1.45 debug結果を受け、sprite実表示をbackground surfaceへ切り替え。
 > v0.1.47 では v0.1.46 debug結果を受け、speech表示/非表示でwindow heightを変えない常時expanded方式へ変更。
+> v0.1.48 では v0.1.47 実機改悪を受け、常時expanded方式を撤回し、speech時もcompact 280px内に収める方式へ変更。
 
-**更新: 2026-05-13 (v0.1.47)**
+**更新: 2026-05-13 (v0.1.48)**
 
 ---
 
-## v0.1.47 での修正内容 (実機確認待ち)
+## v0.1.48 での修正内容 (実機確認待ち)
+
+### 問題Q: 常時expanded 410px windowで全状態のsprite下半分が消える
+
+**v0.1.47 実機確認結果:**
+- idle / speech / drag / speech中drag の全状態でキャラ下半分が消えた
+- debug上は wh/client/vh が `200x410` で、stage / wrapper / surface / img / alpha は viewport 内
+- `OVER` は出ていない
+- DebugOverlayとContextMenuの重なり修正は有効
+
+**判断:**
+- v0.1.47 の always expanded window 化は失敗
+- dynamic resizeだけでなく、410px高の transparent companion window 下部にspriteを置く設計自体が危険
+- v0.1.46相当の「idleが正常なcompact構成」を優先する
+
+**v0.1.48 での修正:**
+- companion window heightを常時 compact `280px` に戻した
+- speech表示時もwindowを `410px` へ広げない
+- dynamic resize `280→410` もしない
+- `SPEECH_VISIBLE` は維持し、hit testはwindow height推測ではなく明示状態を参照
+- speech bubbleはcompact window内のキャラ頭上基準で表示し、長文は最大3行で省略
+- v0.1.47のDebugOverlay/ContextMenu重なり修正は維持
+
+**実機確認手順:**
+1. idle / speech とも wh/client/vh が `200x280` になるか確認
+2. idle / speech / drag / speech中dragでキャラ下半分が消えないか確認
+3. compact内で吹き出しが省略表示されるか確認
+4. 右クリックメニュー、click-through、voice long press、Ollama、Active Appが壊れていないか確認
+
+---
+
+## v0.1.47 での修正内容 (実機確認で失敗)
 
 ### 問題P: expanded透明WebViewで旧compact height付近の内部clipが疑わしい
 

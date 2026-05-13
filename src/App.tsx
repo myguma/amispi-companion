@@ -18,7 +18,6 @@ import {
   CHARACTER_BOTTOM_PAD,
   CHARACTER_SPRITE_H,
   CHARACTER_SPRITE_W,
-  COMPANION_BUBBLE_H,
   COMPANION_COMPACT_H,
   COMPANION_WINDOW_W,
   CONTEXT_MENU_H,
@@ -155,7 +154,7 @@ export default function App() {
 
     // ドラッグ終了 → ウィンドウ位置を保存
     // 保存する y はウィンドウ上端 (pos.y) をそのまま使う。
-    // v0.1.47 以降は companion window を常時 expanded height で扱う。
+    // v0.1.48 以降は companion window を常時 compact height で扱う。
     if (!isDragging && wasDragging && isTauri) {
       // startDragging() は OS ネイティブなので少し待ってから位置を取得する
       setTimeout(async () => {
@@ -202,7 +201,7 @@ export default function App() {
     if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // companion window は常時 expanded height で維持する。
+  // companion window は常時 compact height で維持する。
   // hasSpeech は Rust 側 hit test の bubble 領域ON/OFFへ渡すだけにする。
   const hasSpeech = !!(tinyText || speechText);
   const scale = normalizeCompanionScale(settings.sizeScale);
@@ -215,7 +214,7 @@ export default function App() {
   const characterW = Math.round(CHARACTER_SPRITE_W * scale);
   const characterH = Math.round(CHARACTER_SPRITE_H * scale);
   const windowW = Math.round(COMPANION_WINDOW_W * scale);
-  const windowH = Math.round((COMPANION_COMPACT_H + COMPANION_BUBBLE_H) * scale);
+  const windowH = Math.round(COMPANION_COMPACT_H * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
   const speechBubbleGap = Math.round(SPEECH_BUBBLE_GAP * scale);
   const updateBadgeGap = Math.round(UPDATE_BADGE_GAP * scale);

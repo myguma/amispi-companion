@@ -137,6 +137,7 @@ html,
   border-radius: 12px;
   padding: 8px 12px;
   max-width: 180px;
+  max-height: 74px;
   font-size: 12px;
   font-family: system-ui, -apple-system, sans-serif;
   color: #3a2870;
@@ -144,6 +145,13 @@ html,
   box-shadow: 0 4px 16px rgba(100, 60, 200, 0.15);
   animation: bubble-appear 0.25s ease-out;
   word-break: break-word;
+}
+
+.speech-bubble > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 
 .speech-bubble-tail {

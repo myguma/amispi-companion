@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.47)**
+**最終更新: 2026-05-13 (v0.1.48)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.47
-**フェーズ:** Hotfix — Always Expanded Transparent Window Fix 完了 (実機確認待ち)
+**バージョン:** v0.1.48
+**フェーズ:** Hotfix — Compact Speech Layout Fix 完了 (実機確認待ち)
 **全体進捗:** 約 80%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.47)
-✅ cargo build  → Finished dev profile (v0.1.47)
-✅ GitHub Actions / Windows Installer → v0.1.46 成功済み。v0.1.47 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.48)
+✅ cargo build  → Finished dev profile (v0.1.48)
+✅ GitHub Actions / Windows Installer → v0.1.47 成功済み。v0.1.48 は tag push 後に確認
 ```
 
 ---
@@ -54,6 +54,38 @@
 | Diagnostic: Sprite Render Debug Instrumentation | Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 | ✅ v0.1.45 |
 | Hotfix: Sprite Render Surface Fix | sprite実表示をbackground surfaceへ変更し、透明WebView expanded時の描画欠け対策 | ✅ v0.1.46 |
 | Hotfix: Always Expanded Transparent Window | speech表示/非表示でwindow heightを変えず、常時expanded height + 明示speech hit testへ変更 | ✅ v0.1.47 |
+| Hotfix: Compact Speech Layout | v0.1.47の常時410pxを撤回し、speech時も常時compact 280px内に収める | ✅ v0.1.48 |
+
+---
+
+## v0.1.48 実装詳細
+
+### A: v0.1.47 実機結果
+
+- 常時expanded `200x410` では idle / speech / drag / speech中drag の全状態でキャラ下半分が消えた
+- debug上は `stage` / `wrapper` / `surface` / `img` / `alphaRect` が viewport 内で、`OVER` は出ていない
+- 410px高の transparent companion window 下部領域にspriteを置く設計が現在の実機環境では危険と判断
+
+### B: compact固定へ戻す
+
+- `src-tauri/tauri.conf.json`: companion初期heightを `280` に戻した
+- `src-tauri/src/lib.rs`: `resize_companion` の target height を常に `CHAR_WINDOW_H_LOGICAL` に固定
+- `src/App.tsx`: expected `windowH` を `COMPANION_COMPACT_H` に戻した
+- speech表示時も `410px` へ広げず、dynamic resizeもしない
+
+### C: compact内speech layout
+
+- speech bubble は character-stage 頭上基準のまま
+- `src/styles/index.css`: compact window内に収めるため bubble 最大高さを制限し、本文を最大3行で省略
+- 長文応答は完全表示よりキャラ正常描画を優先する
+
+### D: 維持したもの
+
+- `SPEECH_VISIBLE: AtomicBool` による明示hit test状態
+- v0.1.47 の DebugOverlay / ContextMenu 重なり修正
+- v0.1.46 の background render surface / sprite debug
+- 設定画面アップデート / UpdateBadge hit test / DebugMode
+- ContextMenu / click-through / drag / voice long press / Active App / Ollama
 
 ---
 
@@ -447,15 +479,15 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.48)
+## 次のフェーズ候補 (v0.1.49)
 
-### 優先候補 A: v0.1.47 実機確認 → 残QA修正 ← **最優先**
+### 優先候補 A: v0.1.48 実機確認 → 残QA修正 ← **最優先**
 
-1. idle / speech とも debug overlay の wh/client/vh が `200x410` になるか確認
+1. idle / speech とも debug overlay の wh/client/vh が `200x280` になるか確認
 2. speech表示時にキャラ下半分が消えないか確認
 3. speech中dragでも消えないか確認
 4. speech=false時の上部透明領域click-throughが維持されているか確認
-5. 吹き出し位置・drag・右クリック・click-through・設定アップデートが壊れていないか確認
+5. compact内で吹き出しが省略表示され、drag・右クリック・click-through・設定アップデートが壊れていないか確認
 
 ### 優先候補 B: First-run Onboarding
 
