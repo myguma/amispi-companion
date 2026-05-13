@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.49] — 2026-05-13
+
+### Added (First-run Onboarding)
+
+#### A: 初回起動オンボーディング
+
+- **settings/types.ts / defaults.ts**: `onboardingCompleted` / `onboardingVersion` を追加
+- **App.tsx**: 初回起動時、`onboardingCompleted=false` の場合に設定ウィンドウを開く
+- **SettingsApp.tsx**: 「はじめに」タブを追加し、未完了時はOnboardingを初期表示
+- **OnboardingPage.tsx**: 初回設定UIを追加
+  - Welcome
+  - Privacy / Local-first
+  - AI Engine
+  - Behavior
+  - Window / Controls
+  - Finish
+- 完了またはスキップで `onboardingCompleted=true` / `onboardingVersion=1` を保存
+- 完了後も設定画面の「はじめに」タブから再表示可能
+
+#### B: v0.1.48 Field QA結果を反映
+
+- **v0.1.48 実機確認**: idle / speech / drag / speech中drag のすべてでキャラ下半分が消えないことを確認
+- `wh/client/vh = 200x280` 固定、stage / wrapper / surface / img / alpha は viewport 内
+- compact speech layout を採用
+- 410px expanded window案、dynamic resize `280→410`、always expanded `410px` は不採用として記録
+- transparent WebView / layered window では 410px window 下部領域のsprite描画が壊れる実機結果があるため、今後この方向へ戻さない
+
+#### C: 維持したもの
+
+- v0.1.48 の compact 200x280 window / speech compact layout
+- character-stage bottom anchor / background render surface
+- DebugMode / 設定画面アップデート / UpdateBadge hit test
+- ContextMenu / DebugOverlay 重なり修正
+- click-through / drag / voice long press / Active App / Ollama
+
 ## [0.1.48] — 2026-05-13
 
 ### Fixed (Hotfix: Compact Speech Layout)

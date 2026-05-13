@@ -60,6 +60,7 @@ export default function App() {
   const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [lastAIResult, setLastAIResult] = useState(getLastAIResult());
+  const onboardingOpenRequestedRef = useRef(false);
   const characterStageRef = useRef<HTMLDivElement | null>(null);
   const speechLayerRef = useRef<HTMLDivElement | null>(null);
   const updateBadgeRef = useRef<HTMLDivElement | null>(null);
@@ -113,6 +114,12 @@ export default function App() {
     const unsub = subscribeLastAIResult(() => setLastAIResult({ ...getLastAIResult() }));
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!isTauri || settings.onboardingCompleted || onboardingOpenRequestedRef.current) return;
+    onboardingOpenRequestedRef.current = true;
+    void invoke("open_settings_window");
+  }, [settings.onboardingCompleted]);
 
   // 常時最前面
   useEffect(() => {

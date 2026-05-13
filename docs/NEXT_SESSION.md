@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.48)**
+**最終更新: 2026-05-13 (v0.1.49)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.48
-**フェーズ:** Hotfix — Compact Speech Layout Fix 完了 (実機確認待ち)
-**全体進捗:** 約 80%
+**バージョン:** v0.1.49
+**フェーズ:** First-run Onboarding 実装完了 (実機確認待ち)
+**全体進捗:** 約 82%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.48)
-✅ cargo build  → Finished dev profile (v0.1.48)
-✅ GitHub Actions / Windows Installer → v0.1.47 成功済み。v0.1.48 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.49)
+✅ cargo build  → Finished dev profile (v0.1.49)
+✅ GitHub Actions / Windows Installer → v0.1.48 成功済み。v0.1.49 は tag push 後に確認
 ```
 
 ---
@@ -55,6 +55,40 @@
 | Hotfix: Sprite Render Surface Fix | sprite実表示をbackground surfaceへ変更し、透明WebView expanded時の描画欠け対策 | ✅ v0.1.46 |
 | Hotfix: Always Expanded Transparent Window | speech表示/非表示でwindow heightを変えず、常時expanded height + 明示speech hit testへ変更 | ✅ v0.1.47 |
 | Hotfix: Compact Speech Layout | v0.1.47の常時410pxを撤回し、speech時も常時compact 280px内に収める | ✅ v0.1.48 |
+| First-run Onboarding | ローカルファースト・AI設定・自律発話・デバッグ方針を初回設定で案内 | ✅ v0.1.49 |
+
+---
+
+## v0.1.49 実装詳細
+
+### A: v0.1.48 実機確認結果
+
+- idle / speech / drag / speech中drag のすべてでキャラ下半分が消えない
+- debug overlay上で wh/client/vh は `200x280` 固定
+- stage / wrapper / surface / img / alpha は viewport 内
+- compact speech layout は採用
+- 410px expanded window、dynamic resize `280→410`、always expanded `410px` は不採用
+- 今後、companion window は compact `200x280` 固定を設計制約として扱う
+
+### B: First-run Onboarding
+
+- `CompanionSettings` に `onboardingCompleted` / `onboardingVersion` を追加
+- 初回起動時に設定ウィンドウを開く
+- 設定画面に「はじめに」タブを追加
+- Onboarding構成
+  - Welcome
+  - Privacy / Local-first
+  - AI Engine
+  - Behavior
+  - Window / Controls
+  - Finish
+- 完了またはスキップで `onboardingCompleted=true` / `onboardingVersion=1`
+- 完了後も設定画面から再表示可能
+
+### C: 注意
+
+- v0.1.48で安定した character/window/hit test layout は変更していない
+- DebugMode / UpdatePage / TransparencyPage / Active App / Ollama は維持
 
 ---
 
@@ -479,37 +513,21 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.49)
+## 次のフェーズ候補 (v0.1.50)
 
-### 優先候補 A: v0.1.48 実機確認 → 残QA修正 ← **最優先**
+### 優先候補 A: v0.1.49 実機確認 → 残QA修正 ← **最優先**
 
-1. idle / speech とも debug overlay の wh/client/vh が `200x280` になるか確認
-2. speech表示時にキャラ下半分が消えないか確認
-3. speech中dragでも消えないか確認
-4. speech=false時の上部透明領域click-throughが維持されているか確認
-5. compact内で吹き出しが省略表示され、drag・右クリック・click-through・設定アップデートが壊れていないか確認
+1. 初回起動または設定画面からOnboardingを開けるか確認
+2. Onboarding完了後に再表示されないか確認
+3. 設定画面の「はじめに」タブから再表示できるか確認
+4. 既存設定、UpdatePage、DebugPage、TransparencyPageが壊れていないか確認
+5. v0.1.48のcompact 200x280 character layoutが維持されているか確認
 
-### 優先候補 B: First-run Onboarding
+### 優先候補 B: 残QA修正
 
-**目的:** 初回起動時の権限・機能・記憶・安全性の説明。
+**目的:** v0.1.49 実機確認で出たOnboarding/設定/常駐体験の問題を優先修正する。
 
-**実装すべき内容:**
-1. localStorage に `hasCompletedOnboarding` フラグ
-2. 初回のみ表示されるオンボーディング画面 (メインウィンドウに overlay or 別ウィンドウ)
-3. 主な項目: ローカル動作・観測内容・Ollama設定方法・記憶について
-4. 「設定を開く」ボタンで設定画面に誘導
-
-**完了条件:**
-- 初回起動時に表示される
-- 2回目以降は表示されない
-- 「設定を開く」が機能する
-- build が通る
-
-### 優先候補 C: 残QA修正
-
-**目的:** v0.1.40 実機確認で、キャラ常駐体験に残った問題を優先修正する。
-
-### 優先候補 D: Memory Retention Policy
+### 優先候補 C: Memory Retention Policy
 
 **目的:** 古いイベントを自動的に整理する仕組み。
 
@@ -518,7 +536,7 @@
 2. 起動時に古い speech_shown / state_changed を削除
 3. MemoryPage に設定UI追加
 
-### 優先候補 E: Emotion Sprite Set
+### 優先候補 D: Emotion Sprite Set
 
 **目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
 

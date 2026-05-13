@@ -33,6 +33,8 @@ export type CompanionSettings = {
 
   showOnStartup: boolean;
   debugModeEnabled: boolean;
+  onboardingCompleted: boolean;
+  onboardingVersion: number;
 
   // AI エンジン設定
   aiEngine: AIEngine;

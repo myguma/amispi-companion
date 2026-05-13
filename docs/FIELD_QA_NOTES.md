@@ -12,12 +12,39 @@
 > v0.1.46 では v0.1.45 debug結果を受け、sprite実表示をbackground surfaceへ切り替え。
 > v0.1.47 では v0.1.46 debug結果を受け、speech表示/非表示でwindow heightを変えない常時expanded方式へ変更。
 > v0.1.48 では v0.1.47 実機改悪を受け、常時expanded方式を撤回し、speech時もcompact 280px内に収める方式へ変更。
+> v0.1.49 では v0.1.48 実機確認結果を反映し、First-run Onboardingを追加。
 
-**更新: 2026-05-13 (v0.1.48)**
+**更新: 2026-05-13 (v0.1.49)**
 
 ---
 
-## v0.1.48 での修正内容 (実機確認待ち)
+## v0.1.49 での更新内容
+
+### v0.1.48 実機確認結果を採用
+
+**確認結果:**
+- idle / speech / drag / speech中drag のすべてでキャラ下半分が消えない
+- debug overlay上でも wh/client/vh は `200x280` 固定
+- stage / wrapper / surface / img / alpha は viewport 内
+- 吹き出しは compact window 内に収まる
+- 右クリックメニュー、click-through、drag、voice long press も問題なし
+
+**確定事項:**
+- v0.1.48 の compact speech layout を採用
+- 410px expanded window案は不採用
+- dynamic resize `280→410` は不採用
+- always expanded `410px` は不採用
+- v0.1.48以降、companion window は compact `200x280` 固定を設計制約として扱う
+- transparent WebView / layered window では 410px window 下部領域でsprite描画が壊れる実機結果があるため、今後この方向へ戻さない
+
+**v0.1.49 で追加:**
+- First-run Onboarding
+- `onboardingCompleted` / `onboardingVersion`
+- 設定画面の「はじめに」タブ
+
+---
+
+## v0.1.48 での修正内容 (実機確認済み・採用)
 
 ### 問題Q: 常時expanded 410px windowで全状態のsprite下半分が消える
 

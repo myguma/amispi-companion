@@ -26,6 +26,8 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
 
   showOnStartup: true,
   debugModeEnabled: false,
+  onboardingCompleted: false,
+  onboardingVersion: 1,
 
   aiEngine: "none",
   ollamaBaseUrl: "http://127.0.0.1:11434",

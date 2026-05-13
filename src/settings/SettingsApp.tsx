@@ -11,10 +11,13 @@ import { VoicePage } from "./pages/VoicePage";
 import { MemoryPage } from "./pages/MemoryPage";
 import { UpdatePage } from "./pages/UpdatePage";
 import { DebugPage } from "./pages/DebugPage";
+import { OnboardingPage } from "./pages/OnboardingPage";
+import { getSettings, useSettings } from "./store";
 
-type Tab = "transparency" | "behavior" | "ai" | "voice" | "memory" | "update" | "debug";
+type Tab = "onboarding" | "transparency" | "behavior" | "ai" | "voice" | "memory" | "update" | "debug";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "onboarding", label: "はじめに" },
   { id: "transparency", label: "無明が見ているもの" },
   { id: "behavior",     label: "動作設定" },
   { id: "ai",           label: "AI エンジン" },
@@ -73,12 +76,17 @@ class TabErrorBoundary extends Component<
 }
 
 export function SettingsApp() {
-  const [tab, setTab] = useState<Tab>("transparency");
+  const [settings] = useSettings();
+  const [tab, setTab] = useState<Tab>(() => getSettings().onboardingCompleted ? "transparency" : "onboarding");
   const [version, setVersion] = useState<string>("…");
 
   useEffect(() => {
     invoke<string>("get_app_version").then(setVersion).catch(() => setVersion("?"));
   }, []);
+
+  useEffect(() => {
+    if (!settings.onboardingCompleted) setTab("onboarding");
+  }, [settings.onboardingCompleted]);
 
   return (
     <div style={{
@@ -126,6 +134,7 @@ export function SettingsApp() {
       {/* コンテンツ — 各タブを ErrorBoundary で保護 */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
         <TabErrorBoundary tabId={tab} key={tab}>
+          {tab === "onboarding"    && <OnboardingPage onDone={() => setTab("transparency")} />}
           {tab === "transparency" && <TransparencyPage />}
           {tab === "behavior"     && <BehaviorPage />}
           {tab === "ai"           && <AIPage />}
