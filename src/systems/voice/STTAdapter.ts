@@ -16,6 +16,8 @@ export type STTError =
   | "no_speech"       // 無音または短すぎる
   | "too_long"        // 録音が長すぎる
   | "unavailable"     // STT エンジンが利用不可 (path 未設定 等)
+  | "ffmpeg_unavailable" // FFmpeg path 未設定または起動不可
+  | "conversion_failed"  // WebView 録音 → WAV 変換失敗
   | "timeout"         // 処理タイムアウト
   | "error";          // その他エラー
 

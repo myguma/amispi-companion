@@ -52,6 +52,7 @@ export type CompanionSettings = {
   sttEngine: STTEngine;
   whisperExecutablePath: string;
   whisperModelPath: string;
+  ffmpegExecutablePath: string;
   whisperTimeoutMs: number;
 
   // 将来フェーズ用

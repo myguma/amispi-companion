@@ -196,7 +196,7 @@ html,
    ============================================================ */
 
 .update-badge-wrapper {
-  margin-top: 4px;
+  margin-top: 0;
   display: flex;
   justify-content: center;
 }

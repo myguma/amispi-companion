@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v1.0.0 + v2 draft)**
+**最終更新: 2026-05-14 (v1.0.1)**
 
 ---
 
@@ -19,14 +19,14 @@
 | fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
 | 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
-| 音声入力 (Voice) | 66% | Whisper Push-to-Talk MVPをRust commandへ接続し、未設定/失敗時の復帰案内を強化。実機音声QAは未実施 |
+| 音声入力 (Voice) | 70% | Whisper Push-to-Talk MVPをRust commandへ接続。v1.0.1でFFmpeg WAV変換を追加。実STT成功はfield QA pending |
 | キャラクター表現 | 91% | compact描画安定を維持し、追加表情だけsprite fallbackするようQA調整 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
-| ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
+| ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 99% | v1.0.0 stable notes / Known Issues / v2 roadmap draft整理 |
 | Windows installer / CI | 84% | Release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
-| **総合** | **~94%** | v1.0.0 stable tag + v2 roadmap draft。v1.0.0 field QA not performed |
+| **総合** | **~94%** | v1.0.0 field QA通過後のv1.0.1 hotfix。Voice実STTはfield QA pending |
 
 ---
 
@@ -72,6 +72,7 @@
 | v1.0.0-rc.1 | Release Candidate: docs / Known Issues / QA checklist / release notes draft整理 |
 | v1.0.0 | Stable: v1.0.0 release notes / Known Issues / hotfix policy整理 |
 | docs | v2 roadmap draft: v2候補と非目標を整理。実装未着手 |
+| v1.0.1 | Field QA hotfix: UpdateBadge右下配置・FFmpegによるWhisper用16kHz mono PCM WAV変換 |
 
 ---
 
@@ -86,15 +87,14 @@
 
 ---
 
-## 次の目標: v1.0 field QA / v1.0.1 hotfix
+## 次の目標: v1.0.1 field QA / post-stable maintenance
 
-優先候補A: **v1.0.0 field QA** ← **推奨**
-- 実機でstable tagの最小確認を行う
-- 問題があればv1.0.1 hotfixへ進む
+優先候補A: **v1.0.1 field QA** ← **推奨**
+- UpdateBadge右下配置がspeech bubbleと被らずクリックできるか確認
+- FFmpeg path設定後にvoice long pressで実STTが成功するか確認
 
 | 作業 | 優先度 |
 |------|--------|
-| v1.0.0 field QA | 高 |
-| v1.0.1 hotfix | 必要時 |
+| v1.0.1 field QA | 高 |
 | Voice実機QA | 高 |
 | 残QA修正 | 中 |

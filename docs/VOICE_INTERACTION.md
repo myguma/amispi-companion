@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-13 (v0.3.1)**
+**最終更新: 2026-05-14 (v1.0.1)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -23,8 +23,21 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a | 設定・状態・導線・mock transcript | ✅ 完了 (v0.1.28) |
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
-| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | ✅ v0.3.0 MVP / field QA pending |
+| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + FFmpeg WAV 変換 | ✅ v1.0.1 hotfix / field QA pending |
 | Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v0.3.1 hardening / field QA pending |
+
+---
+
+## v1.0.1 FFmpeg conversion hotfix
+
+- v1.0.0 field QAでwhisper-cli起動自体は確認されたが、WebView録音形式を直接渡すと transcript が空になる可能性が高かった
+- `ffmpegExecutablePath` をVoice設定に追加
+- WebView録音Blobはまず一時ファイルへ保存し、FFmpegで `16kHz mono PCM WAV` に変換してからWhisper CLIへ渡す
+- 変換コマンド相当: `ffmpeg -y -i input.webm -ar 16000 -ac 1 -c:a pcm_s16le input.wav`
+- FFmpeg未設定時は「FFmpegの設定、まだみたい。」として短く復帰する
+- 元音声・変換WAV・transcriptは処理後に一時ディレクトリごと削除する
+- WindowsではFFmpeg/Whisper起動時に黒いコンソールが出にくいよう `CREATE_NO_WINDOW` を指定
+- 実STT成功は v1.0.1 field QA pending
 
 ---
 

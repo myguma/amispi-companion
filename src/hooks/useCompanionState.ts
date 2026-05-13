@@ -52,6 +52,8 @@ function voiceErrorLine(error: STTError | string): string {
   }
   if (normalized.includes("too_long")) return "少し長かったみたい。";
   if (normalized.includes("timeout")) return "声の解析、時間がかかった。";
+  if (normalized.includes("ffmpeg_unavailable")) return "FFmpegの設定、まだみたい。";
+  if (normalized.includes("conversion_failed")) return "音声の変換、うまくいかなかった。";
   if (normalized.includes("unavailable")) return "Whisperの設定、まだみたい。";
   if (normalized.includes("no_speech") || normalized.includes("empty")) return "うまく聞き取れなかった。";
   return "声、うまく拾えなかった。";

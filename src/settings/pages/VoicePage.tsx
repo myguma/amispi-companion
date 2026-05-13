@@ -178,6 +178,13 @@ export function VoicePage() {
                 placeholder="C:\path\to\ggml-tiny.bin"
                 onChange={(v) => update({ whisperModelPath: v })}
               />
+              <TextInput
+                label="FFmpeg executable path"
+                note="WebView録音をWhisper用の16kHz mono PCM WAVへ変換するために使います。クラウド送信はありません。"
+                value={s.ffmpegExecutablePath}
+                placeholder="C:\tools\ffmpeg\bin\ffmpeg.exe"
+                onChange={(v) => update({ ffmpegExecutablePath: v })}
+              />
 
               <div style={{ padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
                 <div style={{ fontSize: 13, marginBottom: 4 }}>タイムアウト (秒)</div>
@@ -192,7 +199,8 @@ export function VoicePage() {
               </div>
 
               <div style={{ fontSize: 11, color: "#777", lineHeight: 1.7, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
-                実行時は一時音声ファイルを作成し、処理後に削除します。Whisper CLI は
+                実行時はWebView録音を一時ファイルに保存し、FFmpegで16kHz mono PCM WAVへ変換してからWhisperへ渡します。
+                元音声・変換後WAV・文字起こしファイルは処理後に削除します。Whisper CLI は
                 <code style={{ margin: "0 3px" }}>-m</code>
                 <code style={{ margin: "0 3px" }}>-f</code>
                 <code style={{ margin: "0 3px" }}>-otxt</code>

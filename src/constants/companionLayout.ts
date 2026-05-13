@@ -6,7 +6,8 @@ export const CHARACTER_SPRITE_H = 160;
 export const CHARACTER_BOTTOM_PAD = 24;
 export const SPEECH_BUBBLE_GAP = 8;
 export const SPEECH_BUBBLE_HIT_H = 96;
-export const UPDATE_BADGE_GAP = 4;
+export const UPDATE_BADGE_RIGHT = 8;
+export const UPDATE_BADGE_BOTTOM = 8;
 export const UPDATE_BADGE_HIT_W = 96;
 export const UPDATE_BADGE_HIT_H = 28;
 

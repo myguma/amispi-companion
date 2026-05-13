@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   sttEngine: "mock",
   whisperExecutablePath: "",
   whisperModelPath: "",
+  ffmpegExecutablePath: "",
   whisperTimeoutMs: 30_000,
 
   mediaAwarenessEnabled: false,

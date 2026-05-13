@@ -29,8 +29,38 @@
 > v1.0.0-rc.1 では新機能追加なしでrelease candidate checklist / release notes draft / Known Issuesを整理。
 > v1.0.0 ではstable tagとしてrelease notesを追加。v1.0.0自体のfield QAは未実施。
 > v1.0.0後に v2 roadmap draft を追加。実装には未着手。
+> v1.0.0 field QAでは基本操作が通過し、v1.0.1でUpdateBadge位置とWhisper WAV変換をhotfix。
 
-**更新: 2026-05-13 (v1.0.0)**
+**更新: 2026-05-14 (v1.0.1)**
+
+---
+
+## v1.0.1 での更新内容
+
+### Field QA hotfix
+
+**v1.0.0 field QAで確認できたこと:**
+- 起動、idle / speech / drag / speech中drag、右クリック、click-through、設定画面はOK
+- Onboarding / Memory / Update / Debug / Transparency はOK
+- Memory export UIはOK
+- Ollama未起動でもアプリ全体は落ちない
+- Whisper未設定時のvoice long pressは短い案内で復帰する
+- whisper-cli関連DLLを同じフォルダへ置くことでDLL missing errorは解消
+
+**残問題:**
+- UpdateBadgeがspeech bubbleと被ることがあった
+- whisper-cliは起動しているが、WebView録音形式を直接読めず transcript が空になっている可能性が高い
+
+**v1.0.1修正:**
+- UpdateBadgeをキャラ頭上から右下へ移動し、Rust hit testも同じ右下矩形へ同期
+- `ffmpegExecutablePath` を追加し、WebView録音をFFmpegで16kHz mono PCM WAVへ変換してからWhisper CLIへ渡す
+- 一時音声・変換WAV・transcriptは処理後に一時ディレクトリごと削除
+- compact `200x280` / click-through / ContextMenu / character layout は維持
+
+**field QA pending:**
+- FFmpeg path設定後にvoice long pressで実STTが成功するか
+- FFmpeg/Whisper失敗時の短い案内
+- UpdateBadge右下配置がspeech bubbleと重ならずクリックできるか
 
 ---
 

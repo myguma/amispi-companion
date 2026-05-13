@@ -16,8 +16,9 @@ export function getSTTAdapter(): STTAdapter {
   if (engine === "whisperCli") {
     const execPath  = s.whisperExecutablePath ?? "";
     const modelPath = s.whisperModelPath      ?? "";
+    const ffmpegPath = s.ffmpegExecutablePath ?? "";
     const timeoutMs = s.whisperTimeoutMs      ?? 30_000;
-    return new WhisperCliSTTAdapter(execPath, modelPath, timeoutMs);
+    return new WhisperCliSTTAdapter(execPath, modelPath, ffmpegPath, timeoutMs);
   }
 
   return new MockSTTAdapter();

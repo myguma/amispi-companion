@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v1.0.0)**
+**最終更新: 2026-05-14 (v1.0.1)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.0
-**フェーズ:** Stable tag + v2 roadmap draft (v1.0.0 field QA not performed)
+**バージョン:** v1.0.1
+**フェーズ:** Stable field QA hotfix (UpdateBadge + Whisper WAV conversion)
 **全体進捗:** 約 94%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,8 +24,8 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.0)
-✅ cargo build  → Finished dev profile (v1.0.0)
+✅ npm run build → ✓ built (v1.0.1)
+✅ cargo build  → Finished dev profile (v1.0.1)
 ✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
 ```
 
@@ -71,6 +71,19 @@
 | Release Candidate | docs / Known Issues / QA checklist / release notes draft整理 | ✅ v1.0.0-rc.1 / field QA pending |
 | Stable | v1.0.0 stable notes / Known Issues / hotfix policy整理 | ✅ v1.0.0 / field QA not performed |
 | v2 Roadmap Draft | docs/V2_ROADMAP_DRAFT.md にv2候補と非目標を整理 | ✅ docs only |
+| Field QA Hotfix | UpdateBadge右下配置・FFmpegによるWhisper用WAV変換 | ✅ v1.0.1 / voice STT field QA pending |
+
+---
+
+## v1.0.1 hotfix summary
+
+- v1.0.0 field QAで起動 / compact character layout / settings / onboarding / memory / update / debug / transparency / right click / click-through / voice failure recovery は概ねOK
+- UpdateBadgeがspeech bubbleと被る問題を避けるため、companion右下の小さなpillへ移動
+- Rust hit testも右下badge矩形へ同期し、UpdateBadge表示中だけinteractiveにする
+- WebView録音Blobをwhisper-cliへ直接渡さず、FFmpegで16kHz mono PCM WAVへ変換してから渡す
+- `ffmpegExecutablePath` をVoice設定に追加
+- Voice実STT成功は v1.0.1 field QA pending
+- compact `200x280` window / speech時window resize禁止 / click-through / ContextMenu / character layout は維持
 
 ---
 
@@ -89,17 +102,16 @@
 
 - 新機能追加なし
 - `docs/V1_STABLE_RELEASE_NOTES.md` を追加
-- v1.0.0自体のfield QA未実施を明記
+- v1.0.0 stable後の実機QAで起動 / compact character layout / settings / onboarding / memory / update / debug / transparency / right click / click-through は通過
 - v1.0.1+ hotfix方針を記録
 - compact `200x280` window / hit test / character layout / Voice / Ollama / Active App は変更なし
 
-### B: Field QA pending
+### B: Field QA remaining
 
-- v1.0.0自体のWindows実機QA
 - 長時間常駐
 - 実インストール環境のupdate
-- Whisper binary/model/path/MIME type/マイク権限/一時ファイル削除
-- Memory export file save
+- v1.0.1のFFmpeg変換後のWhisper実STT
+- マイク権限差分 / 音声デバイス差分 / 一時ファイル削除の継続確認
 
 ---
 

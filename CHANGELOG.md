@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.0.1] — 2026-05-14
+
+### Fixed (Field QA Hotfix)
+
+- **UpdateBadge**:
+  - companion window内のUpdateBadgeをキャラ頭上から右下へ移動
+  - speech bubbleとの重なりを避ける
+  - Rust hit testも右下badge矩形へ同期し、表示中だけinteractiveにする設計を維持
+- **Voice / Whisper**:
+  - `ffmpegExecutablePath` 設定を追加
+  - WebView録音Blobを一時ファイルへ保存後、FFmpegで16kHz mono PCM WAVへ変換してからWhisper CLIへ渡す
+  - FFmpeg未設定時は「FFmpegの設定、まだみたい。」系の短い案内に分岐
+  - Whisper/FFmpeg実行後は元音声・変換WAV・transcriptを含む一時ディレクトリ削除を維持
+  - WindowsでWhisper/FFmpeg起動時の一瞬の黒いコンソールを抑えるため `CREATE_NO_WINDOW` を指定
+
+### Maintained
+
+- compact `200x280` window / speech時window resize不採用 / 410px expanded window不採用は維持
+- character layout / speech bubble / ContextMenu / click-through / drag / voice long press / Onboarding / Memory / Update / Debug / Transparency / Ollama / Active Appは大きく変更なし
+
+### Field QA
+
+- v1.0.0 field QAで基本動作はおおむねOK
+- Whisper DLL missingはユーザー側でDLLを同じフォルダに置くことで解決確認
+- v1.0.1のFFmpeg変換による実STT成功は field QA pending
+
 ## [1.0.0] — 2026-05-13
 
 ### Stable

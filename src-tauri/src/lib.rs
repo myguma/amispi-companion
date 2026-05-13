@@ -38,7 +38,9 @@ const SPEECH_BUBBLE_GAP_LOGICAL: f64 = 8.0;
 #[cfg(windows)]
 const SPEECH_BUBBLE_HIT_H_LOGICAL: f64 = 96.0;
 #[cfg(windows)]
-const UPDATE_BADGE_GAP_LOGICAL: f64 = 4.0;
+const UPDATE_BADGE_RIGHT_LOGICAL: f64 = 8.0;
+#[cfg(windows)]
+const UPDATE_BADGE_BOTTOM_LOGICAL: f64 = 8.0;
 #[cfg(windows)]
 const UPDATE_BADGE_HIT_W_LOGICAL: f64 = 96.0;
 #[cfg(windows)]
@@ -276,10 +278,41 @@ fn read_transcript(output_base: &Path, stdout_text: &str) -> Result<String, Stri
     Err("no speech detected".to_string())
 }
 
+#[cfg(windows)]
+fn hide_console_window(command: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    command.creation_flags(CREATE_NO_WINDOW);
+}
+
+#[cfg(not(windows))]
+fn hide_console_window(_command: &mut Command) {}
+
+fn wait_with_timeout(
+    mut child: std::process::Child,
+    timeout: Duration,
+    command_name: &str,
+) -> Result<std::process::Output, String> {
+    let started = Instant::now();
+    loop {
+        if child.try_wait().map_err(|e| e.to_string())?.is_some() {
+            return child.wait_with_output().map_err(|e| e.to_string());
+        }
+
+        if started.elapsed() >= timeout {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(format!("{command_name} timed out"));
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
+}
+
 #[tauri::command]
 async fn transcribe_with_whisper(
     executable_path: String,
     model_path: String,
+    ffmpeg_executable_path: String,
     audio_bytes: Vec<u8>,
     mime_type: String,
     timeout_ms: u64,
@@ -293,6 +326,10 @@ async fn transcribe_with_whisper(
         if model_path.is_empty() {
             return Err("Whisper model path is empty".to_string());
         }
+        let ffmpeg_executable_path = ffmpeg_executable_path.trim();
+        if ffmpeg_executable_path.is_empty() {
+            return Err("FFmpeg executable path is empty".to_string());
+        }
         if audio_bytes.is_empty() {
             return Err("audio input is empty".to_string());
         }
@@ -300,48 +337,71 @@ async fn transcribe_with_whisper(
         let temp_dir = unique_voice_temp_dir()?;
         let ext = audio_extension_from_mime(&mime_type);
         let input_path = temp_dir.join(format!("input.{ext}"));
+        let wav_path = temp_dir.join("input.wav");
         let output_base = temp_dir.join("transcript");
 
         let result = (|| {
             fs::write(&input_path, &audio_bytes).map_err(|e| e.to_string())?;
 
-            let mut child = Command::new(executable_path)
+            let timeout = Duration::from_millis(timeout_ms.clamp(1_000, 120_000));
+
+            let mut ffmpeg = Command::new(ffmpeg_executable_path);
+            ffmpeg
+                .arg("-y")
+                .arg("-i")
+                .arg(&input_path)
+                .arg("-ar")
+                .arg("16000")
+                .arg("-ac")
+                .arg("1")
+                .arg("-c:a")
+                .arg("pcm_s16le")
+                .arg(&wav_path)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped());
+            hide_console_window(&mut ffmpeg);
+
+            let ffmpeg_child = ffmpeg
+                .spawn()
+                .map_err(|e| format!("failed to start FFmpeg: {e}"))?;
+            let ffmpeg_output = wait_with_timeout(ffmpeg_child, timeout, "FFmpeg")?;
+            if !ffmpeg_output.status.success() {
+                let stderr_text = String::from_utf8_lossy(&ffmpeg_output.stderr);
+                return Err(format!(
+                    "FFmpeg conversion failed: {}",
+                    stderr_text.trim().chars().take(400).collect::<String>()
+                ));
+            }
+
+            let mut whisper = Command::new(executable_path);
+            whisper
                 .arg("-m")
                 .arg(model_path)
                 .arg("-f")
-                .arg(&input_path)
+                .arg(&wav_path)
                 .arg("-otxt")
                 .arg("-of")
                 .arg(&output_base)
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
-                .stderr(Stdio::piped())
+                .stderr(Stdio::piped());
+            hide_console_window(&mut whisper);
+
+            let whisper_child = whisper
                 .spawn()
                 .map_err(|e| format!("failed to start Whisper CLI: {e}"))?;
 
-            let timeout = Duration::from_millis(timeout_ms.clamp(1_000, 120_000));
-            let started = Instant::now();
-            loop {
-                if let Some(_status) = child.try_wait().map_err(|e| e.to_string())? {
-                    let output = child.wait_with_output().map_err(|e| e.to_string())?;
-                    let stdout_text = String::from_utf8_lossy(&output.stdout).to_string();
-                    if !output.status.success() {
-                        let stderr_text = String::from_utf8_lossy(&output.stderr);
-                        return Err(format!(
-                            "Whisper CLI failed: {}",
-                            stderr_text.trim().chars().take(400).collect::<String>()
-                        ));
-                    }
-                    return read_transcript(&output_base, &stdout_text);
-                }
-
-                if started.elapsed() >= timeout {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    return Err("Whisper CLI timed out".to_string());
-                }
-                std::thread::sleep(Duration::from_millis(50));
+            let output = wait_with_timeout(whisper_child, timeout, "Whisper CLI")?;
+            let stdout_text = String::from_utf8_lossy(&output.stdout).to_string();
+            if !output.status.success() {
+                let stderr_text = String::from_utf8_lossy(&output.stderr);
+                return Err(format!(
+                    "Whisper CLI failed: {}",
+                    stderr_text.trim().chars().take(400).collect::<String>()
+                ));
             }
+            read_transcript(&output_base, &stdout_text)
         })();
 
         let _ = fs::remove_dir_all(&temp_dir);
@@ -406,7 +466,8 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                     let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * ui_scale * scale;
                     let bubble_gap = SPEECH_BUBBLE_GAP_LOGICAL * ui_scale * scale;
                     let bubble_hit_h = SPEECH_BUBBLE_HIT_H_LOGICAL * ui_scale * scale;
-                    let update_badge_gap = UPDATE_BADGE_GAP_LOGICAL * ui_scale * scale;
+                    let update_badge_right_pad = UPDATE_BADGE_RIGHT_LOGICAL * ui_scale * scale;
+                    let update_badge_bottom_pad = UPDATE_BADGE_BOTTOM_LOGICAL * ui_scale * scale;
                     let update_badge_w = UPDATE_BADGE_HIT_W_LOGICAL * ui_scale * scale;
                     let update_badge_h = UPDATE_BADGE_HIT_H_LOGICAL * ui_scale * scale;
                     let unit = ui_scale * scale;
@@ -423,10 +484,10 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                         && lx >= 8.0 * unit
                         && lx <= size.width as f64 - 8.0 * unit;
 
-                    let update_badge_bottom = char_top - update_badge_gap;
+                    let update_badge_bottom = size.height as f64 - update_badge_bottom_pad;
                     let update_badge_top = update_badge_bottom - update_badge_h;
-                    let update_badge_left = center_x - update_badge_w / 2.0;
-                    let update_badge_right = center_x + update_badge_w / 2.0;
+                    let update_badge_right = size.width as f64 - update_badge_right_pad;
+                    let update_badge_left = update_badge_right - update_badge_w;
                     let update_badge_hit = UPDATE_BADGE_VISIBLE.load(Ordering::Relaxed)
                         && ly >= update_badge_top
                         && ly <= update_badge_bottom

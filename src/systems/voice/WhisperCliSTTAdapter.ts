@@ -14,8 +14,11 @@ const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 function errorKind(message: string): STTError {
   const lower = message.toLowerCase();
   if (lower.includes("timeout") || lower.includes("timed out")) return "timeout";
-  if (lower.includes("empty") || lower.includes("no speech")) return "no_speech";
+  if (lower.includes("ffmpeg executable path is empty")) return "ffmpeg_unavailable";
+  if (lower.includes("failed to start ffmpeg")) return "ffmpeg_unavailable";
+  if (lower.includes("ffmpeg conversion failed")) return "conversion_failed";
   if (lower.includes("path is empty") || lower.includes("not found") || lower.includes("failed to start")) return "unavailable";
+  if (lower.includes("empty") || lower.includes("no speech")) return "no_speech";
   return "error";
 }
 
@@ -39,12 +42,14 @@ export class WhisperCliSTTAdapter implements STTAdapter {
 
   private readonly executablePath: string;
   private readonly modelPath: string;
+  private readonly ffmpegExecutablePath: string;
   // Phase 6b-real-2 で whisper CLI タイムアウト設定に使用
   readonly timeoutMs: number;
 
-  constructor(executablePath: string, modelPath: string, timeoutMs = 30_000) {
+  constructor(executablePath: string, modelPath: string, ffmpegExecutablePath: string, timeoutMs = 30_000) {
     this.executablePath = executablePath;
     this.modelPath = modelPath;
+    this.ffmpegExecutablePath = ffmpegExecutablePath;
     this.timeoutMs = timeoutMs;
   }
 
@@ -67,6 +72,7 @@ export class WhisperCliSTTAdapter implements STTAdapter {
       const text = await invoke<string>("transcribe_with_whisper", {
         executablePath: this.executablePath,
         modelPath: this.modelPath,
+        ffmpegExecutablePath: this.ffmpegExecutablePath,
         audioBytes: bytes,
         mimeType,
         timeoutMs: this.timeoutMs,

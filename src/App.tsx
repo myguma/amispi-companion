@@ -22,7 +22,10 @@ import {
   COMPANION_WINDOW_W,
   CONTEXT_MENU_H,
   SPEECH_BUBBLE_GAP,
-  UPDATE_BADGE_GAP,
+  UPDATE_BADGE_BOTTOM,
+  UPDATE_BADGE_HIT_H,
+  UPDATE_BADGE_HIT_W,
+  UPDATE_BADGE_RIGHT,
   normalizeCompanionScale,
 } from "./constants/companionLayout";
 import { useSettings } from "./settings/store";
@@ -224,7 +227,10 @@ export default function App() {
   const windowH = Math.round(COMPANION_COMPACT_H * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
   const speechBubbleGap = Math.round(SPEECH_BUBBLE_GAP * scale);
-  const updateBadgeGap = Math.round(UPDATE_BADGE_GAP * scale);
+  const updateBadgeRight = Math.round(UPDATE_BADGE_RIGHT * scale);
+  const updateBadgeBottom = Math.round(UPDATE_BADGE_BOTTOM * scale);
+  const updateBadgeW = Math.round(UPDATE_BADGE_HIT_W * scale);
+  const updateBadgeH = Math.round(UPDATE_BADGE_HIT_H * scale);
   const menuSafeH = Math.round(CONTEXT_MENU_H * scale);
   const updateBadgeVisible = updateAvailable !== null || installing;
 
@@ -375,9 +381,13 @@ export default function App() {
       {updateAvailable && (
         <div ref={updateBadgeRef} style={{
           position: "absolute",
-          left: "50%",
-          bottom: bottomPad + characterH + updateBadgeGap,
-          transform: "translateX(-50%)",
+          right: updateBadgeRight,
+          bottom: updateBadgeBottom,
+          width: updateBadgeW,
+          height: updateBadgeH,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
           pointerEvents: "auto",
         }}>
           <UpdateBadge version={updateAvailable.version} installing={installing} onInstall={installUpdate} />
