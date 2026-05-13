@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.1)**
+**最終更新: 2026-05-14 (v1.0.2)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.1
-**フェーズ:** Stable field QA hotfix (UpdateBadge + Whisper WAV conversion)
-**全体進捗:** 約 94%
+**バージョン:** v1.0.2
+**フェーズ:** Voice transcript debug and prompt repair
+**全体進捗:** 約 95%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,8 +24,8 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.1)
-✅ cargo build  → Finished dev profile (v1.0.1)
+✅ npm run build → ✓ built (v1.0.2)
+✅ cargo build  → Finished dev profile (v1.0.2)
 ✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
 ```
 
@@ -72,6 +72,19 @@
 | Stable | v1.0.0 stable notes / Known Issues / hotfix policy整理 | ✅ v1.0.0 / field QA not performed |
 | v2 Roadmap Draft | docs/V2_ROADMAP_DRAFT.md にv2候補と非目標を整理 | ✅ docs only |
 | Field QA Hotfix | UpdateBadge右下配置・FFmpegによるWhisper用WAV変換 | ✅ v1.0.1 / voice STT field QA pending |
+| Voice transcript debug | VoicePage transcript preview・voice prompt/fallback/filter修正 | ✅ v1.0.2 / voice conversation field QA pending |
+
+---
+
+## v1.0.2 hotfix summary
+
+- VoicePageに直近の音声認識結果を追加
+- transcript previewは最大80文字の一時表示のみ。MemoryEvent / localStorage / exportへ保存しない
+- DebugMode ON時にMIME、extension、FFmpeg/Whisper結果、stderr preview、temp cleanup、AI sourceを表示
+- voice trigger時のPromptBuilderへ「音声内容に直接返答する」追加ルールを入れた
+- transcriptありAI失敗時はclick fallbackを使わず、voice専用fallbackで内容を少し反映
+- QualityFilterで英字混入、`继续观察`、assistant的表現、voice generic返答を拒否
+- compact `200x280` window / UpdateBadge / click-through / ContextMenu / character layout は維持
 
 ---
 

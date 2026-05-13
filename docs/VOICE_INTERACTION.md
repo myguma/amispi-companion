@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-14 (v1.0.1)**
+**最終更新: 2026-05-14 (v1.0.2)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -24,7 +24,21 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
 | Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + FFmpeg WAV 変換 | ✅ v1.0.1 hotfix / field QA pending |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v0.3.1 hardening / field QA pending |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v1.0.2 transcript debug / field QA pending |
+
+---
+
+## v1.0.2 transcript debug / prompt repair
+
+- VoicePageに直近の音声認識結果を追加
+- transcript previewは最大80文字、length/status/updatedAtを表示
+- DebugMode ON時のみ、MIME type、input extension、FFmpeg/Whisper success、stderr preview、temp cleanup、AI sourceを表示
+- transcriptは揮発状態だけに保持し、MemoryEvent / localStorage / Memory exportへ保存しない
+- 音声ファイル・変換WAV・Whisper transcript txtは一時ディレクトリごと削除する
+- voice trigger時のPromptBuilderを強化し、聞き取った内容に直接返答させる
+- transcriptありAI失敗時はclick fallbackではなくvoice fallbackを使う
+- QualityFilterで英字混入、`继续观察`、assistant的表現、voice generic返答を拒否する
+- Voice conversation qualityは field QA pending
 
 ---
 

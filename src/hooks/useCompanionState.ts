@@ -16,7 +16,7 @@ import type { CompanionEmotion } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
 import { buildMemorySummary } from "../companion/memory/buildMemorySummary";
-import { getAIResponse as getNewAIResponse } from "../companion/ai/AIProviderManager";
+import { getAIResponse as getNewAIResponse, getLastAIResult } from "../companion/ai/AIProviderManager";
 import { buildCompanionContext } from "../systems/ai/buildCompanionContext";
 import { canSpeak } from "../companion/speech/SpeechPolicy";
 import { countInLastHour } from "../companion/reactions/reactionHistory";
@@ -25,6 +25,8 @@ import { EMPTY_SNAPSHOT } from "../observation/types";
 import { inferActivity } from "../companion/activity/inferActivity";
 import { getSTTAdapter } from "../systems/voice/STTAdapterManager";
 import type { STTError } from "../systems/voice/STTAdapter";
+import { buildVoiceFallback } from "../systems/voice/voiceFallback";
+import { patchLastVoiceDebug, setLastVoiceDebug } from "../systems/voice/voiceDebugStore";
 
 export type { VoiceUIState };  // 後方互換のため再エクスポート
 
@@ -57,6 +59,14 @@ function voiceErrorLine(error: STTError | string): string {
   if (normalized.includes("unavailable")) return "Whisperの設定、まだみたい。";
   if (normalized.includes("no_speech") || normalized.includes("empty")) return "うまく聞き取れなかった。";
   return "声、うまく拾えなかった。";
+}
+
+function voiceDebugStatusFromError(error: STTError | null): "no_speech" | "ffmpeg_unavailable" | "conversion_failed" | "timeout" | "error" {
+  if (error === "no_speech") return "no_speech";
+  if (error === "ffmpeg_unavailable") return "ffmpeg_unavailable";
+  if (error === "conversion_failed") return "conversion_failed";
+  if (error === "timeout") return "timeout";
+  return "error";
 }
 
 export function useCompanionState(
@@ -286,17 +296,32 @@ export function useCompanionState(
         }
       }
 
-      text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+      const aiDebug = getLastAIResult();
+      if (!text) {
+        text = buildVoiceFallback(transcript);
+        patchLastVoiceDebug({
+          aiSource: aiDebug.source,
+          aiFallbackReason: aiDebug.fallbackReason ?? "voice_fallback",
+          responsePreview: text.slice(0, 80),
+        });
+      } else {
+        patchLastVoiceDebug({
+          aiSource: aiDebug.source,
+          aiFallbackReason: aiDebug.fallbackReason,
+          responsePreview: text.slice(0, 80),
+        });
+      }
       triggerSpeak(text, emotion);
     } finally {
       setVoiceUIState("voiceReady");
     }
-  }, [triggerSpeak, fireReaction]);
+  }, [triggerSpeak]);
 
   // ──────────────────────────────────────────
   // 録音中フラグ (voiceListening)
   // ──────────────────────────────────────────
   const voiceListeningStart = useCallback(() => {
+    setLastVoiceDebug({ status: "recording" });
     setVoiceUIState("voiceListening");
   }, []);
 
@@ -311,6 +336,7 @@ export function useCompanionState(
     setTimeout(() => {
       setVoiceUIState(s.voiceInputEnabled ? "voiceReady" : "voiceOff");
     }, 3_000);
+    patchLastVoiceDebug({ status: "error", stderrPreview: String(err).slice(0, 200) });
   }, [triggerSpeak]);
 
   // ──────────────────────────────────────────
@@ -321,6 +347,12 @@ export function useCompanionState(
   const requestVoiceFromBlob = useCallback(async (blob: Blob) => {
     setVoiceUIState("voiceTranscribing");
     setState("thinking");
+    setLastVoiceDebug({
+      status: "transcribing",
+      inputMimeType: blob.type || "application/octet-stream",
+      transcriptPreview: "",
+      transcriptLength: 0,
+    });
 
     const s      = getSettings();
     const events = getAllEvents();
@@ -348,6 +380,11 @@ export function useCompanionState(
 
     if (!transcript) {
       setVoiceUIState("voiceError");
+      patchLastVoiceDebug({
+        status: voiceDebugStatusFromError(sttError),
+        transcriptPreview: "",
+        transcriptLength: 0,
+      });
       triggerSpeak(voiceErrorLine(sttError ?? "no_speech"), "concerned");
       setTimeout(() => {
         const latest = getSettings();
@@ -373,12 +410,26 @@ export function useCompanionState(
           }
         } catch { /* AI エラー → reaction fallback */ }
       }
-      text ??= fireReaction("click") ?? pickDialogue("touch_reaction");
+      const aiDebug = getLastAIResult();
+      if (!text) {
+        text = buildVoiceFallback(transcript);
+        patchLastVoiceDebug({
+          aiSource: aiDebug.source,
+          aiFallbackReason: aiDebug.fallbackReason ?? "voice_fallback",
+          responsePreview: text.slice(0, 80),
+        });
+      } else {
+        patchLastVoiceDebug({
+          aiSource: aiDebug.source,
+          aiFallbackReason: aiDebug.fallbackReason,
+          responsePreview: text.slice(0, 80),
+        });
+      }
       triggerSpeak(text, emotion);
     } finally {
       setVoiceUIState("voiceReady");
     }
-  }, [triggerSpeak, fireReaction]);
+  }, [triggerSpeak]);
 
   // ──────────────────────────────────────────
   // クリック処理

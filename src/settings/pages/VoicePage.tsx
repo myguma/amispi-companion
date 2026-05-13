@@ -1,8 +1,11 @@
 // 音声入力設定ページ (Phase 6b-real)
 // Push-to-talk の設定 / STT エンジン選択 / プライバシー説明
 
+import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import type { VoiceInputMode, STTEngine } from "../types";
+import { getLastVoiceDebug, subscribeLastVoiceDebug } from "../../systems/voice/voiceDebugStore";
+import type { LastVoiceDebug } from "../../systems/voice/voiceDebugStore";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -72,8 +75,37 @@ const STT_OPTIONS: { v: STTEngine; label: string; note: string }[] = [
   { v: "whisperCli", label: "Whisper CLI",    note: "ローカル whisper.cpp executable を使用 (要path/model設定)" },
 ];
 
+function boolLabel(value: boolean | undefined): string {
+  if (value === undefined) return "-";
+  return value ? "yes" : "no";
+}
+
+function statusLabel(status: LastVoiceDebug["status"]): string {
+  const labels: Record<LastVoiceDebug["status"], string> = {
+    idle: "idle",
+    recording: "recording",
+    transcribing: "transcribing",
+    success: "success",
+    no_speech: "no speech",
+    ffmpeg_unavailable: "FFmpeg未設定",
+    conversion_failed: "変換失敗",
+    whisper_failed: "Whisper失敗",
+    timeout: "timeout",
+    error: "error",
+  };
+  return labels[status] ?? status;
+}
+
+function timeLabel(value: number): string {
+  if (!value) return "-";
+  return new Date(value).toLocaleString();
+}
+
 export function VoicePage() {
   const [s, update] = useSettings();
+  const [voiceDebug, setVoiceDebug] = useState<LastVoiceDebug>(getLastVoiceDebug());
+
+  useEffect(() => subscribeLastVoiceDebug(() => setVoiceDebug(getLastVoiceDebug())), []);
 
   return (
     <div>
@@ -209,6 +241,32 @@ export function VoicePage() {
               </div>
             </>
           )}
+
+          <SectionHead title="直近の音声認識結果" />
+          <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+            <div><strong>status:</strong> {statusLabel(voiceDebug.status)}</div>
+            <div><strong>transcript:</strong> {voiceDebug.transcriptPreview || "なし"}</div>
+            <div><strong>length:</strong> {voiceDebug.transcriptLength ?? 0}</div>
+            <div><strong>updated:</strong> {timeLabel(voiceDebug.updatedAt)}</div>
+            <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
+              transcriptは確認用の一時表示だけです。記憶・export・localStorageには保存しません。
+            </div>
+            {s.debugModeEnabled && (
+              <div style={{ marginTop: 8, padding: "8px", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, fontSize: 11, color: "#777" }}>
+                <div>mime: {voiceDebug.inputMimeType ?? "-"}</div>
+                <div>extension: {voiceDebug.inputExtension ?? "-"}</div>
+                <div>conversion: {boolLabel(voiceDebug.conversionUsed)}</div>
+                <div>ffmpeg configured: {boolLabel(voiceDebug.ffmpegConfigured)}</div>
+                <div>ffmpeg ok: {boolLabel(voiceDebug.ffmpegExitOk)}</div>
+                <div>whisper ok: {boolLabel(voiceDebug.whisperExitOk)}</div>
+                <div>temp cleanup: {boolLabel(voiceDebug.tempCleanupDone)}</div>
+                <div>ai source: {voiceDebug.aiSource ?? "-"}</div>
+                <div>ai fallback: {voiceDebug.aiFallbackReason ?? "-"}</div>
+                <div>response: {voiceDebug.responsePreview ?? "-"}</div>
+                {voiceDebug.stderrPreview && <div>stderr: {voiceDebug.stderrPreview}</div>}
+              </div>
+            )}
+          </div>
         </>
       )}
 

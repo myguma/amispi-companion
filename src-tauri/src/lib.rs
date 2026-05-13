@@ -5,6 +5,7 @@ use std::{
     process::{Command, Stdio},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
+use serde::Serialize;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -278,6 +279,43 @@ fn read_transcript(output_base: &Path, stdout_text: &str) -> Result<String, Stri
     Err("no speech detected".to_string())
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WhisperTranscriptionResult {
+    status: String,
+    transcript: String,
+    input_mime_type: String,
+    input_extension: String,
+    conversion_used: bool,
+    ffmpeg_configured: bool,
+    ffmpeg_exit_ok: Option<bool>,
+    whisper_exit_ok: Option<bool>,
+    stderr_preview: Option<String>,
+    temp_cleanup_done: bool,
+}
+
+impl WhisperTranscriptionResult {
+    fn new(status: &str, mime_type: &str, input_extension: &str, ffmpeg_configured: bool) -> Self {
+        Self {
+            status: status.to_string(),
+            transcript: String::new(),
+            input_mime_type: mime_type.to_string(),
+            input_extension: input_extension.to_string(),
+            conversion_used: true,
+            ffmpeg_configured,
+            ffmpeg_exit_ok: None,
+            whisper_exit_ok: None,
+            stderr_preview: None,
+            temp_cleanup_done: false,
+        }
+    }
+}
+
+fn stderr_preview(bytes: &[u8]) -> Option<String> {
+    let text = String::from_utf8_lossy(bytes).trim().chars().take(200).collect::<String>();
+    if text.is_empty() { None } else { Some(text) }
+}
+
 #[cfg(windows)]
 fn hide_console_window(command: &mut Command) {
     use std::os::windows::process::CommandExt;
@@ -316,32 +354,51 @@ async fn transcribe_with_whisper(
     audio_bytes: Vec<u8>,
     mime_type: String,
     timeout_ms: u64,
-) -> Result<String, String> {
+) -> Result<WhisperTranscriptionResult, String> {
     tokio::task::spawn_blocking(move || {
         let executable_path = executable_path.trim();
         let model_path = model_path.trim();
+        let ffmpeg_executable_path = ffmpeg_executable_path.trim();
+        let ext = audio_extension_from_mime(&mime_type).to_string();
+        let mut early = WhisperTranscriptionResult::new(
+            "error",
+            &mime_type,
+            &ext,
+            !ffmpeg_executable_path.is_empty(),
+        );
         if executable_path.is_empty() {
-            return Err("Whisper executable path is empty".to_string());
+            early.status = "error".to_string();
+            early.stderr_preview = Some("Whisper executable path is empty".to_string());
+            return Ok(early);
         }
         if model_path.is_empty() {
-            return Err("Whisper model path is empty".to_string());
-        }
-        let ffmpeg_executable_path = ffmpeg_executable_path.trim();
-        if ffmpeg_executable_path.is_empty() {
-            return Err("FFmpeg executable path is empty".to_string());
+            early.status = "error".to_string();
+            early.stderr_preview = Some("Whisper model path is empty".to_string());
+            return Ok(early);
         }
         if audio_bytes.is_empty() {
-            return Err("audio input is empty".to_string());
+            early.status = "no_speech".to_string();
+            early.stderr_preview = Some("audio input is empty".to_string());
+            return Ok(early);
+        }
+        if ffmpeg_executable_path.is_empty() {
+            early.status = "ffmpeg_unavailable".to_string();
+            early.stderr_preview = Some("FFmpeg executable path is empty".to_string());
+            return Ok(early);
         }
 
         let temp_dir = unique_voice_temp_dir()?;
-        let ext = audio_extension_from_mime(&mime_type);
         let input_path = temp_dir.join(format!("input.{ext}"));
         let wav_path = temp_dir.join("input.wav");
         let output_base = temp_dir.join("transcript");
 
-        let result = (|| {
-            fs::write(&input_path, &audio_bytes).map_err(|e| e.to_string())?;
+        let mut result = WhisperTranscriptionResult::new("error", &mime_type, &ext, true);
+        let run_result: Result<(), String> = (|| {
+            if let Err(e) = fs::write(&input_path, &audio_bytes) {
+                result.status = "error".to_string();
+                result.stderr_preview = Some(e.to_string());
+                return Ok(());
+            }
 
             let timeout = Duration::from_millis(timeout_ms.clamp(1_000, 120_000));
 
@@ -362,16 +419,27 @@ async fn transcribe_with_whisper(
                 .stderr(Stdio::piped());
             hide_console_window(&mut ffmpeg);
 
-            let ffmpeg_child = ffmpeg
-                .spawn()
-                .map_err(|e| format!("failed to start FFmpeg: {e}"))?;
-            let ffmpeg_output = wait_with_timeout(ffmpeg_child, timeout, "FFmpeg")?;
+            let ffmpeg_child = match ffmpeg.spawn() {
+                Ok(child) => child,
+                Err(e) => {
+                    result.status = "ffmpeg_unavailable".to_string();
+                    result.stderr_preview = Some(format!("failed to start FFmpeg: {e}"));
+                    return Ok(());
+                }
+            };
+            let ffmpeg_output = match wait_with_timeout(ffmpeg_child, timeout, "FFmpeg") {
+                Ok(output) => output,
+                Err(e) => {
+                    result.status = if e.contains("timed out") { "timeout" } else { "conversion_failed" }.to_string();
+                    result.stderr_preview = Some(e);
+                    return Ok(());
+                }
+            };
+            result.ffmpeg_exit_ok = Some(ffmpeg_output.status.success());
             if !ffmpeg_output.status.success() {
-                let stderr_text = String::from_utf8_lossy(&ffmpeg_output.stderr);
-                return Err(format!(
-                    "FFmpeg conversion failed: {}",
-                    stderr_text.trim().chars().take(400).collect::<String>()
-                ));
+                result.status = "conversion_failed".to_string();
+                result.stderr_preview = stderr_preview(&ffmpeg_output.stderr);
+                return Ok(());
             }
 
             let mut whisper = Command::new(executable_path);
@@ -388,24 +456,51 @@ async fn transcribe_with_whisper(
                 .stderr(Stdio::piped());
             hide_console_window(&mut whisper);
 
-            let whisper_child = whisper
-                .spawn()
-                .map_err(|e| format!("failed to start Whisper CLI: {e}"))?;
+            let whisper_child = match whisper.spawn() {
+                Ok(child) => child,
+                Err(e) => {
+                    result.status = "whisper_failed".to_string();
+                    result.stderr_preview = Some(format!("failed to start Whisper CLI: {e}"));
+                    return Ok(());
+                }
+            };
 
-            let output = wait_with_timeout(whisper_child, timeout, "Whisper CLI")?;
+            let output = match wait_with_timeout(whisper_child, timeout, "Whisper CLI") {
+                Ok(output) => output,
+                Err(e) => {
+                    result.status = if e.contains("timed out") { "timeout" } else { "whisper_failed" }.to_string();
+                    result.stderr_preview = Some(e);
+                    return Ok(());
+                }
+            };
+            result.whisper_exit_ok = Some(output.status.success());
             let stdout_text = String::from_utf8_lossy(&output.stdout).to_string();
             if !output.status.success() {
-                let stderr_text = String::from_utf8_lossy(&output.stderr);
-                return Err(format!(
-                    "Whisper CLI failed: {}",
-                    stderr_text.trim().chars().take(400).collect::<String>()
-                ));
+                result.status = "whisper_failed".to_string();
+                result.stderr_preview = stderr_preview(&output.stderr);
+                return Ok(());
             }
-            read_transcript(&output_base, &stdout_text)
+
+            match read_transcript(&output_base, &stdout_text) {
+                Ok(text) => {
+                    result.status = "success".to_string();
+                    result.transcript = text;
+                    result.stderr_preview = stderr_preview(&output.stderr);
+                }
+                Err(e) => {
+                    result.status = "no_speech".to_string();
+                    result.stderr_preview = Some(e);
+                }
+            }
+            Ok(())
         })();
 
-        let _ = fs::remove_dir_all(&temp_dir);
-        result
+        if let Err(e) = run_result {
+            result.status = "error".to_string();
+            result.stderr_preview = Some(e);
+        }
+        result.temp_cleanup_done = fs::remove_dir_all(&temp_dir).is_ok();
+        Ok(result)
     })
     .await
     .map_err(|e| e.to_string())?

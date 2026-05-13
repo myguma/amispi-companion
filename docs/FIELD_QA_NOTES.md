@@ -30,8 +30,38 @@
 > v1.0.0 ではstable tagとしてrelease notesを追加。v1.0.0自体のfield QAは未実施。
 > v1.0.0後に v2 roadmap draft を追加。実装には未着手。
 > v1.0.0 field QAでは基本操作が通過し、v1.0.1でUpdateBadge位置とWhisper WAV変換をhotfix。
+> v1.0.1 field QAではFFmpeg/Whisperの実行エラーは解消したが、transcript確認とvoice返答品質が不足。v1.0.2でdebugとprompt/fallbackを修正。
 
-**更新: 2026-05-14 (v1.0.1)**
+**更新: 2026-05-14 (v1.0.2)**
+
+---
+
+## v1.0.2 での更新内容
+
+### Voice transcript debug and prompt repair
+
+**v1.0.1 field QAで確認できたこと:**
+- FFmpeg / Whisper CLIの起動エラーは解消
+- voice long press後に返答が出る
+- ただし「ここにいる」「うん、聞こえてる」系に寄りすぎ、transcriptが使われているか判別不能
+
+**v1.0.2修正:**
+- VoicePageに直近の音声認識結果を表示
+- transcript preview / status / length / updatedAt を表示
+- DebugMode ON時のみ MIME / extension / FFmpeg / Whisper / stderr / temp cleanup / AI source を詳細表示
+- voice trigger時のPromptBuilderへ、音声内容に直接返答する追加ルールを挿入
+- transcriptありAI失敗時はclick fallbackではなくvoice専用fallbackを使用
+- QualityFilterで英字混入、`继续观察`、assistant的表現、voice generic返答を拒否
+
+**privacy:**
+- transcript previewはmodule-levelの揮発状態のみ
+- transcriptはMemoryEvent / localStorage / Memory exportに保存しない
+- 音声ファイル・変換WAV・transcript txtは一時ディレクトリごと削除する方針を維持
+
+**field QA pending:**
+- 「青いカエルと七三九」等でtranscript previewが見えるか
+- 返答に音声内容が最低限反映されるか
+- 中国語・英語混入が再発しないか
 
 ---
 

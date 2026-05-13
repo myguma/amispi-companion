@@ -85,12 +85,12 @@ export class OllamaProvider implements AIProvider {
     const { system, user } = buildPrompt(ctx);
 
     if (isTauri) {
-      return this._respondViaTauri(system, user);
+      return this._respondViaTauri(system, user, ctx);
     }
-    return this._respondViaBrowserFetch(system, user);
+    return this._respondViaBrowserFetch(system, user, ctx);
   }
 
-  private async _respondViaTauri(system: string, user: string): Promise<AIProviderOutput> {
+  private async _respondViaTauri(system: string, user: string, ctx: CompanionContext): Promise<AIProviderOutput> {
     try {
       const json = await invoke<string>("ollama_chat", {
         baseUrl:   this.baseUrl,
@@ -99,7 +99,7 @@ export class OllamaProvider implements AIProvider {
         user,
         timeoutMs: this.timeoutMs,
       });
-      return this._parseResponse(json);
+      return this._parseResponse(json, ctx);
     } catch (e) {
       const msg = (e instanceof Error ? e.message : String(e)).slice(0, 100);
       if (msg.includes("timed out") || msg.includes("deadline")) {
@@ -109,7 +109,7 @@ export class OllamaProvider implements AIProvider {
     }
   }
 
-  private async _respondViaBrowserFetch(system: string, user: string): Promise<AIProviderOutput> {
+  private async _respondViaBrowserFetch(system: string, user: string, ctx: CompanionContext): Promise<AIProviderOutput> {
     const ctrl   = new AbortController();
     const timeId = setTimeout(() => ctrl.abort(), this.timeoutMs);
     try {
@@ -129,7 +129,7 @@ export class OllamaProvider implements AIProvider {
       clearTimeout(timeId);
       if (!res.ok) return { shouldSpeak: false, reason: "http_error" };
       const json = await res.text();
-      return this._parseResponse(json);
+      return this._parseResponse(json, ctx);
     } catch (e) {
       clearTimeout(timeId);
       if ((e as Error).name === "AbortError") {
@@ -139,11 +139,11 @@ export class OllamaProvider implements AIProvider {
     }
   }
 
-  private _parseResponse(json: string): AIProviderOutput {
+  private _parseResponse(json: string, ctx: CompanionContext): AIProviderOutput {
     try {
       const data = JSON.parse(json) as { message?: { content?: string } };
       const raw  = data?.message?.content ?? "";
-      const filtered = filterGeneratedText(raw);
+      const filtered = filterGeneratedText(raw, { trigger: ctx.trigger, voiceInput: ctx.voiceInput });
       if (!filtered.ok) {
         console.warn("[Ollama] filtered:", filtered.reason, "|", raw.slice(0, 80));
         return { shouldSpeak: false, reason: filtered.reason };

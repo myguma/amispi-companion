@@ -3,6 +3,7 @@
 
 import type { AIProvider, AIProviderOutput, CompanionContext } from "./types";
 import type { InferredActivity } from "../activity/inferActivity";
+import { buildVoiceFallback } from "../../systems/voice/voiceFallback";
 
 // ────────────────────────────────────────────────
 // テキストプール定義
@@ -138,6 +139,10 @@ export class RuleProvider implements AIProvider {
       ctx.trigger === "wake" ||
       ctx.trigger === "return"
     ) {
+      if (ctx.trigger === "voice" && ctx.voiceInput?.trim()) {
+        return { text: buildVoiceFallback(ctx.voiceInput), shouldSpeak: true, emotion: "aware" };
+      }
+
       // voiceInput があれば voice 専用プールを使う
       const useVoice = ctx.trigger === "voice" && !!ctx.voiceInput;
       const pool = [

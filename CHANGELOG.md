@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.0.2] — 2026-05-14
+
+### Fixed (Voice transcript debug and prompt repair)
+
+- **VoicePage**:
+  - 「直近の音声認識結果」セクションを追加
+  - transcript preview / length / status / updatedAt を表示
+  - DebugMode ON時だけ MIME / extension / FFmpeg / Whisper / stderr preview / cleanup / AI source を詳細表示
+  - transcriptは揮発メモリだけに保持し、localStorage / MemoryEvent / exportへ保存しない方針を維持
+- **Whisper debug**:
+  - `transcribe_with_whisper` の戻り値を構造化し、FFmpeg/Whisperの成功可否・stderr preview・temp cleanupを返すように変更
+  - 音声ファイル、変換WAV、transcript txtは引き続き一時ディレクトリごと削除
+- **Voice prompt / fallback**:
+  - voice trigger時だけ、聞き取った内容に直接返答する追加promptを挿入
+  - transcriptありでAIが失敗/拒否された場合、click fallbackではなくvoice専用fallbackへ落とす
+  - RuleProviderのvoice入力あり応答もvoice fallbackへ寄せ、汎用の「ここにいる」系に落ちにくくした
+- **QualityFilter**:
+  - 英字混入、`continued`、`继续观察` などの混入をより厳しく拒否
+  - 「何か手伝えますか」系と壊れた句読点を拒否
+  - voice triggerでは、transcriptがあるのにgenericすぎる応答を拒否してvoice fallbackへ回す
+
+### Maintained
+
+- compact `200x280` window / speech時window resize不採用 / UpdateBadge右下配置 / click-through / ContextMenu / drag / Onboarding / Memory / Update / Debug / Transparency / Ollama / Active Appは維持
+
+### Field QA
+
+- Voice conversation qualityは v1.0.2 field QA pending
+- 次回は「青いカエルと七三九」等でtranscript previewと返答内容の一致を確認する
+
 ## [1.0.1] — 2026-05-14
 
 ### Fixed (Field QA Hotfix)

@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.1)**
+**最終更新: 2026-05-14 (v1.0.2)**
 
 ---
 
@@ -14,19 +14,19 @@
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
 | 観測システム (Rust) | 91% | camelCase serde・Raw Foreground Debug表示改善。実機取得は継続確認 |
 | 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
-| AI コンテキスト構築 | 91% | trigger別ヒント・直近発話context・時刻偏重修正・記憶文脈を短く整理 |
-| AI プロバイダー (Ollama) | 94% | 127.0.0.1修正・temperature 0.5・QualityFilter追加強化 |
-| fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
+| AI コンテキスト構築 | 92% | trigger別ヒント・直近発話context・voice専用prompt・記憶文脈を短く整理 |
+| AI プロバイダー (Ollama) | 95% | 127.0.0.1修正・temperature 0.5・QualityFilter voice hardening |
+| fallback / RuleProvider | 91% | 固定文短縮・直近固定文重複回避・voice fallback分離 |
 | 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
 | 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
-| 音声入力 (Voice) | 70% | Whisper Push-to-Talk MVPをRust commandへ接続。v1.0.1でFFmpeg WAV変換を追加。実STT成功はfield QA pending |
+| 音声入力 (Voice) | 76% | FFmpeg WAV変換、VoicePage transcript preview、voice prompt/fallback修正。会話品質はfield QA pending |
 | キャラクター表現 | 91% | compact描画安定を維持し、追加表情だけsprite fallbackするようQA調整 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 99% | v1.0.0 stable notes / Known Issues / v2 roadmap draft整理 |
 | Windows installer / CI | 84% | Release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
-| **総合** | **~94%** | v1.0.0 field QA通過後のv1.0.1 hotfix。Voice実STTはfield QA pending |
+| **総合** | **~95%** | v1.0.2 voice transcript debug / prompt repair。Voice conversationはfield QA pending |
 
 ---
 
@@ -73,6 +73,7 @@
 | v1.0.0 | Stable: v1.0.0 release notes / Known Issues / hotfix policy整理 |
 | docs | v2 roadmap draft: v2候補と非目標を整理。実装未着手 |
 | v1.0.1 | Field QA hotfix: UpdateBadge右下配置・FFmpegによるWhisper用16kHz mono PCM WAV変換 |
+| v1.0.2 | Voice transcript debug and prompt repair: transcript preview・voice fallback・QualityFilter強化 |
 
 ---
 
@@ -87,14 +88,14 @@
 
 ---
 
-## 次の目標: v1.0.1 field QA / post-stable maintenance
+## 次の目標: v1.0.2 field QA / 必要なら v1.0.3 voice hotfix
 
-優先候補A: **v1.0.1 field QA** ← **推奨**
-- UpdateBadge右下配置がspeech bubbleと被らずクリックできるか確認
-- FFmpeg path設定後にvoice long pressで実STTが成功するか確認
+優先候補A: **v1.0.2 field QA** ← **推奨**
+- VoicePage transcript preview と実際の返答内容が合っているか確認
+- 中国語・英語混入やgenericすぎるvoice返答が減ったか確認
 
 | 作業 | 優先度 |
 |------|--------|
-| v1.0.1 field QA | 高 |
+| v1.0.2 field QA | 高 |
 | Voice実機QA | 高 |
 | 残QA修正 | 中 |

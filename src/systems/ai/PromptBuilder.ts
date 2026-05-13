@@ -48,6 +48,14 @@ const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトッ
 
 必ず日本語一文のみを出力すること。説明・前置き・コードブロック不要。`;
 
+const VOICE_PROMPT_APPEND = `音声入力時の追加ルール:
+- ユーザーの声に直接返答する。
+- 「ここにいる」「うん、聞こえてる」「呼んだ？」「ん」だけで終わらない。
+- ユーザーの発話に含まれる名詞・数字・問いかけ・依頼のうち最低1つを反映する。
+- 短い挨拶なら挨拶として返す。質問なら短く答える。
+- 汎用AIアシスタント化しない。長文説明しない。日本語のみ。
+- ユーザーの音声内容を長く復唱しない。`;
+
 /** confidence に応じた確信度修飾語を返す */
 function confidenceQualifier(confidence: number): string {
   if (confidence >= 0.85) return "";           // 高確信: 修飾なし
@@ -84,7 +92,7 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
     case "return":
       return "久しぶりに会った。短く自然に挨拶する。";
     case "voice":
-      return "ユーザーが声で話しかけてきた。自然に短く返す。";
+      return "ユーザーが声で話しかけてきた。聞き取った内容に直接、短く返す。";
     case "manual":
       return "観察したことを静かに述べる。";
   }
@@ -92,6 +100,7 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
 
 export function buildPrompt(ctx: CompanionContext): { system: string; user: string } {
   const { activityInsight, memorySummary, observation, recentEvents, trigger } = ctx;
+  const isVoice = trigger === "voice" && !!ctx.voiceInput?.trim();
 
   const contextLines: string[] = [];
 
@@ -150,6 +159,11 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
   if (ctx.voiceInput) {
     const safe = ctx.voiceInput.trim().slice(0, 80);
     contextLines.push(`ユーザーの声: ${safe}`);
+    if (isVoice) {
+      contextLines.push("音声返答ルール: 上の声の内容に直接返す。汎用の呼びかけ反応だけで終わらない。声の中の語や数字を最低1つ反映する。");
+      contextLines.push("voice悪い例: ここにいる / うん、聞こえてる / 呼んだ？ / ん");
+      contextLines.push("voice良い例: こんにちは。声、届いてる / 青いカエルと七三九、聞こえた / 聞こえてる。少しだけ、ここで聞いてる");
+    }
   }
 
   // 直近の発話 (最新3件) — 同一・類似表現を繰り返させないため
@@ -163,5 +177,6 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
 
   const userContent = contextLines.join("\n") + "\n\n日本語一文のみで返答してください。";
 
-  return { system: SYSTEM_PROMPT, user: userContent };
+  const system = isVoice ? `${SYSTEM_PROMPT}\n\n${VOICE_PROMPT_APPEND}` : SYSTEM_PROMPT;
+  return { system, user: userContent };
 }

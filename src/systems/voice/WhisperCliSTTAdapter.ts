@@ -8,6 +8,8 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import type { STTAdapter, STTInput, STTAdapterOutput, STTError } from "./STTAdapter";
+import type { LastVoiceDebugStatus } from "./voiceDebugStore";
+import { previewStderr, previewText, setLastVoiceDebug } from "./voiceDebugStore";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -21,6 +23,38 @@ function errorKind(message: string): STTError {
   if (lower.includes("empty") || lower.includes("no speech")) return "no_speech";
   return "error";
 }
+
+function statusToError(status: LastVoiceDebugStatus): STTError {
+  if (status === "success") return "error";
+  if (status === "no_speech") return "no_speech";
+  if (status === "ffmpeg_unavailable") return "ffmpeg_unavailable";
+  if (status === "conversion_failed") return "conversion_failed";
+  if (status === "timeout") return "timeout";
+  if (status === "whisper_failed") return "error";
+  return "error";
+}
+
+function extensionFromMime(mimeType: string): string {
+  const m = mimeType.toLowerCase();
+  if (m.includes("wav")) return "wav";
+  if (m.includes("ogg")) return "ogg";
+  if (m.includes("mpeg") || m.includes("mp3")) return "mp3";
+  if (m.includes("webm")) return "webm";
+  return "audio";
+}
+
+type WhisperTranscriptionDebug = {
+  status: LastVoiceDebugStatus;
+  transcript?: string;
+  inputMimeType?: string;
+  inputExtension?: string;
+  conversionUsed?: boolean;
+  ffmpegConfigured?: boolean;
+  ffmpegExitOk?: boolean;
+  whisperExitOk?: boolean;
+  stderrPreview?: string;
+  tempCleanupDone?: boolean;
+};
 
 async function inputToBytes(input: STTInput): Promise<{ bytes: number[]; mimeType: string }> {
   if (input instanceof Blob) {
@@ -69,7 +103,15 @@ export class WhisperCliSTTAdapter implements STTAdapter {
       const { bytes, mimeType } = await inputToBytes(_input);
       if (bytes.length === 0) return { ok: false, error: "no_speech" };
 
-      const text = await invoke<string>("transcribe_with_whisper", {
+      setLastVoiceDebug({
+        status: "transcribing",
+        inputMimeType: mimeType,
+        inputExtension: extensionFromMime(mimeType),
+        conversionUsed: true,
+        ffmpegConfigured: this.ffmpegExecutablePath.trim().length > 0,
+      });
+
+      const debug = await invoke<WhisperTranscriptionDebug>("transcribe_with_whisper", {
         executablePath: this.executablePath,
         modelPath: this.modelPath,
         ffmpegExecutablePath: this.ffmpegExecutablePath,
@@ -77,6 +119,25 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         mimeType,
         timeoutMs: this.timeoutMs,
       });
+
+      const text = String(debug.transcript ?? "");
+      setLastVoiceDebug({
+        status: debug.status,
+        transcriptPreview: previewText(text),
+        transcriptLength: text.trim().length,
+        inputMimeType: debug.inputMimeType ?? mimeType,
+        inputExtension: debug.inputExtension ?? extensionFromMime(mimeType),
+        conversionUsed: debug.conversionUsed ?? true,
+        ffmpegConfigured: debug.ffmpegConfigured ?? this.ffmpegExecutablePath.trim().length > 0,
+        ffmpegExitOk: debug.ffmpegExitOk,
+        whisperExitOk: debug.whisperExitOk,
+        stderrPreview: previewStderr(debug.stderrPreview),
+        tempCleanupDone: debug.tempCleanupDone,
+      });
+
+      if (debug.status !== "success") {
+        return { ok: false, error: statusToError(debug.status) };
+      }
 
       const trimmed = text.trim().slice(0, 200);
       if (!trimmed) return { ok: false, error: "no_speech" };
@@ -90,7 +151,16 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         },
       };
     } catch (err) {
-      return { ok: false, error: errorKind(String(err)) };
+      const message = String(err);
+      const kind = errorKind(message);
+      setLastVoiceDebug({
+        status: kind === "timeout" ? "timeout" : kind === "ffmpeg_unavailable" ? "ffmpeg_unavailable" : "error",
+        inputMimeType: undefined,
+        conversionUsed: true,
+        ffmpegConfigured: this.ffmpegExecutablePath.trim().length > 0,
+        stderrPreview: previewStderr(message),
+      });
+      return { ok: false, error: kind };
     }
   }
 }
