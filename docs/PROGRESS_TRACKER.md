@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.51)**
+**最終更新: 2026-05-13 (v0.1.52)**
 
 ---
 
@@ -14,19 +14,19 @@
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
 | 観測システム (Rust) | 91% | camelCase serde・Raw Foreground Debug表示改善。実機取得は継続確認 |
 | 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
-| AI コンテキスト構築 | 90% | trigger別ヒント・直近発話context・時刻偏重修正 |
-| AI プロバイダー (Ollama) | 93% | 127.0.0.1修正・temperature 0.5・QualityFilter強化 |
-| fallback / RuleProvider | 86% | DailySummary context反応・直近固定文重複回避・管理感のある文を抑制 |
+| AI コンテキスト構築 | 91% | trigger別ヒント・直近発話context・時刻偏重修正・記憶文脈を短く整理 |
+| AI プロバイダー (Ollama) | 94% | 127.0.0.1修正・temperature 0.5・QualityFilter追加強化 |
+| fallback / RuleProvider | 89% | 固定文短縮・直近固定文重複回避・管理感のある文を抑制 |
 | 記憶システム | 78% | DailySummary・MemoryViewer・削除機能・保存期間ポリシー実装済み |
-| 自律発話 (autonomous speech) | 87% | AI-first + 返答単調化修正。今日の発話数が多い場合は控えめにする |
+| 自律発話 (autonomous speech) | 88% | 文脈反応の短文化・今日の発話数が多い場合は控えめにする |
 | 音声入力 (Voice) | 42% | 実録音OK・STT未完成。VoicePage UI改善済み |
 | キャラクター表現 | 88% | v0.1.48実機確認で idle / speech / drag / speech中drag の描画消失が解決 |
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 88% | v0.1.51 DailySummary context reactions を反映 |
+| リリース品質 (docs) | 89% | v0.1.52 Reaction Quality QA を反映 |
 | Windows installer / CI | 75% | v0.1.27で成功確認済み |
-| **総合** | **~85%** | v0.1.51でローカル記憶を反応へ軽く反映。field QA pending |
+| **総合** | **~86%** | v0.1.52で固定文・fallback・QualityFilterを整理。field QA pending |
 
 ---
 
@@ -59,6 +59,7 @@
 | v0.1.49 | First-run Onboarding追加・onboardingCompleted/onboardingVersion・v0.1.48 Field QA docs反映・実機QA通過 |
 | v0.1.50 | Memory Retention Policy: memoryRetentionDays・起動時cleanup・MemoryPage保存期間UI/手動整理 |
 | v0.1.51 | DailySummary context reactions: 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 |
+| v0.1.52 | Reaction Quality QA: 固定文短縮・fallback重複回避・QualityFilter追加強化・RESPONSE_QUALITY_GUIDE更新 |
 
 ---
 
@@ -73,13 +74,13 @@
 
 ---
 
-## 次の目標: v0.1.52 候補
+## 次の目標: v0.1.53 候補
 
-優先候補A: **Reaction Quality QA** ← **推奨**
-- RuleProvider固定文・fallback文をさらに短く整理
-- 「今日」「長時間」「作業」などの言及頻度を抑制
-- QualityFilterの軽微な品質ガードを強化
-- RESPONSE_QUALITY_GUIDE.md と実装を整合
+優先候補A: **Quiet / Focus / DND Hardening** ← **推奨**
+- quietMode中は自律発話を止める
+- focusMode中は自律発話頻度を下げる
+- doNotDisturb中はクリック以外ほぼ黙る
+- Settings / Onboarding の説明と整合
 
 優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
@@ -91,7 +92,7 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| Reaction Quality QA | 高 |
+| Quiet / Focus / DND hardening | 高 |
 | Emotion sprite set | 中 |
-| v0.1.51 context reaction QA / 残QA修正 | 中 |
+| v0.1.52 reaction quality QA / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |

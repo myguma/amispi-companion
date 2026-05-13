@@ -16,8 +16,32 @@
 > v0.1.49 実機QAで First-run Onboarding、compact speech layout、主要操作の安定を確認。
 > v0.1.50 ではローカル記憶の保存期間設定と起動時/手動cleanupを追加。
 > v0.1.51 では DailySummary / RuleProvider 活用を強化し、ローカル記憶を短い文脈反応へ反映。
+> v0.1.52 では Reaction Quality QA として固定文・fallback・QualityFilterを整理。
 
-**更新: 2026-05-13 (v0.1.51)**
+**更新: 2026-05-13 (v0.1.52)**
+
+---
+
+## v0.1.52 での更新内容
+
+### Reaction Quality QA
+
+**修正内容:**
+- RuleProvider固定文を短く整理
+- 「今日」系の記憶文脈候補を出しすぎないように調整
+- dialogue fallbackに直近4件の重複回避を追加
+- QualityFilterで命令・助言・測定表示っぽいOllama出力を軽く拒否
+- RESPONSE_QUALITY_GUIDE.mdを更新
+
+**self-reviewで直した点:**
+- 「急がなくてよさそう」など助言寄りの固定文を削除
+- 「今日は何度か無明に触れた」を「何度か呼ばれている」に変更
+- 固定文の複数文を減らした
+
+**field QA pending:**
+- クリック反応 / 自律発話 / fallback / Ollama応答の自然さ
+- QualityFilterが強すぎないか
+- 主要UIとcompact 200x280 character layoutの回帰
 
 ---
 

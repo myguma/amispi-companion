@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.51)**
+**最終更新: 2026-05-13 (v0.1.52)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.51
-**フェーズ:** DailySummary / RuleProvider 活用強化 (field QA pending)
-**全体進捗:** 約 85%
+**バージョン:** v0.1.52
+**フェーズ:** Reaction Quality QA (field QA pending)
+**全体進捗:** 約 86%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.51)
-✅ cargo build  → Finished dev profile (v0.1.51)
-✅ GitHub Actions / Windows Installer → v0.1.50 成功済み。v0.1.51 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.52)
+✅ cargo build  → Finished dev profile (v0.1.52)
+✅ GitHub Actions / Windows Installer → v0.1.51 成功済み。v0.1.52 は tag push 後に確認
 ```
 
 ---
@@ -58,6 +58,32 @@
 | First-run Onboarding | ローカルファースト・AI設定・自律発話・デバッグ方針を初回設定で案内 | ✅ v0.1.49 |
 | Memory Retention Policy | ローカル記憶の保存期間設定・起動時cleanup・手動整理UI | ✅ v0.1.50 |
 | DailySummary Context Reactions | 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 | ✅ v0.1.51 |
+| Reaction Quality QA | 固定文短縮・fallback重複回避・QualityFilter追加強化 | ✅ v0.1.52 |
+
+---
+
+## v0.1.52 実装詳細
+
+### A: Reaction Quality QA
+
+- RuleProviderの記憶文脈候補をactivity別候補の後ろへ回し、「今日」言及の頻度を抑制
+- 固定文を短くし、複数文や助言寄り表現を減らした
+- dialogue fallbackに直近4件の簡易重複回避を追加
+- `QualityFilter` に `してください` / `しましょう` / `頑張` / 測定表示系の拒否を追加
+- `RESPONSE_QUALITY_GUIDE.md` を現行方針へ更新
+
+### B: Self-reviewで直したもの
+
+- `RuleProvider` に残っていた「急がなくてよさそう」系の助言文を観察文へ変更
+- MemorySummary / DailySummary の「今日は何度か無明に触れた」を「何度か呼ばれている」へ変更
+- キャラクター名をコード内の文脈サマリーに追加しない方向へ寄せた
+
+### C: Field QA pending
+
+- クリック反応が自然か
+- 自律発話がうるさすぎないか
+- Ollama fallback時に破綻しないか
+- QualityFilterが強すぎてsource: ollamaを不必要に落としていないか
 
 ---
 
@@ -591,18 +617,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.52)
+## 次のフェーズ候補 (v0.1.53)
 
-### 優先候補 A: Reaction Quality QA ← **推奨**
+### 優先候補 A: Quiet / Focus / DND Hardening ← **推奨**
 
-**目的:** v0.1.51で増えた文脈反応を整理し、発話品質を安定させる。
+**目的:** 黙るべき時に黙るコンパニオンにする。
 
 **実装すべき内容:**
-1. RuleProvider固定文・fallback文をさらに短くする
-2. 「今日」「長時間」「作業」などの言及頻度を抑える
-3. 直近発話との重複判定を強化
-4. RESPONSE_QUALITY_GUIDE.md を更新
-5. QualityFilterを軽微に強化する
+1. quietMode中は自律発話を止める
+2. focusMode中は自律発話頻度を下げる
+3. doNotDisturb中はクリック以外ほぼ黙る
+4. Onboarding / Settings の説明と整合
+5. Debug/Transparency上で抑制理由が分かる範囲を検討
 
 ### 優先候補 B: Emotion Sprite Set
 
@@ -613,15 +639,15 @@
 2. `emotionToSpriteState()` マッピングを更新
 3. CryEngine sound との連動
 
-### 優先候補 C: v0.1.51 残QA修正
+### 優先候補 C: v0.1.52 残QA修正
 
-**目的:** 文脈反応・保存期間UI / cleanup挙動の実機QAで出た問題を優先修正する。
+**目的:** reaction quality 実機QAで出た問題を優先修正する。
 
 **確認すべき内容:**
-1. 文脈反応が監視感を出していないか
+1. クリック反応が自然か
 2. 自律発話がうるさくないか
-3. 7/30/90/無期限が保存されるか
-4. MemoryPage既存機能と主要回帰がないか
+3. Ollama sourceが不必要にfallback化していないか
+4. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
 
 ---
 

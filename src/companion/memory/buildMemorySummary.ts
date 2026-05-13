@@ -69,7 +69,7 @@ function buildNaturalSummary(s: {
   } else {
     // フォールバック: 旧ロジック
     if (s.sessionCountToday > 1) parts.push(`今日は${s.sessionCountToday}回目の起動`);
-    if (s.todayClickCount > 5)   parts.push("今日は何度か無明に触れた");
+    if (s.todayClickCount > 5)   parts.push("何度か呼ばれている");
   }
 
   return parts.length > 0 ? parts.join("。") + "。" : "";

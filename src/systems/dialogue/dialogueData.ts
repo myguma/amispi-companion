@@ -45,7 +45,7 @@ const DIALOGUE_DATA: DialogueEntry[] = [
       "お疲れ様",
       "...夕方になったね",
       "今日どうだった",
-      "そろそろ休む？",
+      "夕方の色になった",
     ],
   },
 
@@ -102,7 +102,7 @@ const DIALOGUE_DATA: DialogueEntry[] = [
   {
     id: "ri_01",
     trigger: "random_idle",
-    lines: ["...", "静かだね", "作業中？", "そこにいるよ"],
+    lines: ["...", "静かだね", "ここにいるよ", "少し間がある"],
     weight: 2,
   },
   {
@@ -114,7 +114,7 @@ const DIALOGUE_DATA: DialogueEntry[] = [
   {
     id: "ri_03",
     trigger: "random_idle",
-    lines: ["休んでる？", "...疲れてない？"],
+    lines: ["少し静か", "...いる"],
     weight: 0.5,
   },
 
@@ -156,5 +156,12 @@ export function pickDialogue(trigger: DialogueTrigger): string {
   }
 
   const lines = chosen.lines;
-  return lines[Math.floor(Math.random() * lines.length)];
+  const candidates = lines.filter((line) => !RECENT_DIALOGUE_LINES.includes(line));
+  const pool = candidates.length > 0 ? candidates : lines;
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+  RECENT_DIALOGUE_LINES.push(picked);
+  if (RECENT_DIALOGUE_LINES.length > 4) RECENT_DIALOGUE_LINES.shift();
+  return picked;
 }
+
+const RECENT_DIALOGUE_LINES: string[] = [];

@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.1.52] — 2026-05-13
+
+### Fixed (Reaction Quality Hardening)
+
+- **RuleProvider.ts**:
+  - v0.1.51で追加した記憶文脈の候補を activity別候補の後ろへ回し、「今日」言及が出すぎないように調整
+  - 「今日は何度か…」系を「何度か…」へ短縮
+  - 複数文だった固定文を1文へ整理
+- **dialogueData.ts**:
+  - fallback / random idle の管理・助言寄り表現を削減
+  - 直近4件の固定fallback文を避ける簡易履歴を追加
+- **QualityFilter.ts**:
+  - Ollama出力に対し、助言・命令・管理っぽい表現を軽く追加拒否
+  - `してください` / `しましょう` / `頑張` / 測定表示系を抑制
+- **buildMemorySummary.ts / dailySummary.ts**:
+  - Prompt/UI向けの自然文からキャラクター名埋め込みと測定感の強い表現を軽減
+
+### Docs
+
+- **docs/RESPONSE_QUALITY_GUIDE.md** を v0.1.52 方針に合わせて更新
+- 短い・断定しない・説教しない・監視っぽくない反応を基準として再整理
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 実機QAは未実施。クリック反応、自律発話、Ollama fallback の自然さは field QA pending
+
 ## [0.1.51] — 2026-05-13
 
 ### Added (Daily Summary Context Reactions)

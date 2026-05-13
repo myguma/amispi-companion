@@ -81,10 +81,10 @@ function buildNaturalSummary(s: {
   else if (s.activeHoursToday >= 4) parts.push(`今日は${Math.round(s.activeHoursToday)}時間ほど起動している`);
   else if (s.activeHoursToday >= 2) parts.push(`今日は${Math.round(s.activeHoursToday)}時間ほど動いている`);
 
-  if (s.sessionCountToday >= 3) parts.push(`今日${s.sessionCountToday}回起動している`);
+  if (s.sessionCountToday >= 3) parts.push("何度か戻ってきている");
 
-  if (s.todayClickCount >= 10)     parts.push("今日はかなり無明に触れた");
-  else if (s.todayClickCount >= 4) parts.push("今日は何度か無明に触れた");
+  if (s.todayClickCount >= 10)     parts.push("よく呼ばれている");
+  else if (s.todayClickCount >= 4) parts.push("何度か呼ばれている");
 
   return parts.length > 0 ? parts.join("。") + "。" : "";
 }

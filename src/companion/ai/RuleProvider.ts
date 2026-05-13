@@ -136,8 +136,8 @@ export class RuleProvider implements AIProvider {
       // voiceInput があれば voice 専用プールを使う
       const useVoice = ctx.trigger === "voice" && !!ctx.voiceInput;
       const pool = [
-        ...contextualManualPool(memory),
         ...(useVoice ? VOICE_BY_ACTIVITY[kind] : CLICK_BY_ACTIVITY[kind]),
+        ...contextualManualPool(memory),
       ];
 
       // confidence が低い場合はより汎用的な返答にフォールバック
@@ -162,8 +162,8 @@ export class RuleProvider implements AIProvider {
       }
 
       const pool = [
-        ...contextualIdlePool(memory),
         ...(OBSERVATION_BY_ACTIVITY[kind] ?? []),
+        ...contextualIdlePool(memory),
       ];
       if (!pool || pool.length === 0) return { shouldSpeak: false };
 
@@ -203,14 +203,14 @@ export class RuleProvider implements AIProvider {
 
 function contextualManualPool(memory: CompanionContext["memorySummary"]): string[] {
   const pool: string[] = [];
-  if (memory.todayClickCount >= 8) {
-    pool.push("今日は、よく呼ばれるね", "また呼んだ。ここにいるよ");
+  if (memory.todayClickCount >= 10) {
+    pool.push("今日は、よく呼ばれるね", "また呼んだね");
   } else if (memory.todayClickCount >= 4) {
-    pool.push("今日は何度か会ってるね");
+    pool.push("何度か会ってるね");
   }
 
   if (memory.sessionCountToday >= 3) {
-    pool.push("また来たね", "今日は何度か戻ってきてる");
+    pool.push("また来たね", "何度か戻ってきてる");
   }
 
   return pool;
@@ -219,9 +219,9 @@ function contextualManualPool(memory: CompanionContext["memorySummary"]): string
 function contextualIdlePool(memory: CompanionContext["memorySummary"]): string[] {
   const pool: string[] = [];
   if (memory.sessionCountToday >= 2 && memory.todaySpeechCount < 4) {
-    pool.push("今日も、ここにいるね");
+    pool.push("また、ここにいるね");
   }
-  if (memory.todayClickCount >= 6 && memory.todaySpeechCount < 5) {
+  if (memory.todayClickCount >= 10 && memory.todaySpeechCount < 5) {
     pool.push("今日は、よく呼ばれるね");
   }
   return pool;
