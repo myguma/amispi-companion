@@ -27,8 +27,28 @@
 > v0.3.0 では Whisper Push-to-Talk MVPをRust commandへ接続。実機音声QAは未実施。
 > v0.3.1 では Voice QA hardeningとして、Whisper未設定/録音失敗/STT失敗時の復帰案内を整理。
 > v1.0.0-rc.1 では新機能追加なしでrelease candidate checklist / release notes draft / Known Issuesを整理。
+> v1.0.0 ではstable tagとしてrelease notesを追加。v1.0.0自体のfield QAは未実施。
 
-**更新: 2026-05-13 (v1.0.0-rc.1)**
+**更新: 2026-05-13 (v1.0.0)**
+
+---
+
+## v1.0.0 での更新内容
+
+### Stable
+
+**整理内容:**
+- 新機能追加なし
+- v1.0.0 stable release notesを追加
+- v1.0.0自体のfield QA未実施を明記
+- v1.0.1+ hotfix policyを記録
+
+**field QA pending:**
+- v1.0.0自体の実機QA
+- 長時間常駐
+- 実インストール環境のupdate
+- Whisper binary/model/path/MIME type/マイク権限/一時ファイル削除
+- Memory export file save
 
 ---
 

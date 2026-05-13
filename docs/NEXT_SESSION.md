@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v1.0.0-rc.1)**
+**最終更新: 2026-05-13 (v1.0.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.0-rc.1
-**フェーズ:** Release Candidate (automated checks required / field QA pending)
-**全体進捗:** 約 93%
+**バージョン:** v1.0.0
+**フェーズ:** Stable tag (automated checks required / v1.0.0 field QA not performed)
+**全体進捗:** 約 94%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,8 +24,8 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.0-rc.1)
-✅ cargo build  → Finished dev profile (v1.0.0-rc.1)
+✅ npm run build → ✓ built (v1.0.0)
+✅ cargo build  → Finished dev profile (v1.0.0)
 ✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
 ```
 
@@ -69,6 +69,27 @@
 | Whisper Push-to-Talk MVP | Rust commandでローカルWhisper CLIへ接続 | ✅ v0.3.0 / field QA pending |
 | Voice QA Hardening | Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 | ✅ v0.3.1 / field QA pending |
 | Release Candidate | docs / Known Issues / QA checklist / release notes draft整理 | ✅ v1.0.0-rc.1 / field QA pending |
+| Stable | v1.0.0 stable notes / Known Issues / hotfix policy整理 | ✅ v1.0.0 / field QA not performed |
+
+---
+
+## v1.0.0 実装詳細
+
+### A: Stable tag
+
+- 新機能追加なし
+- `docs/V1_STABLE_RELEASE_NOTES.md` を追加
+- v1.0.0自体のfield QA未実施を明記
+- v1.0.1+ hotfix方針を記録
+- compact `200x280` window / hit test / character layout / Voice / Ollama / Active App は変更なし
+
+### B: Field QA pending
+
+- v1.0.0自体のWindows実機QA
+- 長時間常駐
+- 実インストール環境のupdate
+- Whisper binary/model/path/MIME type/マイク権限/一時ファイル削除
+- Memory export file save
 
 ---
 

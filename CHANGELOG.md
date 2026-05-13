@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.0] — 2026-05-13
+
+### Stable
+
+- v1.0.0 stable tag
+- 新機能追加なし
+- `docs/V1_STABLE_RELEASE_NOTES.md` を追加
+- v1.0.0時点のfield QA未実施項目とknown riskを明記
+
+### Maintained
+
+- compact `200x280` window / speech時window resize不採用 / hit test geometry は変更なし
+- Onboarding / Memory Retention / Update / Debug / Transparency / Ollama / Active App / Voice MVPは維持
+- クラウドAI / クラウドSTT / 常時マイク監視 / Screen Capture / 自動ファイル操作なし
+
+### Field QA
+
+- v1.0.0自体のfield QAは未実施
+- automated build / release checksでstable tagへ進める
+- Known risk areasは `docs/V1_STABLE_RELEASE_NOTES.md` と `docs/KNOWN_ISSUES.md` に明記
+
 ## [1.0.0-rc.1] — 2026-05-13
 
 ### Release Candidate

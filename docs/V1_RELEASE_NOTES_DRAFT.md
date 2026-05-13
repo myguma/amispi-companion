@@ -2,7 +2,8 @@
 
 **最終更新: 2026-05-13 (v1.0.0-rc.1)**
 
-This draft describes the intended v1.0.0 stable release. v1.0.0-rc.1 is a release candidate, not a field-QA-certified stable build.
+This draft has been superseded by `docs/V1_STABLE_RELEASE_NOTES.md`.
+v1.0.0-rc.1 remains the release candidate snapshot and was not a field-QA-certified stable build.
 
 ## What This App Is
 
@@ -58,4 +59,3 @@ For v1.0.0 stable:
 - If field QA is still not performed, release notes must explicitly say so
 - Known risk areas must remain visible
 - v1.0.1+ hotfixes should target field QA regressions only
-
