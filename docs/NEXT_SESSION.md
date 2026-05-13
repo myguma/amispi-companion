@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.2.2)**
+**最終更新: 2026-05-13 (v0.2.3)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.2.2
-**フェーズ:** Expressiveness QA (automated checks passed / field QA pending)
+**バージョン:** v0.2.3
+**フェーズ:** Voice Implementation Plan (automated checks passed / field QA pending)
 **全体進捗:** 約 91%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.2.2)
-✅ cargo build  → Finished dev profile (v0.2.2)
-✅ GitHub Actions / Windows Installer → v0.2.1 成功済み。v0.2.2 は tag push 後に確認
+✅ npm run build → ✓ built (v0.2.3)
+✅ cargo build  → Finished dev profile (v0.2.3)
+✅ GitHub Actions / Windows Installer → v0.2.2 成功済み。v0.2.3 は tag push 後に確認
 ```
 
 ---
@@ -65,6 +65,26 @@
 | Daily-use Beta | v0.1.x安定化をdocs/checklist/known issuesとして整理 | ✅ v0.2.0 |
 | Minimal Emotion Sprite Set | emotion prop・safe sprite fallback・DebugOverlay emo表示 | ✅ v0.2.1 |
 | Expressiveness QA | operational emotionが表示stateを過剰に上書きしないよう調整 | ✅ v0.2.2 |
+| Voice Implementation Plan | Whisper Push-to-Talk MVPの範囲・privacy・QA項目を固定 | ✅ v0.2.3 |
+
+---
+
+## v0.2.3 実装詳細
+
+### A: Voice Implementation Plan
+
+- Whisper実接続前に docs/VOICE_INTERACTION.md を現状へ更新
+- v0.3.0で実装する範囲を Push-to-Talk / local Whisper CLI / transcript返却 / 一時ファイル削除に限定
+- wake word、常時マイク監視、クラウドSTT、音声保存、TTS、音声ファイル操作コマンドは非目標として固定
+- STT失敗時UIとfield QA pendingを整理
+- docs/SAFETY_AND_PRIVACY_BOUNDARIES.md とPRODUCT_COMPLETION_ROADMAPを更新
+
+### B: 次の実装候補
+
+- v0.3.0 Whisper Push-to-Talk MVP
+- Whisper binary/model未設定でも壊れない
+- 一時音声ファイルを必ず削除する
+- 実機確認なしで進む場合は field QA pending として明記
 
 ---
 

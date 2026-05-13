@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.2.3] — 2026-05-13
+
+### Docs (Voice Implementation Plan)
+
+- **docs/VOICE_INTERACTION.md**:
+  - Whisper Push-to-Talk MVPの実装範囲を固定
+  - v0.3.0で実装する範囲 / 実装しない範囲を整理
+  - STT失敗時UI、field QA pending項目を追加
+- **docs/SAFETY_AND_PRIVACY_BOUNDARIES.md**:
+  - 常時マイク監視なし、wake wordなし、クラウドSTTなし、音声ファイル永続保存なしを再確認
+- **docs/PRODUCT_COMPLETION_ROADMAP.md**:
+  - Voice MVPを「計画固定済み / 実装はv0.3.0」へ更新
+
+### Maintained
+
+- 実装追加なし。Whisper実接続はまだ行っていない
+- compact `200x280` window / character layout / hit test / Ollama / Active Appは変更なし
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- 音声実機QAは未実施。v0.3.0で Whisper binary/model/権限/一時ファイル削除を field QA pending として扱う
+
 ## [0.2.2] — 2026-05-13
 
 ### Changed (Expressiveness QA)

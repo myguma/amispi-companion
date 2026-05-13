@@ -88,6 +88,8 @@ LLM が生成したテキストに以下が含まれる場合は発話しない:
 
 ## 音声入力の安全境界 (Phase 6+)
 
+**v0.2.3更新:** Whisper Push-to-Talk MVPは、下記境界内でのみv0.3.0に実装する。常時マイク監視、wake word、クラウドSTT、音声ファイル永続保存は引き続き非目標。
+
 **許可される動作:**
 - Push-to-talk のみ: キャラクター長押し 500ms 以上のみ録音開始
 - `voiceInputEnabled: false` がデフォルト
@@ -134,6 +136,12 @@ stdout: transcript テキストのみ取得
 stderr: ログのみ (外部送信なし)
 timeout: 設定の whisperTimeoutMs (デフォルト 30s)
 ```
+
+**v0.3.0 field QA pending:**
+- Whisper binary / model path未設定時にクラッシュしない
+- 権限拒否 / マイクなし / 録音失敗から復帰する
+- 一時音声ファイルが成功/失敗/timeout時に削除される
+- transcriptのみがUIへ戻り、生音声は保存されない
 
 ---
 

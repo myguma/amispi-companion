@@ -23,8 +23,27 @@
 > v0.2.0 では daily-use beta としてv0.1.x安定化をdocs/checklistに整理。
 > v0.2.1 では Emotion Sprite Set minimal として、emotion propとsafe fallbackを追加。
 > v0.2.2 では Expressiveness QA として、operational emotionが描画stateを過剰に上書きしないよう調整。
+> v0.2.3 では Whisper Push-to-Talk MVPの範囲・安全境界・QA項目をdocsで固定。
 
-**更新: 2026-05-13 (v0.2.2)**
+**更新: 2026-05-13 (v0.2.3)**
+
+---
+
+## v0.2.3 での更新内容
+
+### Voice Implementation Plan
+
+**整理内容:**
+- Push-to-Talkのみを維持
+- 常時マイク監視 / wake word / クラウドSTT / 音声保存は非目標として再確認
+- v0.3.0 Whisper Push-to-Talk MVPの実装範囲を固定
+- STT失敗時UIとfield QA pending項目を整理
+
+**field QA pending:**
+- Whisper binary / model path未設定時の復帰
+- マイク許可拒否 / 録音失敗 / timeout時の復帰
+- 一時音声ファイルが残らないこと
+- long press UXとdrag/clickの干渉
 
 ---
 

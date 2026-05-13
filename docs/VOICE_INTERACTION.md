@@ -1,5 +1,7 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
+**最終更新: 2026-05-13 (v0.2.3)**
+
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
 ---
@@ -21,8 +23,53 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a | 設定・状態・導線・mock transcript | ✅ 完了 (v0.1.28) |
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
-| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | ⏸ 凍結中 (Milestone A 完了後に再開) |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | ⏸ 凍結中 |
+| Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + WAV 変換 | 📋 v0.2.3 で実装計画固定 / 実装は v0.3.0 |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | 📋 v0.3.1 以降 |
+
+---
+
+## v0.2.3 実装計画固定
+
+v0.2.3では実装を増やさず、Whisper Push-to-Talk MVPの範囲と安全境界を固定する。
+
+### v0.3.0で実装する範囲
+
+- Push-to-Talk中に録音されたBlobをRust commandへ渡す
+- Rust側で一時音声ファイルを作り、Whisper CLIを `std::process::Command` で起動する
+- `whisperExecutablePath` と `whisperModelPath` を設定から使う
+- transcriptのみをReactへ返す
+- STT成功時は既存の `requestVoiceResponse(transcript)` 経路へ接続する
+- STT失敗時は `voiceError` または短い案内へ戻し、アプリ全体は止めない
+- 一時音声ファイルは成功/失敗に関係なく削除する
+
+### v0.3.0で実装しない範囲
+
+- wake word
+- 常時マイク監視
+- クラウドSTT
+- 音声履歴保存
+- 音声ファイルの永続保存
+- TTS
+- 音声コマンドによるファイル操作
+- Whisper modelの自動ダウンロード
+- ffmpeg同梱
+
+### STT失敗時UI
+
+- executable未設定: 「Whisper executable path を設定してください」
+- model未設定: 「Whisper model path を設定してください」
+- 実行失敗: 「Whisperを起動できませんでした」
+- タイムアウト: 「音声の解析が時間内に終わりませんでした」
+- transcript空: 何も聞き取れなかった扱いで、短く復帰する
+
+### Field QA pending
+
+- Windows実機でMediaRecorderが生成するMIME type
+- Whisper CLI binaryごとの引数差
+- モデルサイズごとの応答時間
+- マイク許可ダイアログと権限拒否時の復帰
+- 一時音声ファイルが失敗時にも削除されること
+- long press中のUIとdrag/clickの干渉
 
 ---
 
