@@ -57,6 +57,7 @@ type ImageSnapshot = {
 
 interface DebugOverlayProps {
   enabled: boolean;
+  suspended?: boolean;
   state: CompanionState;
   speechText: string | null;
   hasSpeech: boolean;
@@ -260,6 +261,7 @@ function snapshotImage(): ImageSnapshot {
 
 export function DebugOverlay({
   enabled,
+  suspended = false,
   state,
   speechText,
   hasSpeech,
@@ -278,7 +280,7 @@ export function DebugOverlay({
   speechLayerRef,
   updateBadgeRef,
 }: DebugOverlayProps) {
-  const active = enabled || isDev;
+  const active = !suspended && (enabled || isDev);
   const [eventCount, setEventCount] = useState(0);
   const [lastEventType, setLastEventType] = useState<string>("-");
   const [viewport, setViewport] = useState<ViewportSnapshot>({

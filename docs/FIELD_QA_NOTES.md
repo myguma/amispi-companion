@@ -10,8 +10,42 @@
 > v0.1.44 では設定画面更新導線、UpdateBadge hit test、ユーザーON/OFF可能なdebug modeを追加。
 > v0.1.45 では v0.1.44 debug結果を受け、Character内部のimg/sprite/alpha bbox診断を追加。
 > v0.1.46 では v0.1.45 debug結果を受け、sprite実表示をbackground surfaceへ切り替え。
+> v0.1.47 では v0.1.46 debug結果を受け、speech表示/非表示でwindow heightを変えない常時expanded方式へ変更。
 
-**更新: 2026-05-13 (v0.1.46)**
+**更新: 2026-05-13 (v0.1.47)**
+
+---
+
+## v0.1.47 での修正内容 (実機確認待ち)
+
+### 問題P: expanded透明WebViewで旧compact height付近の内部clipが疑わしい
+
+**v0.1.46 実機debug結果:**
+- `renderMode=background` でも speech表示時のキャラ下半分消失は残った
+- expanded `200x410` で `stage` / `wrapper` / `surface` / `img` / `alphaRect` はすべて viewport 内
+- `OVER` は出ていない
+- `speaking.png` 固有でも `<img>` 固有でも background surface 固有でもなさそう
+- 視覚的に消える境界が旧compact height `280px` 付近に見える
+
+**今回の判断:**
+- window height不足、work area clamp、sprite alpha bbox、img rect外はみ出しは本命ではない
+- speech表示時に `280 → 410` へdynamic resizeすること自体が、transparent WebView / GPU compositor の内部clipを誘発している可能性が高い
+
+**v0.1.47 での修正:**
+- companion windowを常時expanded height (`280 + 130 = 410`) に変更
+- speech表示/非表示ではwindow heightを変えない
+- `resize_companion` は sizeScale と bounds同期を担当し、speechVisibleはhit test状態として保存
+- `SPEECH_VISIBLE` を追加し、hit testはwindow height推測ではなく明示状態を参照
+- speech=false時はbubble hitを無効化し、上部透明領域click-throughを維持
+- ContextMenu表示中はDebugOverlayを一時停止し、右クリックメニューがdebug文字列に隠れないようにした
+
+**実機確認手順:**
+1. idle時にキャラが正常表示されるか確認
+2. speech表示時にキャラ下半分が消えないか確認
+3. speech中dragでも消えないか確認
+4. debug overlayで idle / speech とも wh/client/vh が `200x410` になるか確認
+5. speech=false時の上部透明領域click-throughが維持されているか確認
+6. 右クリックメニューがdebug overlayに隠れないか確認
 
 ---
 

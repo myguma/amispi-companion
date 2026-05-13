@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.46)**
+**最終更新: 2026-05-13 (v0.1.47)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.46
-**フェーズ:** Hotfix — Sprite Render Surface Fix 完了 (実機確認待ち)
-**全体進捗:** 約 79%
+**バージョン:** v0.1.47
+**フェーズ:** Hotfix — Always Expanded Transparent Window Fix 完了 (実機確認待ち)
+**全体進捗:** 約 80%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.46)
-✅ cargo build  → Finished dev profile (v0.1.46)
-✅ GitHub Actions / Windows Installer → v0.1.45 成功済み。v0.1.46 は tag push 後に確認
+✅ npm run build → ✓ built (v0.1.47)
+✅ cargo build  → Finished dev profile (v0.1.47)
+✅ GitHub Actions / Windows Installer → v0.1.46 成功済み。v0.1.47 は tag push 後に確認
 ```
 
 ---
@@ -53,6 +53,45 @@
 | Hotfix: Settings Updater / Debug Mode / Hit Test QA | 設定画面更新導線・UpdateBadge hit test・debug overlay追加 | ✅ v0.1.44 |
 | Diagnostic: Sprite Render Debug Instrumentation | Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 | ✅ v0.1.45 |
 | Hotfix: Sprite Render Surface Fix | sprite実表示をbackground surfaceへ変更し、透明WebView expanded時の描画欠け対策 | ✅ v0.1.46 |
+| Hotfix: Always Expanded Transparent Window | speech表示/非表示でwindow heightを変えず、常時expanded height + 明示speech hit testへ変更 | ✅ v0.1.47 |
+
+---
+
+## v0.1.47 実装詳細
+
+### A: v0.1.46 debug結果
+
+- background render surfaceでも speech expanded時のキャラ下半分消失は残った
+- debug上は `stage` / `wrapper` / `surface` / `img` / `alphaRect` がすべて viewport 内で、`OVER` は出ていない
+- 消える境界が旧compact height `280px` 付近に見えるため、280→410 dynamic resize後のtransparent WebView / GPU compositor内部clipを疑う
+
+### B: always expanded window化
+
+- `src-tauri/src/lib.rs`
+  - `resize_companion` は speech表示状態に関係なく常に `CHAR_WINDOW_H_LOGICAL + BUBBLE_WINDOW_H_LOGICAL` を target height にする
+  - speech表示/非表示でwindow heightを変えず、sizeScale変更時のみbounds同期する設計へ変更
+- `src-tauri/tauri.conf.json`
+  - companion初期heightを `410` に変更
+- `src/App.tsx`
+  - debug expected `windowH` を常時expanded heightに変更
+  - root `100vw/100vh`、character-stage bottom anchor、speech bubble頭上基準は維持
+
+### C: hit test状態の明示化
+
+- `SPEECH_VISIBLE: AtomicBool` を追加
+- `resize_companion(speechVisible, sizeScale)` で表示状態をRustへ同期
+- hit testはwindow heightからspeech表示を推測せず、`SPEECH_VISIBLE` を参照
+- 常時410pxでも speech=false時はbubble hitを無効化し、上部透明領域click-throughを維持
+
+### D: DebugOverlayとContextMenu
+
+- `DebugOverlay` に `suspended` propを追加
+- ContextMenu表示中はDebugOverlayを一時停止し、右クリックメニューがdebug文字列に隠れないようにした
+
+### E: 触っていないもの
+
+- sprite画像 / canvas描画 / speechSafetyLift / work area clamp大幅変更
+- Ollama / Active App / PromptBuilder / QualityFilter / Transparency UI
 
 ---
 
@@ -408,14 +447,14 @@
 
 ---
 
-## 次のフェーズ候補 (v0.1.47)
+## 次のフェーズ候補 (v0.1.48)
 
-### 優先候補 A: v0.1.46 実機確認 → 残QA修正 ← **最優先**
+### 優先候補 A: v0.1.47 実機確認 → 残QA修正 ← **最優先**
 
-1. speech表示時にキャラ下半分が消えないか確認
-2. speech中dragでも消えないか確認
-3. debug overlayで `renderMode=background` が出るか確認
-4. `speaking.png` / `touched.png` の両方で問題ないか確認
+1. idle / speech とも debug overlay の wh/client/vh が `200x410` になるか確認
+2. speech表示時にキャラ下半分が消えないか確認
+3. speech中dragでも消えないか確認
+4. speech=false時の上部透明領域click-throughが維持されているか確認
 5. 吹き出し位置・drag・右クリック・click-through・設定アップデートが壊れていないか確認
 
 ### 優先候補 B: First-run Onboarding

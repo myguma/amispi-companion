@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.1.47] — 2026-05-13
+
+### Fixed (Hotfix: Always Expanded Transparent Window)
+
+#### A: speech表示時のdynamic resizeを停止
+
+- **v0.1.46 debug結果**: expanded `200x410` でも `stage` / `wrapper` / `surface` / `img` / `alphaRect` は viewport 内に収まり、`OVER` は出ていなかった
+- **判断**: `<img>` / `background-image` / sprite alpha bbox / window height不足 / work area clamp より、transparent WebView の 280→410 dynamic resize 後に旧compact height付近で内部clipされる可能性が高い
+- **lib.rs**: `resize_companion` の target height を speech表示状態に関係なく `CHAR_WINDOW_H_LOGICAL + BUBBLE_WINDOW_H_LOGICAL` に固定
+- **tauri.conf.json**: companion初期heightを `410` に変更
+- **App.tsx**: debug expected `windowH` を常時 expanded height に変更
+- speech表示/非表示では window height を変えず、sizeScale変更時のみbounds同期する設計にした
+
+#### B: speech visible を明示状態でhit testへ同期
+
+- **lib.rs**: `SPEECH_VISIBLE: AtomicBool` を追加
+- `resize_companion(speechVisible, sizeScale)` で `SPEECH_VISIBLE` を更新
+- Windows hit test は window height からspeech表示を推測せず、`SPEECH_VISIBLE` を参照
+- 常時expanded windowでも speech=false 時は bubble hit を無効化し、上部透明領域click-throughを維持
+- ContextMenu中のみ全域interactive、UpdateBadge表示中のみbadge領域interactiveの設計は維持
+
+#### C: DebugOverlayとContextMenuの重なりを修正
+
+- **DebugOverlay.tsx**: `suspended` propを追加
+- **App.tsx**: ContextMenu表示中はDebugOverlayを一時停止
+- デバッグモードON時でも右クリックメニューと「アプリ終了」がdebug文字列に隠れないようにした
+
+#### D: 維持したもの
+
+- v0.1.46 の background render surface / sprite debug
+- v0.1.44 の設定画面アップデート機能 / UpdateBadge hit test
+- v0.1.43 の speech bubble character relative anchor
+- root `100vw/100vh`、character-stage bottom anchor、Character実描画sizeScale同期
+- ContextMenu / click-through / drag / voice long press / Active App / Ollama
+
 ## [0.1.46] — 2026-05-13
 
 ### Fixed (Hotfix: Sprite Render Surface)

@@ -147,15 +147,15 @@ export default function App() {
   }, [onCharacterClick, settings.cryEnabled]);
 
   // ドラッグ終了後に位置を保存し、drag reaction を少し遅らせて発火する。
-  // drag中に speech resize が走ると OS ネイティブドラッグと window resize が競合する。
+  // drag中に発話状態が切り替わっても window height は変えないが、反応は掴み終えてから出す。
   const prevIsDragging = useRef(false);
   useEffect(() => {
     const wasDragging = prevIsDragging.current;
     prevIsDragging.current = isDragging;
 
     // ドラッグ終了 → ウィンドウ位置を保存
-    // resize_companion がキャラ底辺を固定して動的リサイズするため、
-    // 保存する y はウィンドウ上端 (pos.y) をそのまま使う
+    // 保存する y はウィンドウ上端 (pos.y) をそのまま使う。
+    // v0.1.47 以降は companion window を常時 expanded height で扱う。
     if (!isDragging && wasDragging && isTauri) {
       // startDragging() は OS ネイティブなので少し待ってから位置を取得する
       setTimeout(async () => {
@@ -202,8 +202,8 @@ export default function App() {
     if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 吹き出し表示状態に応じてウィンドウをリサイズ。
-  // React の sizeScale と Rust 側 window bounds を必ず同じ値に揃える。
+  // companion window は常時 expanded height で維持する。
+  // hasSpeech は Rust 側 hit test の bubble 領域ON/OFFへ渡すだけにする。
   const hasSpeech = !!(tinyText || speechText);
   const scale = normalizeCompanionScale(settings.sizeScale);
 
@@ -215,7 +215,7 @@ export default function App() {
   const characterW = Math.round(CHARACTER_SPRITE_W * scale);
   const characterH = Math.round(CHARACTER_SPRITE_H * scale);
   const windowW = Math.round(COMPANION_WINDOW_W * scale);
-  const windowH = Math.round((hasSpeech ? COMPANION_COMPACT_H + COMPANION_BUBBLE_H : COMPANION_COMPACT_H) * scale);
+  const windowH = Math.round((COMPANION_COMPACT_H + COMPANION_BUBBLE_H) * scale);
   const bottomPad = Math.round(CHARACTER_BOTTOM_PAD * scale);
   const speechBubbleGap = Math.round(SPEECH_BUBBLE_GAP * scale);
   const updateBadgeGap = Math.round(UPDATE_BADGE_GAP * scale);
@@ -292,6 +292,7 @@ export default function App() {
     >
       <DebugOverlay
         enabled={settings.debugModeEnabled}
+        suspended={contextMenuVisible}
         state={state}
         speechText={speechText}
         hasSpeech={hasSpeech}

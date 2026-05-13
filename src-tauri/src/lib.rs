@@ -12,10 +12,10 @@ mod observation;
 mod settings;
 
 // ──────────────────────────────────────────────────────────
-// ウィンドウリサイズ (吹き出し表示/非表示で動的変更)
+// companion window bounds / hit-test state synchronization
 // ──────────────────────────────────────────────────────────
 
-/// キャラクター領域の論理ピクセル高さ (吹き出し非表示時のウィンドウ高さ)。
+/// キャラクター領域の論理ピクセル高さ。
 /// 160px スプライト + 状態アニメーションの上下余白 + 下端パディングを収める。
 const CHAR_WINDOW_H_LOGICAL: f64 = 280.0;
 /// 吹き出し領域の論理ピクセル高さ
@@ -42,6 +42,7 @@ const UPDATE_BADGE_HIT_H_LOGICAL: f64 = 28.0;
 
 static CONTEXT_MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
 static UPDATE_BADGE_VISIBLE: AtomicBool = AtomicBool::new(false);
+static SPEECH_VISIBLE: AtomicBool = AtomicBool::new(false);
 
 fn normalized_size_scale(value: Option<f64>) -> f64 {
     let n = value.unwrap_or(1.0);
@@ -92,9 +93,9 @@ fn log_resize_companion(
     );
 }
 
-/// 吹き出し表示状態に応じてウィンドウをリサイズする
+/// companion window を常時 expanded height に揃え、speech visible 状態を hit test へ同期する
 /// scale_factor() で論理→物理ピクセルを変換してから設定するため DPI に対応する
-/// キャラクター底辺の位置を固定してリサイズするため、画面上の位置が維持される
+/// サイズ変更が必要な場合はキャラクター底辺の位置を固定して画面上の位置を維持する
 #[tauri::command]
 async fn resize_companion(
     app: tauri::AppHandle,
@@ -108,15 +109,12 @@ async fn resize_companion(
     let size = window.outer_size().map_err(|e| e.to_string())?;
     let scale = window.scale_factor().unwrap_or(1.0);
     let ui_scale = normalized_size_scale(size_scale);
+    SPEECH_VISIBLE.store(speech_visible, Ordering::Relaxed);
 
     let target_w = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale).round() as u32;
     let char_h = (CHAR_WINDOW_H_LOGICAL * ui_scale * scale).round() as u32;
     let bubble_h = (BUBBLE_WINDOW_H_LOGICAL * ui_scale * scale).round() as u32;
-    let target_h = if speech_visible {
-        char_h + bubble_h
-    } else {
-        char_h
-    };
+    let target_h = char_h + bubble_h;
 
     // キャラクター底辺 (= ウィンドウ下端) を画面上で固定する。
     // その後 work_area 内に clamp し、旧バージョンで保存された小さいwindow用の座標でも
@@ -276,7 +274,6 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                         .clamp(MIN_SIZE_SCALE, MAX_SIZE_SCALE);
                     let lx = (cx - pos.x) as f64;
                     let ly = (cy - pos.y) as f64;
-                    let char_h = CHAR_WINDOW_H_LOGICAL * ui_scale * scale;
                     let sprite_w = CHARACTER_SPRITE_W_LOGICAL * ui_scale * scale;
                     let sprite_h = CHARACTER_SPRITE_H_LOGICAL * ui_scale * scale;
                     let bottom_pad = CHARACTER_BOTTOM_PAD_LOGICAL * ui_scale * scale;
@@ -286,7 +283,7 @@ fn start_hit_test_thread(window: tauri::WebviewWindow) {
                     let update_badge_w = UPDATE_BADGE_HIT_W_LOGICAL * ui_scale * scale;
                     let update_badge_h = UPDATE_BADGE_HIT_H_LOGICAL * ui_scale * scale;
                     let unit = ui_scale * scale;
-                    let speech_visible = size.height as f64 > char_h + (8.0 * unit);
+                    let speech_visible = SPEECH_VISIBLE.load(Ordering::Relaxed);
 
                     let char_top = size.height as f64 - bottom_pad - sprite_h;
                     let center_x = (COMPANION_WINDOW_W_LOGICAL * ui_scale * scale) / 2.0;
@@ -478,7 +475,7 @@ fn save_settings_cmd(
 fn save_window_position(app: tauri::AppHandle, x: i32, y: i32) -> Result<(), String> {
     let mut s = settings::load_settings(&app);
     let (save_x, save_y) = if let Some(window) = app.get_webview_window("companion") {
-        let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
+        let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 410 });
         let clamped = clamp_position_to_work_area(&window, x, y, size.width, size.height);
         if clamped != (x, y) {
             let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
@@ -519,7 +516,7 @@ pub fn run() {
             let restored = if let (Some(sx), Some(sy)) = (saved.window_x, saved.window_y) {
                 // 画面外補正: 明らかにおかしな値は無視
                 if sx > -500 && sy > -500 && sx < 10_000 && sy < 10_000 {
-                    let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
+                    let size = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 410 });
                     let (rx, ry) = clamp_position_to_work_area(&window, sx, sy, size.width, size.height);
                     let _ = window.set_position(tauri::Position::Physical(
                         tauri::PhysicalPosition { x: rx, y: ry },
@@ -535,7 +532,7 @@ pub fn run() {
             if !restored {
                 if let Some(monitor) = window.current_monitor().ok().flatten() {
                     let area = monitor.work_area();
-                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 280 });
+                    let win = window.outer_size().unwrap_or(tauri::PhysicalSize { width: 200, height: 410 });
                     let margin = 20i32;
                     let _ = window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                         x: area.position.x + area.size.width as i32 - win.width as i32 - margin,
