@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.2.0] — 2026-05-13
+
+### Daily-use Beta
+
+- v0.1.x の安定化を daily-use beta として区切り
+- 新機能追加なし。docs / checklist / roadmap / known issues の整理のみ
+- compact `200x280` speech layout を継続採用
+- 410px expanded window / 280→410 dynamic resize は引き続き不採用
+- `docs/DAILY_USE_BETA_CHECKLIST.md` を追加
+- `docs/KNOWN_ISSUES.md` を daily-use beta の実機依存リスクとして参照
+
+### Beta Scope
+
+- ローカルLLM(Ollama) / RuleProvider / fallback による短い反応
+- First-run Onboarding
+- Memory Retention Policy / JSON export
+- 設定画面アップデート導線
+- DebugMode / Transparency UI / Active App debug
+- quiet / focus / DND 発話抑制
+
+### Field QA
+
+- Automated build / cargo build / release workflow passed
+- v0.2.0自体の実機QAは未実施。v0.1.48〜v0.1.50で実機通過済みの土台は維持
+- v0.1.51以降の文脈反応・発話品質・quiet/focus/DND・memory export・release polishは field QA pending
+
 ## [0.1.55] — 2026-05-13
 
 ### Changed (Release Polish)

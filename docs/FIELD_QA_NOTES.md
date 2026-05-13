@@ -20,8 +20,27 @@
 > v0.1.53 では Quiet / Focus / DND hardening として、自律発話抑制経路を整理。
 > v0.1.54 では MemoryEvent JSON export と data control polish を追加。
 > v0.1.55 では Release polish としてNode.js 24 opt-in、Update/Ollama失敗案内、Known Issuesを追加。
+> v0.2.0 では daily-use beta としてv0.1.x安定化をdocs/checklistに整理。
 
-**更新: 2026-05-13 (v0.1.55)**
+**更新: 2026-05-13 (v0.2.0)**
+
+---
+
+## v0.2.0 での更新内容
+
+### Daily-use Beta
+
+**整理内容:**
+- v0.1.xの安定化を daily-use beta として区切り
+- docs/DAILY_USE_BETA_CHECKLIST.md を追加
+- docs/KNOWN_ISSUES.md と合わせて field QA pending を明確化
+- compact 200x280 fixed window と speech時window resize不採用を継続制約として記録
+
+**field QA pending:**
+- v0.2.0自体の実機QA
+- 30分以上の常駐
+- v0.1.51以降の文脈反応 / reaction quality / quiet-focus-DND / memory export
+- 実インストール環境でのupdater
 
 ---
 

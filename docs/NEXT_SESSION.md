@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.55)**
+**最終更新: 2026-05-13 (v0.2.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v0.1.55
-**フェーズ:** Release Polish (field QA pending)
-**全体進捗:** 約 89%
+**バージョン:** v0.2.0
+**フェーズ:** Daily-use Beta (automated checks passed / field QA pending)
+**全体進捗:** 約 90%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,9 +24,9 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v0.1.55)
-✅ cargo build  → Finished dev profile (v0.1.55)
-✅ GitHub Actions / Windows Installer → v0.1.54 成功済み。v0.1.55 は tag push 後に確認
+✅ npm run build → ✓ built (v0.2.0)
+✅ cargo build  → Finished dev profile (v0.2.0)
+✅ GitHub Actions / Windows Installer → v0.1.55 成功済み。v0.2.0 は tag push 後に確認
 ```
 
 ---
@@ -62,6 +62,25 @@
 | Quiet / Focus / DND Hardening | quiet/focus/DND時の自律発話抑制経路を整理 | ✅ v0.1.53 |
 | Memory Export / Data Control Polish | MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 | ✅ v0.1.54 |
 | Release Polish | Node.js 24 opt-in・Update/Ollama失敗案内・Known Issues作成 | ✅ v0.1.55 |
+| Daily-use Beta | v0.1.x安定化をdocs/checklist/known issuesとして整理 | ✅ v0.2.0 |
+
+---
+
+## v0.2.0 実装詳細
+
+### A: Daily-use Beta Docs Consolidation
+
+- 新機能追加なし
+- `docs/DAILY_USE_BETA_CHECKLIST.md` を追加
+- `docs/KNOWN_ISSUES.md` と合わせ、automated checks と field QA pending を分離
+- compact `200x280` fixed window / speech時window resize不採用を設計制約として再確認
+- v0.1.48〜v0.1.50で実機QA通過済みの土台を維持
+
+### B: Field QA pending
+
+- v0.2.0自体の実機QAは未実施
+- v0.1.51以降の文脈反応 / reaction quality / quiet-focus-DND / memory export / release polish は実機確認が必要
+- updater実機更新、Ollama未起動表示、長時間常駐は引き続きKnown Issuesで管理
 
 ---
 
@@ -679,18 +698,18 @@
 
 ---
 
-## 次のフェーズ候補 (v0.2.0)
+## 次のフェーズ候補 (v0.2.x)
 
-### 優先候補 A: Daily-use Beta docs consolidation ← **推奨**
+### 優先候補 A: Emotion Sprite Set Minimal ← **推奨**
 
-**目的:** v0.1.x安定化を daily-use beta として区切る。
+**目的:** window / hit test / layoutを触らず、表情の存在感を少し増やす。
 
 **実装すべき内容:**
-1. v0.2.0 beta 合格条件をチェックリスト化
-2. docs/PRODUCT_COMPLETION_ROADMAP.md を v0.2.0 現在地へ更新
-3. PROGRESS_TRACKER / NEXT_SESSION / FIELD_QA_NOTES / CHANGELOG を整理
-4. Known Issues を daily-use beta 向けに更新
-5. 実機依存項目は field QA pending と明記
+1. emotionToSpriteState の整理
+2. happy / shy / concerned など最小3種類のfallback mapping
+3. 画像未存在時は既存spriteへ安全fallback
+4. DebugOverlayに current emotion / sprite fallback 状態を軽く表示してもよい
+5. docsにEmotion Sprite Setの安全fallback方針を書く
 
 ### 優先候補 B: Emotion Sprite Set
 

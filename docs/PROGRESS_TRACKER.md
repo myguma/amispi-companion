@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.1.55)**
+**最終更新: 2026-05-13 (v0.2.0)**
 
 ---
 
@@ -24,9 +24,9 @@
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 93% | Known Issues追加・Update/Ollama失敗案内を改善 |
+| リリース品質 (docs) | 95% | v0.2.0 daily-use beta checklist / Known Issues / roadmapを整理 |
 | Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
-| **総合** | **~89%** | v0.1.55でrelease polishを追加。field QA pending |
+| **総合** | **~90%** | v0.2.0 daily-use beta。automated checks passed / field QA pending |
 
 ---
 
@@ -63,6 +63,7 @@
 | v0.1.53 | Quiet / Focus / DND Hardening: idle/observationの抑制経路整理・DND中の短い手動反応化 |
 | v0.1.54 | Memory Export / Data Control Polish: MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 |
 | v0.1.55 | Release Polish: Node.js 24 opt-in・Update/Ollama失敗案内・KNOWN_ISSUES作成 |
+| v0.2.0 | Daily-use Beta: v0.1.x安定化をdocs/checklist/known issuesとして整理 |
 
 ---
 
@@ -77,12 +78,12 @@
 
 ---
 
-## 次の目標: v0.2.0 候補
+## 次の目標: v0.2.x 候補
 
-優先候補A: **Daily-use Beta docs consolidation** ← **推奨**
-- v0.2.0 beta 合格条件をチェックリスト化
-- PRODUCT_COMPLETION_ROADMAP / PROGRESS_TRACKER / NEXT_SESSION / FIELD_QA_NOTES / CHANGELOG を整理
-- 実機依存項目は field QA pending と明記
+優先候補A: **Emotion Sprite Set Minimal** ← **推奨**
+- happy / shy / concerned など最小3種類のfallback mapping
+- asset未存在でも既存spriteへ安全fallback
+- window / hit test / layoutは触らない
 
 優先候補B: **Emotion Sprite Set**
 - 感情別スプライト (shy / concerned / happy)
@@ -94,7 +95,6 @@
 
 | 作業 | 優先度 |
 |------|--------|
-| v0.2.0 daily-use beta docs consolidation | 高 |
-| Emotion sprite set | 中 |
+| Emotion sprite set minimal | 高 |
 | v0.1.55 release polish / 残QA修正 | 中 |
 | Whisper Rust sidecar (Phase 6b-real-2) | 低 |
