@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.0-rc.1] — 2026-05-13
+
+### Release Candidate
+
+- 新機能追加なし
+- v0.3.1時点の機能をrelease candidateとして整理
+- `docs/V1_RELEASE_CANDIDATE_CHECKLIST.md` を追加
+- `docs/V1_RELEASE_NOTES_DRAFT.md` を追加
+- Known Issues / roadmap / progress / next session docsをRC基準へ更新
+
+### Maintained
+
+- compact `200x280` window / speech時window resize不採用 / hit test geometry は変更なし
+- Onboarding / Memory Retention / Update / Debug / Transparency / Ollama / Active App / Voice MVPは維持
+- クラウドAI / クラウドSTT / 常時マイク監視 / Screen Capture / 自動ファイル操作なし
+
+### Field QA
+
+- Automated build / cargo build required before tag; release workflow checked after tag push
+- v1.0.0-rc.1自体のfield QAは未実施。実機依存項目はKnown Issuesに明記
+
 ## [0.3.1] — 2026-05-13
 
 ### Fixed (Voice QA Hardening)

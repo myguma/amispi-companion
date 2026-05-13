@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-13 (v0.3.1)**
+**最終更新: 2026-05-13 (v1.0.0-rc.1)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -14,6 +14,7 @@
 | Voice / Whisper | pending | v0.3.1で失敗時復帰案内を強化。Windows実機のbinary/model/MIME type/権限/一時ファイル削除はfield QA pending |
 | Windows transparent WebView | watch | 410px expanded windowは不採用。compact 200x280 fixedを設計制約として維持 |
 | v0.2.0 daily-use beta | pending | automated checksでのbeta区切り。v0.2.0自体のfield QAは未実施 |
+| v1.0.0-rc.1 release candidate | pending | 新機能追加なしのRC。field QAは未実施 |
 
 ## Non-goals
 
@@ -31,3 +32,4 @@
 - `v0.1.50`: Memory Retention Policy 実機QA通過
 - `v0.1.51`以降: 文脈反応・発話品質・発話抑制・memory exportは automated checks passed / field QA pending
 - `v0.3.1`: Whisper Push-to-Talk failure recoveryは automated checks passed / field QA pending
+- `v1.0.0-rc.1`: release candidate docs整理。field QA pendingを隠さない

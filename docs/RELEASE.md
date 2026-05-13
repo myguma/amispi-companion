@@ -57,18 +57,18 @@ ls ~/.tauri/amispi-companion.key*
 
 **`src-tauri/tauri.conf.json`:**
 ```json
-"version": "0.2.0",
+"version": "1.0.0-rc.1",
 ```
 
 **`src-tauri/Cargo.toml`:**
 ```toml
-version = "0.2.0"
+version = "1.0.0-rc.1"
 ```
 
 ### 2. CHANGELOG.md を更新
 
 ```markdown
-## [0.2.0] — YYYY-MM-DD
+## [1.0.0-rc.1] — YYYY-MM-DD
 
 ### Added
 - ...
@@ -77,16 +77,16 @@ version = "0.2.0"
 ### 3. コミット
 
 ```bash
-git add src-tauri/tauri.conf.json src-tauri/Cargo.toml CHANGELOG.md
-git commit -m "chore: bump version to 0.2.0"
+git add -A
+git commit -m "chore: v1.0.0-rc.1 — release candidate"
 ```
 
 ### 4. タグを作成して push
 
 ```bash
-git tag v0.2.0
+git tag -a v1.0.0-rc.1 -m "v1.0.0-rc.1"
 git push origin main
-git push origin v0.2.0
+git push origin v1.0.0-rc.1
 ```
 
 → GitHub Actions が自動起動し、約 5〜10 分で Draft Release が作成される。

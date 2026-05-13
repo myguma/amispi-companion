@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-13 (v0.3.1)**
+**最終更新: 2026-05-13 (v1.0.0-rc.1)**
 
 ---
 
@@ -24,9 +24,9 @@
 | 設定 UI | 97% | TabErrorBoundary、アップデート/デバッグタブ、First-run Onboarding、Memory retention UI追加 |
 | 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+表示中UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 96% | v0.2.3 Voice implementation plan更新 |
-| Windows installer / CI | 82% | Release workflow継続成功。Node.js 24 opt-inを追加 |
-| **総合** | **~92%** | v0.3.1でVoice QA hardening。automated checks passed / field QA pending |
+| リリース品質 (docs) | 98% | v1.0.0-rc.1 checklist / release notes draft / Known Issues整理 |
+| Windows installer / CI | 84% | Release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
+| **総合** | **~93%** | v1.0.0-rc.1 release candidate。automated checks required / field QA pending |
 
 ---
 
@@ -69,6 +69,7 @@
 | v0.2.3 | Voice Implementation Plan: Push-to-Talk Whisper MVPの範囲・privacy・QA項目を固定 |
 | v0.3.0 | Whisper Push-to-Talk MVP: Rust commandでローカルWhisper CLIへ接続 |
 | v0.3.1 | Voice QA Hardening: Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 |
+| v1.0.0-rc.1 | Release Candidate: docs / Known Issues / QA checklist / release notes draft整理 |
 
 ---
 
@@ -83,14 +84,14 @@
 
 ---
 
-## 次の目標: v1.0 release candidate
+## 次の目標: v1.0.0 stable
 
-優先候補A: **v1.0.0-rc.1 Release Candidate** ← **推奨**
-- 新機能追加なしでdocs / Known Issues / QA checklistを整理
-- field QA pendingを隠さずRCとして区切る
+優先候補A: **v1.0.0 Stable** ← **推奨**
+- 新機能追加なしでversion / release notes / Known Issuesを最終確認
+- field QA未実施ならstable notesに明記
 
 | 作業 | 優先度 |
 |------|--------|
-| v1.0.0-rc.1 Release Candidate | 高 |
+| v1.0.0 Stable | 高 |
 | Voice実機QA | 高 |
 | 残QA修正 | 中 |
