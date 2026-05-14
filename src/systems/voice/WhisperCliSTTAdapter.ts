@@ -10,6 +10,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { STTAdapter, STTInput, STTAdapterOutput, STTError } from "./STTAdapter";
 import type { LastVoiceDebugStatus } from "./voiceDebugStore";
 import { previewStderr, previewText, setLastVoiceDebug } from "./voiceDebugStore";
+import { validateVoiceTranscript } from "./normalizeTranscript";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -139,13 +140,28 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         return { ok: false, error: statusToError(debug.status) };
       }
 
-      const trimmed = text.trim().slice(0, 200);
-      if (!trimmed) return { ok: false, error: "no_speech" };
+      const validated = validateVoiceTranscript(text);
+      if (!validated.ok) {
+        setLastVoiceDebug({
+          status: "no_speech",
+          transcriptPreview: previewText(text),
+          transcriptLength: text.trim().length,
+          inputMimeType: debug.inputMimeType ?? mimeType,
+          inputExtension: debug.inputExtension ?? extensionFromMime(mimeType),
+          conversionUsed: debug.conversionUsed ?? true,
+          ffmpegConfigured: debug.ffmpegConfigured ?? this.ffmpegExecutablePath.trim().length > 0,
+          ffmpegExitOk: debug.ffmpegExitOk,
+          whisperExitOk: debug.whisperExitOk,
+          stderrPreview: previewStderr(debug.stderrPreview ?? validated.reason),
+          tempCleanupDone: debug.tempCleanupDone,
+        });
+        return { ok: false, error: "no_speech" };
+      }
 
       return {
         ok: true,
         result: {
-          text: trimmed,
+          text: validated.text,
           durationMs: Math.round(performance.now() - started),
           engine: this.name,
         },

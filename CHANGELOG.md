@@ -1,5 +1,38 @@
 # Changelog
 
+## [1.0.3] — 2026-05-14
+
+### Fixed (Voice interaction priority and conversational response hotfix)
+
+- **Voice long press / click suppression**:
+  - voice recording開始からSTT/AI応答完了直後まで通常clickを抑制
+  - 抑制されたclickは `character_clicked` として記録しない
+  - voice返答直後に「ここにいる」「...なに？」「ん」などのclick反応で上書きされる問題を抑制
+- **Speech priority/source**:
+  - `triggerSpeak` に `source` / `priority` / `lockMs` を追加
+  - voice / voice_error をmanual click・drag・autonomousより高優先度にし、短時間の上書きを防止
+  - 既存呼び出し互換を維持しつつ、update/system/autonomous/drag/manual_clickを明示
+- **Voice transcript validation**:
+  - `[BLANK_AUDIO]` / `[NO_SPEECH]` / `[MUSIC]` / 記号のみ / 1文字ノイズを `no_speech` 扱いにする
+  - blank/noise transcript を「聞こえた」扱いにしない
+- **Voice response quality**:
+  - voice fallbackに観測質問向けの短い応答を追加
+  - 「今何を見てる？」「画面見えてる？」に、画面全体ではなく現在のアプリ種別や状態の気配だけ分かると答える方針へ調整
+  - 末尾の孤立した「ん」、壊れた句読点、複数文化をvoice post-process / QualityFilterで抑制
+- **Docs**:
+  - optional remote LLM mode は v2以降の明示opt-in検討メモとしてのみ記録
+  - Remote LLM / OpenAI API / ChatGPT API 実装は追加していない
+
+### Maintained
+
+- transcript / 音声ファイルは永続保存しない
+- compact `200x280` window / speech時window resize不採用 / character layout / hit test geometry / UpdateBadge右下配置 / click-through / ContextMenu / drag / Onboarding / Memory / Update / Debug / Transparency / Ollama / Active Appは維持
+
+### Field QA
+
+- Voice conversationは v1.0.3 field QA pending
+- 次回は voice返答直後のclick上書き、`[BLANK_AUDIO]` rejection、観測質問応答を確認する
+
 ## [1.0.2] — 2026-05-14
 
 ### Fixed (Voice transcript debug and prompt repair)

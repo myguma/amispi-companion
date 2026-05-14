@@ -2,7 +2,7 @@
 // 禁止表現・長文・アシスタント文・英語混入を排除する
 
 import type { CompanionContext } from "../../companion/ai/types";
-import { isGenericVoiceLine } from "../voice/voiceFallback";
+import { isGenericVoiceLine, sanitizeVoiceResponse } from "../voice/voiceFallback";
 
 const MAX_LENGTH = 80;
 const MIN_LENGTH = 2;
@@ -67,7 +67,11 @@ export type FilterOptions = {
 };
 
 export function filterGeneratedText(raw: string, options: FilterOptions = {}): FilterResult {
-  const text = raw.trim();
+  const text = options.trigger === "voice" && options.voiceInput?.trim()
+    ? sanitizeVoiceResponse(raw)
+    : raw.trim()
+        .replace(/[？！]。/g, (m) => m[0])
+        .replace(/。。+/g, "。");
 
   if (!text) return { ok: false, reason: "empty" };
 

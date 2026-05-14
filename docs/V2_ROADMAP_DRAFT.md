@@ -38,6 +38,18 @@ v2 should extend the local-first desktop companion without turning it into a clo
 - Safer model-missing guidance
 - No cloud routing
 
+### Optional Remote LLM Mode (Design Memo Only)
+
+- Not implemented in v1.x
+- Default OFF, explicit opt-in only
+- Local-only mode must remain fully supported
+- Before sending anything, show the data categories that would be sent
+- Let the user choose whether transcript, abstract observation, or memory summary can be sent
+- Never send raw audio, screen capture, OCR text, file contents, browser history, clipboard, keyboard input, email, or message bodies
+- Transparency UI must clearly show when cloud routing is active
+- Remote mode must not enable cloud STT, wake word, always-on microphone, or automatic file operations
+- This is a v2+ planning candidate, not a current implementation task
+
 ### Advanced Memory Export / Import
 
 - Versioned local JSON schema

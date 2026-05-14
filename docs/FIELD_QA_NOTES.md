@@ -31,8 +31,39 @@
 > v1.0.0後に v2 roadmap draft を追加。実装には未着手。
 > v1.0.0 field QAでは基本操作が通過し、v1.0.1でUpdateBadge位置とWhisper WAV変換をhotfix。
 > v1.0.1 field QAではFFmpeg/Whisperの実行エラーは解消したが、transcript確認とvoice返答品質が不足。v1.0.2でdebugとprompt/fallbackを修正。
+> v1.0.2 field QAではWhisperが聞こえていることを確認。残問題はvoice long press後のclick誤発火とvoice返答品質。v1.0.3でpriority/suppress/noise rejectionを修正。
 
-**更新: 2026-05-14 (v1.0.2)**
+**更新: 2026-05-14 (v1.0.3)**
+
+---
+
+## v1.0.3 での更新内容
+
+### Voice interaction priority and conversational response hotfix
+
+**v1.0.2 field QAで確認できたこと:**
+- VoicePage transcript previewによりWhisperが音声を聞き取っていることを確認
+- 「青いカエルと七三九」などの内容が返答へ反映され始めた
+- ただしvoice返答直後に通常click反応が入り、`character_clicked` とclick返答でvoice返答が上書きされることがあった
+- `[BLANK_AUDIO]` が有効transcript扱いされ、「聞こえた」と返ることがあった
+
+**v1.0.3修正:**
+- voice recording開始から応答完了直後まで通常clickを抑制し、抑制clickはMemoryEventに記録しない
+- `triggerSpeak` にsource/priority/lockを追加し、voice返答をclick/drag/autonomousより優先
+- `[BLANK_AUDIO]` / `[NO_SPEECH]` / `[MUSIC]` / 記号のみ / ノイズを `no_speech` 扱いへ変更
+- voice fallbackに観測質問向けの短い応答を追加
+- 末尾「ん」や壊れた句読点をvoice post-process / QualityFilterで抑制
+
+**privacy:**
+- transcript previewは引き続き揮発状態のみ
+- transcriptはMemoryEvent / localStorage / Memory exportに保存しない
+- 音声ファイル・変換WAV・Whisper transcript txtは一時ディレクトリごと削除する方針を維持
+
+**field QA pending:**
+- voice返答直後にclick反応で上書きされないか
+- Memory exportに不要な `character_clicked` が残らないか
+- `[BLANK_AUDIO]` が「聞こえた」扱いされないか
+- 「今何を見てる？」に観測範囲を短く答えるか
 
 ---
 

@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.2)**
+**最終更新: 2026-05-14 (v1.0.3)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.2
-**フェーズ:** Voice transcript debug and prompt repair
-**全体進捗:** 約 95%
+**バージョン:** v1.0.3
+**フェーズ:** Voice interaction priority and conversational response hotfix
+**全体進捗:** 約 96%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,8 +24,8 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.2)
-✅ cargo build  → Finished dev profile (v1.0.2)
+✅ npm run build → ✓ built (v1.0.3)
+✅ cargo build  → Finished dev profile (v1.0.3)
 ✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
 ```
 
@@ -73,6 +73,21 @@
 | v2 Roadmap Draft | docs/V2_ROADMAP_DRAFT.md にv2候補と非目標を整理 | ✅ docs only |
 | Field QA Hotfix | UpdateBadge右下配置・FFmpegによるWhisper用WAV変換 | ✅ v1.0.1 / voice STT field QA pending |
 | Voice transcript debug | VoicePage transcript preview・voice prompt/fallback/filter修正 | ✅ v1.0.2 / voice conversation field QA pending |
+| Voice interaction priority | voice後click抑制・speech priority・blank transcript rejection・観測質問fallback | ✅ v1.0.3 / voice conversation field QA pending |
+
+---
+
+## v1.0.3 hotfix summary
+
+- v1.0.2 field QAでWhisperが聞こえていることを確認
+- voice long press release後に通常clickが発火し、voice返答をclick返答が上書きする問題を修正
+- voice recording/STT/AI応答中と応答直後はclickを抑制し、抑制clickは `character_clicked` として記録しない
+- `triggerSpeak` に source / priority / lockMs を追加し、voice返答をmanual click / drag / autonomousより優先
+- `[BLANK_AUDIO]` / `[NO_SPEECH]` / `[MUSIC]` / 記号のみ / ノイズを no_speech 扱いにする
+- voice fallbackに「今何を見てる？」「画面見えてる？」向けの短い観測範囲応答を追加
+- 末尾「ん」や壊れた句読点をvoice post-process / QualityFilterで抑制
+- Remote LLMは実装していない。v2以降の明示opt-in検討メモだけdocsへ残す
+- compact `200x280` window / hit test / click-through / ContextMenu / UpdateBadge / Onboarding / Memory / Update / Debug / Transparency / Ollama / Active Appは維持
 
 ---
 

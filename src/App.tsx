@@ -149,10 +149,10 @@ export default function App() {
 
   // クリック音: ユーザーgesture 文脈で即座に再生
   const handleCharacterClick = useCallback(() => {
-    if (settings.cryEnabled) {
+    const handled = onCharacterClick();
+    if (handled && settings.cryEnabled) {
       void cryEngine.play({ id: "touch", synth: { kind: "surprised", durationMs: 150 } });
     }
-    onCharacterClick();
   }, [onCharacterClick, settings.cryEnabled]);
 
   // ドラッグ終了後に位置を保存し、drag reaction を少し遅らせて発火する。
@@ -175,10 +175,10 @@ export default function App() {
       }, 100);
     }
 
-    if (!isDragging && wasDragging) {
+    if (!isDragging && wasDragging && voiceUIState !== "voiceListening" && voiceUIState !== "voiceTranscribing" && voiceUIState !== "voiceResponding") {
       setTimeout(() => triggerDragReaction(), 160);
     }
-  }, [isDragging, triggerDragReaction]);
+  }, [isDragging, triggerDragReaction, voiceUIState]);
 
   // 観測ポーリング
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function App() {
 
   // 更新通知
   useEffect(() => {
-    if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`);
+    if (updateAvailable) triggerSpeak(`v${updateAvailable.version} 来てるよ`, { source: "update", priority: 80 });
   }, [updateAvailable]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // companion window は常時 compact height で維持する。

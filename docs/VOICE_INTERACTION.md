@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-14 (v1.0.2)**
+**最終更新: 2026-05-14 (v1.0.3)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -24,7 +24,33 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
 | Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + FFmpeg WAV 変換 | ✅ v1.0.1 hotfix / field QA pending |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v1.0.2 transcript debug / field QA pending |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v1.0.3 interaction priority / field QA pending |
+
+---
+
+## v1.0.3 interaction priority / conversational response hotfix
+
+- v1.0.2 field QAで、Whisper transcript previewにより音声が聞き取れていることを確認
+- voice long press終了直後の通常click誤発火を抑制
+- 抑制clickは `character_clicked` としてMemoryEventに記録しない
+- `triggerSpeak` にsource / priority / lockMsを追加し、voice返答をmanual click / drag / autonomousより優先
+- `[BLANK_AUDIO]` / `[NO_SPEECH]` / `[MUSIC]` / 記号のみ / ノイズは `no_speech` 扱いにする
+- voice fallbackに観測質問向けの応答を追加
+  - 「今何を見てる？」→ 画面全体ではなく今のアプリ種別や状態の気配だけ分かる
+  - 「画面見えてる？」→ 画面そのものは見ていないと短く答える
+- 末尾の孤立した「ん」や壊れた句読点をpost-process / QualityFilterで抑制
+- transcript previewは引き続き揮発表示のみ。MemoryEvent / localStorage / Memory exportには保存しない
+- 音声ファイル・変換WAV・Whisper transcript txtは一時ディレクトリごと削除する
+- Voice conversation qualityは field QA pending
+
+### Optional remote LLM memo (not implemented)
+
+- v1.xではRemote LLMを実装しない
+- 将来検討する場合もdefault OFF、明示opt-in、Transparency UIで送信範囲を表示する
+- transcript / observation / memory の送信範囲はユーザーが選ぶ
+- local-only modeを常に維持する
+- remote modeでもScreen Capture / OCR / ファイル本文送信 / 常時マイク監視は禁止
+- OpenAI API / ChatGPT API / cloud provider UIはv1.0.3では追加していない
 
 ---
 

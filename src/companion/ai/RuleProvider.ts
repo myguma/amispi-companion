@@ -140,7 +140,7 @@ export class RuleProvider implements AIProvider {
       ctx.trigger === "return"
     ) {
       if (ctx.trigger === "voice" && ctx.voiceInput?.trim()) {
-        return { text: buildVoiceFallback(ctx.voiceInput), shouldSpeak: true, emotion: "aware" };
+        return { text: buildVoiceFallback(ctx.voiceInput, ctx), shouldSpeak: true, emotion: "aware" };
       }
 
       // voiceInput があれば voice 専用プールを使う
