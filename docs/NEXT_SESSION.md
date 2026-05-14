@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.1.0)**
+**最終更新: 2026-05-14 (v1.1.1)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.1.0
-**フェーズ:** Safe Visible Local Observer Companion — ObservationSignal層・Watchful Mode・診断ページ
+**バージョン:** v1.1.1
+**フェーズ:** Safe Visible Local Observer Companion — 実機QA hotfix完了
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -53,7 +53,7 @@
 
 ---
 
-## v1.0.6〜v1.1.0 完了済み (今セッション実装)
+## v1.0.6〜v1.1.1 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -61,6 +61,43 @@
 | v1.0.7 | Observation Timeline、Observation Center (observationPage) | ✅ field QA pending |
 | v1.0.8 | Memory Mode、長期記憶候補、記録層の明示化 | ✅ field QA pending |
 | v1.1.0 | ObservationSignal層、Watchful Mode、診断ページ | ✅ field QA pending |
+| v1.1.1 | 実機QA hotfix: Timeline同期・sleep発話独立・preset UI・signals接続・note管理 | ✅ field QA pending |
+
+---
+
+## v1.1.1 実装詳細 (実機QA hotfix)
+
+### 修正した問題
+
+| 問題 | 原因 | 修正 |
+|---|---|---|
+| Observation Timeline空 | observationTimelineStoreにBroadcastChannelがなかった | BroadcastChannel追加でWindowsを同期 |
+| Sleep発話が止まる | scheduleSleepSpeechがautonomousSpeechEnabled依存 | sleepSpeechEnabledのみで独立制御 |
+| Watchfulプリセット非同期 | ボタンに現在設定の検出・ハイライトなし | isWatchfulPreset等の判定+ハイライト追加 |
+| Watchful設定矛盾 | quietMode/doNotDisturbが解除されなかった | Watchful押下で明示的にリセット |
+| ObservationSignal未接続 | 定義のみ・どこにもimportされていなかった | poll→currentSignalStore→BroadcastChannel→Debug/Diagnostics |
+| sleep_entered未記録 | App.txsに追加なし | state変化watchでaddObservationEvent |
+| companion_reacted未記録 | speechText変化を監視していなかった | speechText変化watchでaddObservationEvent |
+| note_saved確認・削除UIなし | MemoryPageに専用UIがなかった | getSavedMemoryNotes()/deleteEventById()追加+一覧UI |
+| filename UI誤解 | disabledチェックボックスが実装済みシグナルを隠蔽 | 実装済み/未実装の区別を明記 |
+
+### 新規ファイル
+
+- `src/systems/observation/currentSignalStore.ts`: ObservationSignalの揮発ストア(BroadcastChannel)
+
+### Field QA で確認すべき項目 (v1.1.1)
+
+- Watchful / バランス / 静かに の選択中表示が正しくハイライトされるか
+- Watchful → 静かに → Watchful の切り替えで設定が矛盾しないか
+- sleep後も sleepSpeechEnabled=true なら低頻度発話するか (autonomousSpeechEnabled=falseでも)
+- 設定 > 観察 > 最近検知したこと にイベントが記録されるか
+- アプリ切替・メディア開始・sleep遷移・発話がTimelineに記録されるか
+- DiagnosticsPageにObservationSignalsが表示されるか
+- DebugPageにcurrentSignals・TimelineイベントのPreviewが表示されるか
+- note_savedを保存し、長期記憶候補一覧に出て、削除できるか
+- 「無明が見ているもの」タブのファイル名表示が正しくなったか
+- Watchful Modeで1〜2分間隔で発話するか
+- raw filename / transcript / text input が保存されていないか
 
 ---
 
