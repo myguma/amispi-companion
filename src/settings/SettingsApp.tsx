@@ -13,6 +13,7 @@ import { UpdatePage } from "./pages/UpdatePage";
 import { DebugPage } from "./pages/DebugPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { ObservationPage } from "./pages/ObservationPage";
+import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { getSettings, useSettings } from "./store";
 
 type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug";
