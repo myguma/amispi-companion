@@ -19,6 +19,11 @@ This document records how visible settings are consumed by runtime behavior.
 | `playCryOnAutonomousSpeech` | `useCompanionState` | Adds a small cry when autonomous speech is displayed. TTS is not used. |
 | `voiceInputEnabled` | App push-to-talk handlers | Enables long-press voice input only. No always-on mic. |
 | `debugModeEnabled` | DebugOverlay / VoicePage / DebugPage | Shows layout/debug details and trace details. |
+| `whisperLanguage` | `WhisperCliSTTAdapter`, `STTAdapterManager` | Passes `-l <lang>` to whisper-cli. `auto` passes nothing. Default: `ja`. |
+| `whisperCustomLanguage` | `WhisperCliSTTAdapter` | Used when `whisperLanguage === "custom"`. |
+| `sleepSpeechEnabled` | `useCompanionState` (scheduleSleepSpeech) | Enables low-frequency murmur speech in sleep state. Default: true. |
+| `sleepSpeechIntervalPreset` | `useCompanionState` (scheduleSleepSpeech) | Pacing for sleep speech: veryRare(15-30min) / rare(8-15min) / off. |
+| `filenameSignalsEnabled` | `voiceIntent.ts` local router | Whether filename-derived signals are used in local responses. Raw filenames are never exposed. |
 
 ## Notes
 

@@ -80,12 +80,14 @@ export class WhisperCliSTTAdapter implements STTAdapter {
   private readonly ffmpegExecutablePath: string;
   // Phase 6b-real-2 で whisper CLI タイムアウト設定に使用
   readonly timeoutMs: number;
+  private readonly languageCode: string;
 
-  constructor(executablePath: string, modelPath: string, ffmpegExecutablePath: string, timeoutMs = 30_000) {
+  constructor(executablePath: string, modelPath: string, ffmpegExecutablePath: string, timeoutMs = 30_000, languageCode = "ja") {
     this.executablePath = executablePath;
     this.modelPath = modelPath;
     this.ffmpegExecutablePath = ffmpegExecutablePath;
     this.timeoutMs = timeoutMs;
+    this.languageCode = languageCode;
   }
 
   async isAvailable(): Promise<boolean> {
@@ -119,6 +121,7 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         audioBytes: bytes,
         mimeType,
         timeoutMs: this.timeoutMs,
+        languageCode: this.languageCode,
       });
 
       const text = String(debug.transcript ?? "");
@@ -133,6 +136,7 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         ffmpegExitOk: debug.ffmpegExitOk,
         whisperExitOk: debug.whisperExitOk,
         stderrPreview: previewStderr(debug.stderrPreview),
+        languageArgUsed: this.languageCode,
         tempCleanupDone: debug.tempCleanupDone,
       });
 
@@ -140,7 +144,7 @@ export class WhisperCliSTTAdapter implements STTAdapter {
         return { ok: false, error: statusToError(debug.status) };
       }
 
-      const validated = validateVoiceTranscript(text);
+      const validated = validateVoiceTranscript(text, { whisperLanguage: this.languageCode });
       if (!validated.ok) {
         setLastVoiceDebug({
           status: "no_speech",
@@ -153,6 +157,8 @@ export class WhisperCliSTTAdapter implements STTAdapter {
           ffmpegExitOk: debug.ffmpegExitOk,
           whisperExitOk: debug.whisperExitOk,
           stderrPreview: previewStderr(debug.stderrPreview ?? validated.reason),
+          languageArgUsed: this.languageCode,
+          rejectedReason: validated.reason,
           tempCleanupDone: debug.tempCleanupDone,
         });
         return { ok: false, error: "no_speech" };

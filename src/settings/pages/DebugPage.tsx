@@ -96,6 +96,15 @@ export function DebugPage() {
         <div>reactionCountInLastHour: {autoDebug.reactionCountInLastHour}</div>
       </div>
 
+      <SectionHead title="sleep発話" />
+      <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+        <div><strong>enabled:</strong> {autoDebug.sleepSpeechEnabled ? "yes" : "no"}</div>
+        <div><strong>preset:</strong> {autoDebug.sleepSpeechIntervalPreset ?? "-"}</div>
+        <div><strong>next:</strong> {fmtTime(autoDebug.nextSleepSpeechAt)}</div>
+        <div><strong>lastSpoke:</strong> {fmtTime(autoDebug.lastSleepSpeechAt)}</div>
+        <div><strong>suppression:</strong> {autoDebug.sleepSpeechSuppressionReason ?? "none"}</div>
+      </div>
+
       <SectionHead title="直近の発話トレース" />
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7, color: "#666" }}>
         {traces.length === 0 ? (

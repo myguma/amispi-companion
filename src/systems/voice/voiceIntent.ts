@@ -67,6 +67,19 @@ function _buildSignals(ctx: CompanionContext): string[] {
   const downloads = ctx.observation.folders.downloads?.fileCount ?? 0;
   if (downloads > 20) signals.push("Downloadsの多さ");
   if (ctx.observation.media?.audioLikelyActive) signals.push("音の気配");
+
+  // filenameSignals が存在する場合のみ、フォルダ由来のシグナルを追加
+  if (ctx.observation.folders?.downloads?.filenameSignals) {
+    const folders = [ctx.observation.folders?.downloads, ctx.observation.folders?.desktop].filter(Boolean);
+    for (const folder of folders) {
+      if (folder?.installerPileLikely) signals.push("インストーラーが増えてる");
+      else if (folder?.archivePileLikely) signals.push("圧縮ファイルが増えてる");
+      else if (folder?.audioExportLikely) signals.push("音の書き出しっぽいものがある");
+      else if (folder?.imageExportLikely) signals.push("画像が溜まってる");
+      else if (folder?.dawProjectLikely) signals.push("DAWプロジェクトがある");
+    }
+  }
+
   return signals;
 }
 

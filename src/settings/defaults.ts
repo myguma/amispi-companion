@@ -47,6 +47,11 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   whisperModelPath: "",
   ffmpegExecutablePath: "",
   whisperTimeoutMs: 30_000,
+  whisperLanguage: "ja",
+  whisperCustomLanguage: "",
+  sleepSpeechEnabled: true,
+  sleepSpeechIntervalPreset: "veryRare",
+  filenameSignalsEnabled: true,
 
   mediaAwarenessEnabled: false,
   screenUnderstandingEnabled: false,

@@ -18,7 +18,8 @@ export function getSTTAdapter(): STTAdapter {
     const modelPath = s.whisperModelPath      ?? "";
     const ffmpegPath = s.ffmpegExecutablePath ?? "";
     const timeoutMs = s.whisperTimeoutMs      ?? 30_000;
-    return new WhisperCliSTTAdapter(execPath, modelPath, ffmpegPath, timeoutMs);
+    const lang = s.whisperLanguage === "custom" ? (s.whisperCustomLanguage || "ja") : s.whisperLanguage;
+    return new WhisperCliSTTAdapter(execPath, modelPath, ffmpegPath, timeoutMs, lang);
   }
 
   return new MockSTTAdapter();

@@ -8,6 +8,8 @@ export type SpeechIntervalPreset = "rare" | "calm" | "normal" | "lively";
 export type AIEngine = "none" | "mock" | "ollama";
 export type VoiceInputMode = "off" | "pushToTalk";
 export type STTEngine = "mock" | "whisperCli";
+export type WhisperLanguage = "ja" | "auto" | "en" | "pt" | "es" | "ko" | "zh" | "fr" | "de" | "custom";
+export type SleepSpeechIntervalPreset = "veryRare" | "rare" | "off";
 
 export type CompanionSettings = {
   quietMode: boolean;
@@ -58,6 +60,11 @@ export type CompanionSettings = {
   whisperModelPath: string;
   ffmpegExecutablePath: string;
   whisperTimeoutMs: number;
+  whisperLanguage: WhisperLanguage;
+  whisperCustomLanguage: string;
+  sleepSpeechEnabled: boolean;
+  sleepSpeechIntervalPreset: SleepSpeechIntervalPreset;
+  filenameSignalsEnabled: boolean;
 
   // 将来フェーズ用
   mediaAwarenessEnabled: boolean;

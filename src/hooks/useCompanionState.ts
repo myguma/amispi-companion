@@ -55,6 +55,7 @@ type SpeechSource =
   | "manual_click"
   | "drag"
   | "autonomous"
+  | "sleep_autonomous"
   | "system"
   | "update";
 
@@ -73,9 +74,23 @@ const SPEECH_PRIORITY: Record<SpeechSource, number> = {
   manual_click: 60,
   drag: 50,
   autonomous: 20,
+  sleep_autonomous: 15,
 };
 
 const POST_VOICE_CLICK_SUPPRESS_MS = 1_500;
+
+const SLEEP_SPEECH_LINES = [
+  "……",
+  "少し寝てた",
+  "まだ、ここにいる",
+  "小さく起きた",
+  "静かだね",
+  "夢を見てた",
+];
+
+function pickSleepSpeech(): string {
+  return SLEEP_SPEECH_LINES[Math.floor(Math.random() * SLEEP_SPEECH_LINES.length)];
+}
 
 function speechDelayRangeMs(settings: ReturnType<typeof getSettings>): [number, number] {
   const preset = settings.autonomousSpeechIntervalPreset ?? (
@@ -88,6 +103,15 @@ function speechDelayRangeMs(settings: ReturnType<typeof getSettings>): [number, 
     case "calm": return [180_000, 300_000];
     case "rare":
     default: return [300_000, 480_000];
+  }
+}
+
+function sleepSpeechDelayRangeMs(preset: string): [number, number] | null {
+  switch (preset) {
+    case "rare":     return [8 * 60_000, 15 * 60_000];
+    case "veryRare": return [15 * 60_000, 30 * 60_000];
+    case "off":
+    default:         return null;
   }
 }
 
@@ -135,6 +159,7 @@ export function useCompanionState(
   const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sleepSpeechTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autonomousSpeechRef = useRef(autonomousSpeechEnabled);
   useEffect(() => { autonomousSpeechRef.current = autonomousSpeechEnabled; }, [autonomousSpeechEnabled]);
@@ -208,7 +233,7 @@ export function useCompanionState(
   }, []);
 
   const clearAllTimers = useCallback(() => {
-    [sleepTimerRef, transitionTimerRef, speechTimerRef, idleSpeechTimerRef].forEach((r) => {
+    [sleepTimerRef, transitionTimerRef, speechTimerRef, idleSpeechTimerRef, sleepSpeechTimerRef].forEach((r) => {
       if (r.current) { clearTimeout(r.current); r.current = null; }
     });
   }, []);
@@ -267,7 +292,7 @@ export function useCompanionState(
       const now = Date.now();
       if (now < speechLockUntilRef.current && priority <= speechPriorityRef.current) {
         addInteractionTrace({
-          trigger: source === "voice" || source === "voice_error" ? "voice" : source === "manual_click" ? "click" : source,
+          trigger: source === "voice" || source === "voice_error" ? "voice" : source === "manual_click" ? "click" : source === "sleep_autonomous" ? "autonomous" : source,
           source,
           selectedResponse: previewTraceText(line),
           speechPriority: priority,
@@ -397,6 +422,77 @@ export function useCompanionState(
       }
     };
   }, [autonomousSpeechEnabled, scheduleIdleSpeech]);
+
+  // sleep 状態中の低頻度発話スケジューラ
+  const scheduleSleepSpeech = useCallback(() => {
+    if (sleepSpeechTimerRef.current) clearTimeout(sleepSpeechTimerRef.current);
+    const s0 = getSettings();
+    if (!s0.sleepSpeechEnabled || !autonomousSpeechRef.current) {
+      updateAutonomousSpeechDebug({
+        sleepSpeechEnabled: s0.sleepSpeechEnabled,
+        sleepSpeechIntervalPreset: s0.sleepSpeechIntervalPreset,
+        sleepSpeechSuppressionReason: !autonomousSpeechRef.current ? "disabled" : "disabled",
+      });
+      return;
+    }
+    const range = sleepSpeechDelayRangeMs(s0.sleepSpeechIntervalPreset);
+    if (!range) {
+      updateAutonomousSpeechDebug({
+        sleepSpeechEnabled: false,
+        sleepSpeechIntervalPreset: s0.sleepSpeechIntervalPreset,
+        sleepSpeechSuppressionReason: "off",
+        nextSleepSpeechAt: null,
+      });
+      return;
+    }
+    const [min, max] = range;
+    const delay = min + Math.random() * (max - min);
+    const nextAt = Date.now() + delay;
+    updateAutonomousSpeechDebug({
+      sleepSpeechEnabled: true,
+      sleepSpeechIntervalPreset: s0.sleepSpeechIntervalPreset,
+      nextSleepSpeechAt: nextAt,
+      sleepSpeechSuppressionReason: null,
+    });
+    sleepSpeechTimerRef.current = setTimeout(() => {
+      if (stateRef.current !== "sleep") {
+        scheduleSleepSpeech();
+        return;
+      }
+      const s = getSettings();
+      if (!s.sleepSpeechEnabled || !autonomousSpeechRef.current || s.quietMode || s.doNotDisturb) {
+        const reason = !s.sleepSpeechEnabled ? "disabled"
+          : !autonomousSpeechRef.current ? "disabled"
+          : s.quietMode ? "quiet"
+          : "dnd";
+        updateAutonomousSpeechDebug({ sleepSpeechSuppressionReason: reason, nextSleepSpeechAt: null });
+        scheduleSleepSpeech();
+        return;
+      }
+      const text = pickSleepSpeech();
+      const shown = triggerSpeak(text, { source: "sleep_autonomous", priority: 15 });
+      if (shown) {
+        updateAutonomousSpeechDebug({ lastSleepSpeechAt: Date.now(), sleepSpeechSuppressionReason: null });
+        if (s.cryEnabled && !s.quietMode && !s.doNotDisturb) {
+          void cryEngine.play({ id: "sleep_speech", synth: { kind: "murmur", durationMs: 120 } });
+        }
+      }
+      scheduleSleepSpeech();
+    }, delay);
+  }, [triggerSpeak]);
+
+  // sleep 状態中の低頻度発話
+  useEffect(() => {
+    if (state === "sleep") {
+      scheduleSleepSpeech();
+    } else {
+      if (sleepSpeechTimerRef.current) {
+        clearTimeout(sleepSpeechTimerRef.current);
+        sleepSpeechTimerRef.current = null;
+      }
+      updateAutonomousSpeechDebug({ nextSleepSpeechAt: null, sleepSpeechSuppressionReason: null });
+    }
+  }, [state, scheduleSleepSpeech]);
 
   // ──────────────────────────────────────────
   // クリック → AI応答 (新フロー: CompanionContext 経由)

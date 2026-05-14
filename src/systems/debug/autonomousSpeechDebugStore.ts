@@ -24,6 +24,12 @@ export type AutonomousSpeechDebugState = {
   autonomousSpeechDelayMs: number | null;
   suppressionReason: AutonomousSuppressionReason;
   reactionCountInLastHour: number;
+  // sleep発話スケジューリング状態
+  sleepSpeechEnabled: boolean;
+  sleepSpeechIntervalPreset: string | null;
+  nextSleepSpeechAt: number | null;
+  lastSleepSpeechAt: number | null;
+  sleepSpeechSuppressionReason: string | null;
   updatedAt: number;
 };
 
@@ -37,6 +43,12 @@ const initial: AutonomousSpeechDebugState = {
   autonomousSpeechDelayMs: null,
   suppressionReason: null,
   reactionCountInLastHour: 0,
+  // sleep発話初期値
+  sleepSpeechEnabled: false,
+  sleepSpeechIntervalPreset: null,
+  nextSleepSpeechAt: null,
+  lastSleepSpeechAt: null,
+  sleepSpeechSuppressionReason: null,
   updatedAt: 0,
 };
 

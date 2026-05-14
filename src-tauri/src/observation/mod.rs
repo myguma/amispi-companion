@@ -42,6 +42,15 @@ pub struct FolderSummary {
     pub screenshot_pile_likely: bool,
     pub audio_pile_likely: bool,
     pub image_pile_likely: bool,
+    // v1.0.6: filename-derived signals
+    pub filename_signals: Vec<String>,
+    pub installer_pile_likely: bool,
+    pub archive_pile_likely: bool,
+    pub audio_export_likely: bool,
+    pub image_export_likely: bool,
+    pub daw_project_likely: bool,
+    pub code_project_likely: bool,
+    pub temp_download_likely: bool,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -438,6 +447,49 @@ mod windows_impl {
 // フォルダスキャン (クロスプラットフォーム)
 // ──────────────────────────────────────────
 
+fn build_filename_signals(
+    ext_counts: &HashMap<String, usize>,
+    file_names: &[String],
+) -> (Vec<String>, bool, bool, bool, bool, bool, bool, bool) {
+    let installer_exts = ["exe", "msi", "dmg", "pkg"];
+    let installer_names = ["setup", "installer", "install"];
+    let archive_exts = ["zip", "rar", "7z", "tar", "gz", "bz2"];
+    let audio_export_exts = ["wav", "mp3", "flac", "aif", "aiff"];
+    let audio_export_names = ["mix", "master", "render", "export", "bounce", "stem"];
+    let image_export_exts = ["png", "jpg", "jpeg", "webp"];
+    let image_export_names = ["screenshot", "screen", "export"];
+    let daw_exts = ["bwproject", "als", "flp", "rpp", "logicx", "cpr"];
+    let code_files = ["package.json", "tsconfig.json", "cargo.toml", "pyproject.toml"];
+    let temp_exts = ["crdownload", "part", "tmp"];
+
+    let ext_count = |exts: &[&str]| -> usize {
+        exts.iter().map(|e| ext_counts.get(*e).copied().unwrap_or(0)).sum()
+    };
+
+    let name_has = |names: &[&str]| -> bool {
+        file_names.iter().any(|n| names.iter().any(|p| n.contains(p)))
+    };
+
+    let installer_likely = ext_count(&installer_exts) > 0 || name_has(&installer_names);
+    let archive_likely = ext_count(&archive_exts) > 3;
+    let audio_export_likely = ext_count(&audio_export_exts) > 2 && name_has(&audio_export_names);
+    let image_export_likely = ext_count(&image_export_exts) > 5 && name_has(&image_export_names);
+    let daw_likely = ext_count(&daw_exts) > 0;
+    let code_likely = file_names.iter().any(|n| code_files.iter().any(|c| n == c));
+    let temp_likely = ext_count(&temp_exts) > 0;
+
+    let mut signals = Vec::new();
+    if installer_likely { signals.push("installer".to_string()); }
+    if archive_likely { signals.push("archive".to_string()); }
+    if audio_export_likely { signals.push("audio_export".to_string()); }
+    if image_export_likely { signals.push("image_export".to_string()); }
+    if daw_likely { signals.push("daw_project".to_string()); }
+    if code_likely { signals.push("code_project".to_string()); }
+    if temp_likely { signals.push("temp_download".to_string()); }
+
+    (signals, installer_likely, archive_likely, audio_export_likely, image_export_likely, daw_likely, code_likely, temp_likely)
+}
+
 fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
     if !path.exists() { return None; }
 
@@ -454,6 +506,7 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
     // depth 1 のみスキャン (パフォーマンス保護)
     let Ok(entries) = std::fs::read_dir(path) else { return None; };
 
+    let mut file_names_lower: Vec<String> = Vec::new();
     let mut count = 0;
     for entry in entries.flatten() {
         count += 1;
@@ -474,6 +527,10 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
         let ext = name_lower.rsplit('.').next().unwrap_or("").to_string();
         *ext_counts.entry(ext).or_default() += 1;
 
+        if file_names_lower.len() < 200 {
+            file_names_lower.push(name_lower.to_string());
+        }
+
         if let Ok(modified) = meta.modified() {
             if modified > cutoff { recent_count += 1; }
         }
@@ -485,6 +542,9 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
     let audio_pile = ["mp3", "wav", "flac", "aac", "ogg"].iter()
         .map(|e| ext_counts.get(*e).copied().unwrap_or(0)).sum::<usize>() > 5;
 
+    let (filename_signals, installer_pile_likely, archive_pile_likely, audio_export_likely, image_export_likely, daw_project_likely, code_project_likely, temp_download_likely) =
+        build_filename_signals(&ext_counts, &file_names_lower);
+
     Some(FolderSummary {
         folder_kind: kind.to_string(),
         file_count,
@@ -495,6 +555,14 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
         screenshot_pile_likely: screenshot_pile,
         audio_pile_likely: audio_pile,
         image_pile_likely: image_pile,
+        filename_signals,
+        installer_pile_likely,
+        archive_pile_likely,
+        audio_export_likely,
+        image_export_likely,
+        daw_project_likely,
+        code_project_likely,
+        temp_download_likely,
     })
 }
 

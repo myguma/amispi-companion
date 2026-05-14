@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.0.6] — 2026-05-14
+
+### Changed (Whisper language, sleep speech, filename-derived signals)
+
+- **Whisper多言語対応**:
+  - `whisperLanguage` 設定を追加（ja/auto/en/pt/es/ko/zh/fr/de/custom、default: ja）
+  - `whisperCustomLanguage` 設定を追加
+  - Rust `transcribe_with_whisper` に `language_code` パラメータを追加し、whisper-cliに `-l <lang>` を渡す
+  - auto選択時は `-l` を渡さない
+  - whisperLanguage=jaの時、ASCII英語のみのtranscriptを低信頼扱いして弾く（rejectedReason: english_when_ja_expected）
+  - VoicePageに言語セレクター UI を追加
+  - Voice debug表示に `lang` / `rejected` を追加
+  - STT言語とAI返答言語は別概念（STT言語のみ制御）
+- **sleep中の低頻度発話**:
+  - `sleepSpeechEnabled` / `sleepSpeechIntervalPreset` 設定を追加（default: enabled/veryRare）
+  - sleep状態中に低頻度で寝言・気配発話（priority 15、quiet/DND時は停止）
+  - sleep発話examples: "……" / "少し寝てた" / "まだ、ここにいる" 等
+  - `sleepSpeechIntervalPreset`: veryRare(15-30分) / rare(8-15分) / off
+  - DebugPageにsleep発話スケジューリング状態を追加
+  - `autonomousSpeechEnabled=false` の時はsleep発話も停止
+- **filename-derived signals v0**:
+  - `filenameSignalsEnabled` 設定を追加（default: true）
+  - Rust `FolderSummary` に signal fields を追加: `filename_signals`, `installer_pile_likely`, `archive_pile_likely`, `audio_export_likely`, `image_export_likely`, `daw_project_likely`, `code_project_likely`, `temp_download_likely`
+  - raw filenameは返さない。ファイル名をローカル内部で見て分類シグナルのみ生成
+  - local conversation routerがfilename signalsを使って観察コメントを改善
+  - TypeScript `FolderSummary` 型に同フィールドを追加
+
+### Maintained
+
+- compact 200x280 window
+- click-through / hit test
+- Interaction Trace
+- Memory Export（filename signals含まず）
+- v1.0.5のprompt contamination fix
+
 ## [1.0.5] — 2026-05-14
 
 ### Fixed (Prompt contamination and autonomous speech pacing hotfix)

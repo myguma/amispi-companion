@@ -21,6 +21,7 @@
 | v1.0.3 hotfix | pending | voice返答上書き防止、`[BLANK_AUDIO]` rejection、観測質問応答、末尾「ん」抑制は継続QA |
 | v1.0.4 hotfix | pending | session isolation、settings consistency、Interaction trace、text input、UpdateBadge足元配置はfield QA pending |
 | v1.0.5 hotfix | pending | prompt汚染修正、hearing_test local router、autonomous speech pacing、safetyCapはfield QA pending |
+| v1.0.6 | pending | Whisper言語指定(-l ja)、sleep発話、filename-derived signalsはfield QA pending |
 
 ## Non-goals
 
@@ -30,6 +31,12 @@
 - 自動ファイル操作 / コマンド実行
 - Web検索 / 外部API連携
 - 長期RAG / ベクトルDB
+
+## Design Notes (v1.0.6+)
+
+- STT言語（whisperLanguage）とAI返答言語は別概念。返答言語は日本語固定。
+- filename-derived signalsはローカル内部でファイル名を見るが、raw filenameは返さず・保存せず。
+- sleep発話はsleep状態中のみ。quiet/DND/autonomousSpeechEnabled=falseで停止。
 
 ## Current Safe Baseline
 

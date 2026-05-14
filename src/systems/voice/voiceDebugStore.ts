@@ -32,6 +32,8 @@ export type LastVoiceDebug = {
   aiSource?: string;
   aiFallbackReason?: string;
   responsePreview?: string;
+  languageArgUsed?: string;
+  rejectedReason?: string;
   updatedAt: number;
 };
 

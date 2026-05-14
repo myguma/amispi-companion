@@ -24,6 +24,14 @@ export type FolderSummary = {
   screenshotPileLikely: boolean;
   audioPileLikely: boolean;
   imagePileLikely: boolean;
+  filenameSignals: string[];
+  installerPileLikely: boolean;
+  archivePileLikely: boolean;
+  audioExportLikely: boolean;
+  imageExportLikely: boolean;
+  dawProjectLikely: boolean;
+  codeProjectLikely: boolean;
+  tempDownloadLikely: boolean;
 };
 
 export type MediaContext = {

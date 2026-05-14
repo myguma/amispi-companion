@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
-import type { VoiceInputMode, STTEngine } from "../types";
+import type { VoiceInputMode, STTEngine, WhisperLanguage } from "../types";
 import { getLastVoiceDebug, subscribeLastVoiceDebug } from "../../systems/voice/voiceDebugStore";
 import type { LastVoiceDebug } from "../../systems/voice/voiceDebugStore";
 import { sendTextMessage } from "../../systems/conversation/textMessageBus";
@@ -76,6 +76,20 @@ const MODE_OPTIONS: { v: VoiceInputMode; label: string; note: string }[] = [
 const STT_OPTIONS: { v: STTEngine; label: string; note: string }[] = [
   { v: "mock",       label: "Mock (開発用)",   note: "実際の録音はするが STT は固定テキストを返す" },
   { v: "whisperCli", label: "Whisper CLI",    note: "ローカル whisper.cpp executable を使用 (要path/model設定)" },
+];
+
+// 言語セレクター用オプション定義
+const WHISPER_LANGUAGE_OPTIONS: { v: WhisperLanguage; label: string }[] = [
+  { v: "ja",     label: "日本語（推奨）" },
+  { v: "auto",   label: "自動判定" },
+  { v: "en",     label: "English" },
+  { v: "pt",     label: "Português" },
+  { v: "es",     label: "Español" },
+  { v: "ko",     label: "한국어" },
+  { v: "zh",     label: "中文" },
+  { v: "fr",     label: "Français" },
+  { v: "de",     label: "Deutsch" },
+  { v: "custom", label: "Custom" },
 ];
 
 function boolLabel(value: boolean | undefined): string {
@@ -252,6 +266,38 @@ export function VoicePage() {
                 <code style={{ margin: "0 3px" }}>-of</code>
                 を使って呼び出されます。
               </div>
+
+              {/* 音声認識言語セレクター */}
+              <SectionHead title="音声認識言語" />
+              <div style={{ fontSize: 11, color: "#777", marginBottom: 6, lineHeight: 1.6 }}>
+                STT言語とAI返答言語は別の設定です。日本語で話しかけると、返答も日本語になります。
+              </div>
+              {WHISPER_LANGUAGE_OPTIONS.map((opt) => (
+                <div
+                  key={opt.v}
+                  onClick={() => update({ whisperLanguage: opt.v })}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "6px 0", borderBottom: "1px solid #f0f0f0", cursor: "pointer",
+                  }}
+                >
+                  <div style={{
+                    width: 14, height: 14, borderRadius: "50%", border: "2px solid #a890f0",
+                    background: s.whisperLanguage === opt.v ? "#a890f0" : "transparent",
+                    flexShrink: 0,
+                  }} />
+                  <div style={{ fontSize: 13, fontWeight: s.whisperLanguage === opt.v ? 600 : 400 }}>{opt.label}</div>
+                </div>
+              ))}
+              {s.whisperLanguage === "custom" && (
+                <TextInput
+                  label="Language code"
+                  note="例: th (Thai), ru (Russian), nl (Dutch)"
+                  value={s.whisperCustomLanguage ?? ""}
+                  placeholder="例: th"
+                  onChange={(v) => update({ whisperCustomLanguage: v })}
+                />
+              )}
             </>
           )}
 
@@ -264,6 +310,8 @@ export function VoicePage() {
             <div><strong>intent:</strong> {voiceDebug.intent ?? "-"}</div>
             <div><strong>length:</strong> {voiceDebug.transcriptLength ?? 0}</div>
             <div><strong>stale dropped:</strong> {voiceDebug.staleDroppedCount ?? 0}</div>
+            <div><strong>lang:</strong> {voiceDebug.languageArgUsed ?? "-"}</div>
+            {voiceDebug.rejectedReason && <div style={{ color: "#e08030" }}><strong>rejected:</strong> {voiceDebug.rejectedReason}</div>}
             <div><strong>updated:</strong> {timeLabel(voiceDebug.updatedAt)}</div>
             <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
               transcriptは確認用の一時表示だけです。記憶・export・localStorageには保存しません。

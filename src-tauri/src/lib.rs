@@ -354,6 +354,7 @@ async fn transcribe_with_whisper(
     audio_bytes: Vec<u8>,
     mime_type: String,
     timeout_ms: u64,
+    language_code: String,
 ) -> Result<WhisperTranscriptionResult, String> {
     tokio::task::spawn_blocking(move || {
         let executable_path = executable_path.trim();
@@ -442,6 +443,7 @@ async fn transcribe_with_whisper(
                 return Ok(());
             }
 
+            let lang = language_code.trim().to_lowercase();
             let mut whisper = Command::new(executable_path);
             whisper
                 .arg("-m")
@@ -450,7 +452,11 @@ async fn transcribe_with_whisper(
                 .arg(&wav_path)
                 .arg("-otxt")
                 .arg("-of")
-                .arg(&output_base)
+                .arg(&output_base);
+            if lang != "auto" && !lang.is_empty() {
+                whisper.arg("-l").arg(&lang);
+            }
+            whisper
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped());
