@@ -28,8 +28,9 @@
 ✅ cargo build  → Finished dev profile (v1.3.0)
 ✅ cargo test app_classification → passed
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.2.0 success (run 25876320136)
-🔲 v1.3.0 Release workflow → push後に確認必要
+✅ GitHub Actions / Windows Installer → v1.3.0 success (run 25887788547)
+✅ Windows Installer artifact → `amispi-companion_1.3.0_x64-setup.exe`
+✅ Updater artifact → `latest.json`
 ```
 
 ---

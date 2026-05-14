@@ -180,6 +180,8 @@ v1.3.0 の到達点:
 - ユーザー定義分類 `customAppClassifications: Record<string, AppCategory>` を追加
 - Observation Page から process名単位の分類保存・削除が可能
 - raw window title / raw filename / file content は custom classification に保存しない
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 
