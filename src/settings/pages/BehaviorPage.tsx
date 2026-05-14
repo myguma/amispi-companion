@@ -105,7 +105,15 @@ export function BehaviorPage() {
           speechFrequency: v === "lively" || v === "normal" ? "normal" : v === "calm" ? "low" : "rare",
         })}
       />
-      <Slider label="旧式の安全上限" min={1} max={10} step={1} value={s.maxAutonomousReactionsPerHour} onChange={(v) => update({ maxAutonomousReactionsPerHour: v })} />
+      <Toggle
+        label="旧式の安全ブレーキを使う"
+        note="通常は発話間隔で制御します。暴走時だけ使う安全ブレーキです。OFFでOKです"
+        checked={s.autonomousSpeechSafetyCapEnabled}
+        onChange={(v) => update({ autonomousSpeechSafetyCapEnabled: v })}
+      />
+      {s.autonomousSpeechSafetyCapEnabled && (
+        <Slider label="上限値 (1時間あたり)" min={1} max={10} step={1} value={s.maxAutonomousReactionsPerHour} onChange={(v) => update({ maxAutonomousReactionsPerHour: v })} />
+      )}
 
       <SectionHead title="移動" />
       <Toggle label="自律移動あり" checked={s.autonomousMovementEnabled} onChange={(v) => update({ autonomousMovementEnabled: v })} />

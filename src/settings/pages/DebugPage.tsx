@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import { getInteractionTraces, subscribeInteractionTrace } from "../../systems/debug/interactionTraceStore";
 import type { InteractionTraceEntry } from "../../systems/debug/interactionTraceStore";
+import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../systems/debug/autonomousSpeechDebugStore";
+import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
 
 function Toggle({
   label, note, checked, onChange,
@@ -37,11 +39,24 @@ function SectionHead({ title }: { title: string }) {
   return <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 4, marginBottom: 4 }}>{title}</div>;
 }
 
+function fmtTime(ts: number | null): string {
+  if (!ts) return "-";
+  return new Date(ts).toLocaleTimeString();
+}
+
+function fmtMs(ms: number | null): string {
+  if (!ms) return "-";
+  if (ms >= 60_000) return `${Math.round(ms / 60_000)}分`;
+  return `${Math.round(ms / 1000)}秒`;
+}
+
 export function DebugPage() {
   const [s, update] = useSettings();
   const [traces, setTraces] = useState<InteractionTraceEntry[]>(getInteractionTraces());
+  const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug());
 
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
+  useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
 
   return (
     <div>
@@ -63,10 +78,22 @@ export function DebugPage() {
         <div>movementFrequency: {s.movementFrequency}</div>
         <div>autonomousSpeechEnabled: {String(s.autonomousSpeechEnabled)}</div>
         <div>speechInterval: {s.autonomousSpeechIntervalPreset}</div>
+        <div>safetyCapEnabled: {String(s.autonomousSpeechSafetyCapEnabled)}</div>
         <div>legacy max/hour: {s.maxAutonomousReactionsPerHour}</div>
         <div>quiet/focus/DND: {String(s.quietMode)} / {String(s.focusMode)} / {String(s.doNotDisturb)}</div>
         <div>cryEnabled / autonomousCry: {String(s.cryEnabled)} / {String(s.playCryOnAutonomousSpeech)}</div>
         <div>voiceInputEnabled: {String(s.voiceInputEnabled)}</div>
+      </div>
+
+      <SectionHead title="自律発話スケジューリング状態" />
+      <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
+        <div>enabled: {String(autoDebug.autonomousSpeechEnabled)}</div>
+        <div>interval: {autoDebug.autonomousSpeechIntervalPreset} / safetyCap: {String(autoDebug.safetyCapEnabled)}</div>
+        <div>suppressionReason: {autoDebug.suppressionReason ?? "-"}</div>
+        <div>lastSpoke: {fmtTime(autoDebug.lastAutonomousSpeechAt)}</div>
+        <div>nextScheduled: {fmtTime(autoDebug.nextAutonomousSpeechAt)}</div>
+        <div>delay: {fmtMs(autoDebug.autonomousSpeechDelayMs)}</div>
+        <div>reactionCountInLastHour: {autoDebug.reactionCountInLastHour}</div>
       </div>
 
       <SectionHead title="直近の発話トレース" />

@@ -73,13 +73,14 @@ export function useObservationReactions(
         tags,
         isFullscreen: snapshot.fullscreenLikely,
         policy: {
-          autonomousSpeech:              s.autonomousSpeechEnabled,
-          cryEnabled:                    s.cryEnabled,
-          maxAutonomousReactionsPerHour: s.maxAutonomousReactionsPerHour,
-          suppressWhenFullscreen:        s.suppressWhenFullscreen,
-          suppressWhenFocus:             s.focusMode,
-          quietMode:                     s.quietMode,
-          doNotDisturb:                  s.doNotDisturb,
+          autonomousSpeech:                  s.autonomousSpeechEnabled,
+          cryEnabled:                        s.cryEnabled,
+          maxAutonomousReactionsPerHour:     s.maxAutonomousReactionsPerHour,
+          autonomousSpeechSafetyCapEnabled:  s.autonomousSpeechSafetyCapEnabled,
+          suppressWhenFullscreen:            s.suppressWhenFullscreen,
+          suppressWhenFocus:                 s.focusMode,
+          quietMode:                         s.quietMode,
+          doNotDisturb:                      s.doNotDisturb,
         },
       });
       if (!r) return false;

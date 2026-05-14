@@ -15,7 +15,7 @@ import type { ReactionTrigger } from "../companion/reactions/types";
 import type { CompanionEmotion } from "../companion/reactions/types";
 import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/clickPattern";
 import { classifyBreak } from "../companion/memory/memorySummary";
-import { buildMemorySummary } from "../companion/memory/buildMemorySummary";
+// buildMemorySummary: scheduleIdleSpeechのtodaySpeechCount廃止により不要になったため削除
 import { getAIResponse as getNewAIResponse, getLastAIResult } from "../companion/ai/AIProviderManager";
 import { buildCompanionContext } from "../systems/ai/buildCompanionContext";
 import { canSpeak } from "../companion/speech/SpeechPolicy";
@@ -28,8 +28,9 @@ import type { STTError } from "../systems/voice/STTAdapter";
 import { buildVoiceFallback, sanitizeVoiceResponse } from "../systems/voice/voiceFallback";
 import { patchLastVoiceDebug, setLastVoiceDebug } from "../systems/voice/voiceDebugStore";
 import { validateVoiceTranscript } from "../systems/voice/normalizeTranscript";
-import { buildObservationQuestionResponse, classifyVoiceIntent } from "../systems/voice/voiceIntent";
+import { buildLocalConversationResponse, classifyVoiceIntent } from "../systems/voice/voiceIntent";
 import { addInteractionTrace, previewTraceText } from "../systems/debug/interactionTraceStore";
+import { updateAutonomousSpeechDebug } from "../systems/debug/autonomousSpeechDebugStore";
 
 export type { VoiceUIState };  // 後方互換のため再エクスポート
 
@@ -202,6 +203,7 @@ export function useCompanionState(
       doNotDisturb: s.doNotDisturb,
       speechFrequency: s.speechFrequency,
       autonomousSpeechIntervalPreset: s.autonomousSpeechIntervalPreset,
+      autonomousSpeechSafetyCapEnabled: s.autonomousSpeechSafetyCapEnabled,
     };
   }, []);
 
@@ -238,6 +240,7 @@ export function useCompanionState(
         autonomousSpeech: autonomousSpeechRef.current,
         cryEnabled: s.cryEnabled,
         maxAutonomousReactionsPerHour: s.maxAutonomousReactionsPerHour,
+        autonomousSpeechSafetyCapEnabled: s.autonomousSpeechSafetyCapEnabled,
         suppressWhenFullscreen: s.suppressWhenFullscreen,
         suppressWhenFocus: s.focusMode,
         quietMode: s.quietMode,
@@ -311,11 +314,23 @@ export function useCompanionState(
     if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
     if (!autonomousSpeechRef.current) {
       idleSpeechTimerRef.current = null;
+      updateAutonomousSpeechDebug({ autonomousSpeechEnabled: false, suppressionReason: "disabled", nextAutonomousSpeechAt: null });
       return;
     }
     const s0 = getSettings();
     const [minDelay, maxDelay] = speechDelayRangeMs(s0);
     const delay = minDelay + Math.random() * (maxDelay - minDelay);
+    const nextAt = Date.now() + delay;
+    updateAutonomousSpeechDebug({
+      autonomousSpeechEnabled: true,
+      autonomousSpeechIntervalPreset: s0.autonomousSpeechIntervalPreset,
+      safetyCapEnabled: s0.autonomousSpeechSafetyCapEnabled,
+      legacyMaxPerHour: s0.maxAutonomousReactionsPerHour,
+      nextAutonomousSpeechAt: nextAt,
+      autonomousSpeechDelayMs: delay,
+      reactionCountInLastHour: countInLastHour(),
+      suppressionReason: null,
+    });
     idleSpeechTimerRef.current = setTimeout(async () => {
       if (stateRef.current === "idle" && autonomousSpeechRef.current) {
         const { kind } = inferActivity(snapshotRef.current);
@@ -325,15 +340,13 @@ export function useCompanionState(
           let emotion: CompanionEmotion | null = null;
           const s      = getSettings();
           const events = getAllEvents();
-          const memory = buildMemorySummary(events);
-          if (memory.todaySpeechCount >= 60) {
-            scheduleIdleSpeech();
-            return;
-          }
           const ctx    = buildCompanionContext("idle", snapshotRef.current, events, s);
           const policy = canSpeak("idle", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
           if (!policy.allowed) {
+            const policyReason = policy.reason === "rateLimit" ? "safetyCap" : (policy.reason ?? "no_text");
+            updateAutonomousSpeechDebug({ suppressionReason: policyReason });
+            addInteractionTrace({ trigger: "autonomous", dropped: true, fallbackReason: policy.reason ?? "policy_blocked", settingsSnapshot: settingsSnapshot() });
             scheduleIdleSpeech();
             return;
           }
@@ -349,15 +362,24 @@ export function useCompanionState(
           text ??= fireReaction("randomIdle");
           if (text) {
             const shown = triggerSpeak(text, { emotion, source: "autonomous", priority: 20 });
-            if (shown && s.cryEnabled && s.playCryOnAutonomousSpeech && !s.quietMode && !s.doNotDisturb) {
-              void cryEngine.play({ id: "autonomous_speech", synth: { kind: "murmur", durationMs: 180 } });
+            if (shown) {
+              updateAutonomousSpeechDebug({ lastAutonomousSpeechAt: Date.now(), suppressionReason: "allowed" });
+              if (s.cryEnabled && s.playCryOnAutonomousSpeech && !s.quietMode && !s.doNotDisturb) {
+                void cryEngine.play({ id: "autonomous_speech", synth: { kind: "murmur", durationMs: 180 } });
+              }
             }
+          } else {
+            updateAutonomousSpeechDebug({ suppressionReason: "no_text" });
           }
+        } else {
+          updateAutonomousSpeechDebug({ suppressionReason: "silent_activity" });
         }
+      } else {
+        updateAutonomousSpeechDebug({ suppressionReason: stateRef.current !== "idle" ? "not_idle" : "disabled" });
       }
       scheduleIdleSpeech();
     }, delay);
-  }, [triggerSpeak, fireReaction]);
+  }, [triggerSpeak, fireReaction, settingsSnapshot]);
 
   useEffect(() => {
     if (!autonomousSpeechEnabled) {
@@ -475,7 +497,7 @@ export function useCompanionState(
     setVoiceState("voiceResponding");
 
     try {
-      const routed = buildObservationQuestionResponse(intent, ctx);
+      const routed = buildLocalConversationResponse(intent, ctx, validated.text);
       if (routed) {
         text = sanitizeVoiceResponse(routed);
       } else if (policy.allowed && !s.doNotDisturb) {
@@ -680,7 +702,7 @@ export function useCompanionState(
     setVoiceState("voiceResponding");
 
     try {
-      const routed = buildObservationQuestionResponse(intent, ctx);
+      const routed = buildLocalConversationResponse(intent, ctx, transcript);
       if (routed) {
         text = sanitizeVoiceResponse(routed);
       } else if (policy.allowed && !s.doNotDisturb) {
@@ -756,7 +778,7 @@ export function useCompanionState(
 
     let response: string | null = null;
     let emotion: CompanionEmotion | null = null;
-    const routed = buildObservationQuestionResponse(intent, ctx);
+    const routed = buildLocalConversationResponse(intent, ctx, textInput);
     if (routed) {
       response = sanitizeVoiceResponse(routed);
     } else if (policy.allowed && !s.doNotDisturb) {

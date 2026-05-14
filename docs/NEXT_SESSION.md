@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.4)**
+**最終更新: 2026-05-14 (v1.0.5)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.4
-**フェーズ:** Interaction trace, voice session reset, and settings consistency hotfix
-**全体進捗:** 約 96〜97%
+**バージョン:** v1.0.5
+**フェーズ:** Prompt contamination and autonomous speech pacing hotfix
+**全体進捗:** 約 97〜98%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照

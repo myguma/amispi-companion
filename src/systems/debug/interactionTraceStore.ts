@@ -39,6 +39,7 @@ export type InteractionTraceEntry = {
     | "doNotDisturb"
     | "speechFrequency"
     | "autonomousSpeechIntervalPreset"
+    | "autonomousSpeechSafetyCapEnabled"
   >;
 };
 

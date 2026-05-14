@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.0.5] — 2026-05-14
+
+### Fixed (Prompt contamination and autonomous speech pacing hotfix)
+
+- **Prompt contamination fix**:
+  - voice/text trigger時、`recentSpeech`（直近の発話本文）をLLMプロンプトに含めないようにした
+  - voice/text trigger時、`memorySummary.shortNaturalSummary`をプロンプトから除外し、入力への集中を優先
+  - click/idle/observation等の非会話triggerでは既存の反復回避ロジックを維持
+- **Local conversation router強化**:
+  - `hearing_test`（聞こえる？等）をlocal routerで処理し、Ollamaに流さない
+  - `greeting`（こんにちは等）もlocal routerで返答
+  - `buildLocalConversationResponse(intent, ctx, rawInput)` として関数を拡張
+  - observation/screen_visibility/app_state は引き続きlocal router優先
+  - `casual_chat` / `unknown` のみOllamaへ
+- **Autonomous speech pacing fix**:
+  - `scheduleIdleSpeech` の `todaySpeechCount >= 60` チェックを削除（voice/text/clickが自律発話を止めない）
+  - `autonomousSpeechSafetyCapEnabled` 設定を追加（default: false）
+  - `SpeechPolicy.canSpeak` / `selectReaction` のlegacy capを `autonomousSpeechSafetyCapEnabled` でゲート
+  - 主制御は `autonomousSpeechIntervalPreset` のみ
+- **Autonomous speech debug trace**:
+  - `autonomousSpeechDebugStore.ts` を新規追加（揮発ストア）
+  - DebugPageに自律発話スケジューリング状態を表示：suppressionReason / nextScheduled / delay / lastSpoke
+  - 抑制時にInteraction Traceにも理由を記録
+- **Settings**:
+  - `autonomousSpeechSafetyCapEnabled` をBehaviorPageに追加（toggle + 条件付きslider）
+  - DebugPageの設定値表示に `safetyCapEnabled` を追加
+
+### Maintained
+
+- Remote LLM / ChatGPT API / OpenAI APIは実装していない
+- transcript / text input / 音声ファイルは永続保存しない
+- compact `200x280` window / speech時window resize不採用 / character layout / click-through / ContextMenu / drag / voice long press / Update / Onboarding / Memory / Debug / Transparency / Ollama / Active Appは維持
+
+### Field QA
+
+- prompt汚染修正 / hearing_test local router / 自律発話pacing / safetyCapは v1.0.5 field QA pending
+
 ## [1.0.4] — 2026-05-14
 
 ### Fixed (Interaction trace, voice session reset, and settings consistency hotfix)

@@ -155,8 +155,8 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
   if (dl > 20) contextLines.push("Downloadsにファイルが溜まっている");
   if (dt > 15) contextLines.push("Desktopにもファイルが多い");
 
-  // 記憶サマリー
-  if (memorySummary.shortNaturalSummary) {
+  // 記憶サマリー — voice/text会話時はスキップ（過去発話本文のprompt汚染防止）
+  if (!isConversationalInput && memorySummary.shortNaturalSummary) {
     contextLines.push(memorySummary.shortNaturalSummary.replace(/。$/, ""));
   }
 
@@ -168,17 +168,19 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
       contextLines.push("会話返答ルール: 上の入力内容に直接返す。汎用の呼びかけ反応だけで終わらない。入力内の語や数字を最低1つ反映する。");
       contextLines.push("観測質問ルール: 画面全体ではなく、今のアプリ種別・入力状態・少しの作業の気配だけ分かる。見えていないものは断定しない。");
       contextLines.push("voice悪い例: ここにいる / うん、聞こえてる / 呼んだ？ / ん");
-      contextLines.push("voice良い例: こんにちは、声は届いてる / 青いカエルと七三九、聞こえた / 画面全部じゃなくて、今いる場所の気配だけ見てる");
+      contextLines.push("voice良い例: こんにちは、声は届いてる / 聞こえてる / 画面全部じゃなくて、今いる場所の気配だけ見てる");
     }
   }
 
-  // 直近の発話 (最新3件) — 同一・類似表現を繰り返させないため
-  const recentSpeech = recentEvents
-    .filter((e) => e.type === "speech_shown" && typeof e.data?.text === "string")
-    .slice(-3)
-    .map((e) => e.data!.text as string);
-  if (recentSpeech.length > 0) {
-    contextLines.push(`直近の発話 (繰り返し厳禁): ${recentSpeech.join(" / ")}`);
+  // 直近の発話 (最新3件) — voice/text会話時はスキップ（過去発話本文がLLMに混入するのを防ぐ）
+  if (!isConversationalInput) {
+    const recentSpeech = recentEvents
+      .filter((e) => e.type === "speech_shown" && typeof e.data?.text === "string")
+      .slice(-3)
+      .map((e) => e.data!.text as string);
+    if (recentSpeech.length > 0) {
+      contextLines.push(`直近の発話 (繰り返し厳禁): ${recentSpeech.join(" / ")}`);
+    }
   }
 
   const userContent = contextLines.join("\n") + "\n\n日本語一文のみで返答してください。";

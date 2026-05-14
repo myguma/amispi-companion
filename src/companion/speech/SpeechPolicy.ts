@@ -50,12 +50,11 @@ export function canSpeak(
     return { allowed: false, reason: "fullscreen" };
   }
 
-  const legacySafetyCap = Math.max(20, settings.maxAutonomousReactionsPerHour * 4);
-  if (
-    !isManual &&
-    reactionCountInLastHour >= legacySafetyCap
-  ) {
-    return { allowed: false, reason: "rateLimit" };
+  if (!isManual && settings.autonomousSpeechSafetyCapEnabled) {
+    const legacySafetyCap = Math.max(20, settings.maxAutonomousReactionsPerHour * 4);
+    if (reactionCountInLastHour >= legacySafetyCap) {
+      return { allowed: false, reason: "rateLimit" };
+    }
   }
 
   if (

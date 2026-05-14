@@ -31,6 +31,7 @@ export type CompanionSettings = {
   autonomousSpeechIntervalPreset: SpeechIntervalPreset;
   maxAutonomousReactionsPerHour: number;
   playCryOnAutonomousSpeech: boolean;
+  autonomousSpeechSafetyCapEnabled: boolean;
 
   permissions: PermissionSettings;
 

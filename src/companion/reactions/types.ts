@@ -62,6 +62,7 @@ export type ReactionPolicy = {
   autonomousSpeech: boolean;
   cryEnabled: boolean;
   maxAutonomousReactionsPerHour: number;
+  autonomousSpeechSafetyCapEnabled: boolean;
   suppressWhenFullscreen: boolean;
   suppressWhenFocus: boolean;
   quietMode: boolean;

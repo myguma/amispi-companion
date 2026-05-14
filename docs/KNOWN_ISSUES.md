@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-14 (v1.0.4)**
+**最終更新: 2026-05-14 (v1.0.5)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -20,6 +20,7 @@
 | v1.0.2 hotfix | passed | transcript previewによりWhisperが聞こえていることを確認。残問題はv1.0.3でhotfix |
 | v1.0.3 hotfix | pending | voice返答上書き防止、`[BLANK_AUDIO]` rejection、観測質問応答、末尾「ん」抑制は継続QA |
 | v1.0.4 hotfix | pending | session isolation、settings consistency、Interaction trace、text input、UpdateBadge足元配置はfield QA pending |
+| v1.0.5 hotfix | pending | prompt汚染修正、hearing_test local router、autonomous speech pacing、safetyCapはfield QA pending |
 
 ## Non-goals
 
