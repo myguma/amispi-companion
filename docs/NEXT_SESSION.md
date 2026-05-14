@@ -18,6 +18,7 @@
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
 **記憶設計:** docs/MEMORY_AND_DATA_CONTROL.md 参照
 **QA 記録:** docs/FIELD_QA_NOTES.md 参照
+**完了監査:** docs/V1_6_FIELD_QA_AUDIT.md 参照
 
 ---
 
@@ -35,6 +36,7 @@
 ✅ Windows Installer artifact → amispi-companion_1.5.4_x64-setup.exe
 ✅ Updater artifact → latest.json
 ✅ v1.6.0 field QA preflight → failures 0 / warnings 0 (2026-05-15)
+✅ v1.6.0 completion audit → Day 0のみ / goal未完了を確認
 ```
 
 ---
