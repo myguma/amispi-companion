@@ -230,6 +230,8 @@ v1.5.3 の到達点:
 - `npm run qa:preflight` でbranch / working tree / version files / latest tag / Release workflow / release assets / known issuesをread-only確認可能
 - `docs/DAILY_USE_BETA_CHECKLIST.md` のPreflightへ実行手順を追加
 - preflightはfield QA通過判定ではなく、v1.6.0 QA開始前の入口確認に限定
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 
