@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.5.0 まで進んでいる。
+現在 v1.5.1 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -206,12 +206,19 @@ v1.5.0 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.5.1 の到達点:
+
+- v1.6.0 Daily-use Betaを即時完了扱いにせず、field QA gateをprepとして分離
+- 1週間常駐QA / updater / installer / OpenAIなし / Ollama fallback / RuleProvider fallback / Memory v2 / Observation visibility / filename samples / Diagnostics の通過条件をdocsへ固定
+- `docs/FIELD_QA_NOTES.md` へ日次記録フォーマットを追加
+- critical issueなしを実機で確認するまではv1.6.0へ進まない方針を明記
+
 ## 直近の次の一手
 
-まず v1.5.0 実機QA 結果を踏まえる。
+まず v1.5.0 / v1.5.1 実機QA 結果を踏まえる。
 
 問題があれば v1.5.x hotfix として最小修正する。
-問題がなければ v1.6.0 Daily-use Beta へ進む。
+問題がなければ v1.6.0 Daily-use Beta field QA を開始する。
 
 v1.1.4 QA観点:
 

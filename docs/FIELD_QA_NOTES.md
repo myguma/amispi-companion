@@ -33,8 +33,28 @@
 > v1.0.1 field QAではFFmpeg/Whisperの実行エラーは解消したが、transcript確認とvoice返答品質が不足。v1.0.2でdebugとprompt/fallbackを修正。
 > v1.0.2 field QAではWhisperが聞こえていることを確認。残問題はvoice long press後のclick誤発火とvoice返答品質。v1.0.3でpriority/suppress/noise rejectionを修正。
 > v1.0.3 field QAでは、過去transcript由来の返答混入、設定値と動作の不一致、内部理由不可視が残った。v1.0.4でsession isolation / interaction trace / settings consistencyを追加。
+> v1.5.1 では v1.6.0 Daily-use Betaへ進む前の1週間常駐QA gateと日次記録フォーマットを固定。実機QA自体は未実施。
 
-**更新: 2026-05-14 (v1.0.4)**
+**更新: 2026-05-15 (v1.5.1)**
+
+---
+
+## v1.5.1 での更新内容
+
+### Daily-use Beta QA readiness prep
+
+**整理内容:**
+- v1.6.0 Daily-use Betaをこの場で完了扱いにしない
+- 1週間常駐QA、updater、installer、OpenAIなし、Ollama fallback、RuleProvider fallback、Memory v2、Observation visibility、filename samples、Diagnostics / Debugを実機gateとして固定
+- `docs/KNOWN_ISSUES.md` にv1.6.0へ進む前の通過条件と日次記録フォーマットを追加
+- field QA未実施項目はpendingのまま維持
+
+**field QA pending:**
+- v1.6.0 Daily-use Beta判定用の7日間常駐記録
+- installer / updater実機確認
+- OpenAIなし・Ollama失敗・RuleProvider fallbackの日常利用確認
+- Memory export/importとfilename samples非保存/非送信境界の再確認
+- critical issueなしの確認
 
 ---
 

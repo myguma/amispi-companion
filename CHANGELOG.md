@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.1] — 2026-05-15
+
+### Added
+
+- Daily-use Beta QA readiness prepとして、v1.6.0へ進む前の1週間常駐QAチェックリストと日次記録フォーマットを整理
+- v1.6.0の入口条件を明確化し、実機QA未実施項目を完了扱いにしない運用を明記
+- updater / installer / OpenAI / Ollama / RuleProvider / Memory / filename samples / Diagnostics のQA観点を1つの実行可能なマトリクスにまとめた
+
+### Fixed / Improved
+
+- `docs/KNOWN_ISSUES.md` のdaily-use beta向けpending項目をv1.5.1時点の判定基準に更新
+- `docs/NEXT_SESSION.md` をv1.5.1へ更新し、次セッションの最初の作業をv1.6.0 field QA実施判断に固定
+
+---
+
 ## [1.5.0] — 2026-05-15
 
 ### Added

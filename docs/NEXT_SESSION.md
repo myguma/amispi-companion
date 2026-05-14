@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.5.0)**
+**最終更新: 2026-05-15 (v1.5.1)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.5.0
-**フェーズ:** Visible Local Observer Companion — Optional Filename Samples
+**バージョン:** v1.5.1
+**フェーズ:** Visible Local Observer Companion — Daily-use Beta QA readiness prep
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,14 +24,14 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.5.0)
-✅ cargo build  → Finished dev profile (v1.5.0)
+✅ npm run build → ✓ built (v1.5.1)
+✅ cargo build  → Finished dev profile (v1.5.1)
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
-✅ cargo test observation::tests → 3 passed (v1.5.0)
+✅ cargo test observation::tests → 3 passed (v1.5.1)
 ✅ git diff --check → clean
-✅ v1.5.0 Release workflow → success (run 25889278221)
-✅ Windows Installer artifact → amispi-companion_1.5.0_x64-setup.exe
-✅ Updater artifact → latest.json
+🔲 v1.5.1 Release workflow → push後に確認必要
+🔲 Windows Installer artifact → push後に確認必要
+🔲 Updater artifact → push後に確認必要
 ```
 
 ---
@@ -58,7 +58,7 @@
 
 ---
 
-## v1.0.6〜v1.5.0 完了済み
+## v1.0.6〜v1.5.1 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -74,6 +74,25 @@
 | v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
 | v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
 | v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | ✅ automated QA passed / field QA pending |
+| v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | 🔲 release前 / automated QA中 |
+
+## v1.5.1 実装詳細
+
+### 変更内容
+
+- v1.6.0 Daily-use Betaをこの場で完了扱いにしない方針を明記
+- 1週間常駐QA / updater / installer / OpenAIなし / Ollama fallback / RuleProvider fallback / Memory v2 / Observation visibility / filename samples / Diagnostics を実機gateとして整理
+- `docs/KNOWN_ISSUES.md` にv1.6.0へ進む前の通過条件と日次記録フォーマットを追加
+- `docs/FIELD_QA_NOTES.md` にv1.5.1のprep内容と未実施QA項目を追記
+- `docs/PROGRESS_TRACKER.md` をv1.5.1時点へ更新
+
+### Field QA で確認すべき項目 (v1.5.1)
+
+- 7日間の常駐記録が `docs/FIELD_QA_NOTES.md` に日次で残るか
+- updater / installer / latest.json / signature を実インストール環境で確認できるか
+- OpenAIなし、Ollama失敗、RuleProvider fallbackの3状態で破綻しないか
+- Memory v2とfilename samplesの非保存/非送信境界が崩れていないか
+- critical issueなしを確認できるまでv1.6.0へ進まないか
 
 ## v1.5.0 実装詳細
 
@@ -99,8 +118,8 @@
 
 ## 次に着手する候補
 
-- v1.5.x hotfix: v1.5.0 field QAでsamples表示・権限境界・非保存/非送信不具合が出た場合の最小修正
-- 問題がなければ v1.6.0 Daily-use Beta へ進む
+- v1.5.x hotfix: v1.5.0 / v1.5.1 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
+- 問題がなければ v1.6.0 Daily-use Beta field QAを開始する
 
 ## v1.4.0 実装詳細
 

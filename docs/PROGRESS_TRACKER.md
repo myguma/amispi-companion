@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.4)**
+**最終更新: 2026-05-15 (v1.5.1)**
 
 ---
 
@@ -12,21 +12,21 @@
 | 領域 | 進捗 | 備考 |
 |------|------|------|
 | 土台・アーキテクチャ | 100% | Phase 0–2 完了 |
-| 観測システム (Rust) | 91% | camelCase serde・Raw Foreground Debug表示改善。実機取得は継続確認 |
-| 活動推定 (inferActivity) | 83% | communication / self カテゴリ処理追加 |
-| AI コンテキスト構築 | 94% | trigger別ヒント・直近発話context・voice/text専用prompt・観測質問router・記憶文脈を短く整理 |
+| 観測システム (Rust) | 94% | ObservationSignal、classification reason、optional filename samplesを追加。実機取得は継続確認 |
+| 活動推定 (inferActivity) | 88% | AppCategory拡張、AI/notes/design/archive/music系分類を追加。field QA pending |
+| AI コンテキスト構築 | 96% | ReactionIntent、topSignal、保存メモprompt投入、provider/model traceを整理 |
 | AI プロバイダー (Ollama) | 95% | 127.0.0.1修正・temperature 0.5・QualityFilter voice hardening |
-| fallback / RuleProvider | 92% | 固定文短縮・直近固定文重複回避・voice fallback分離・観測質問fallback追加 |
-| 記憶システム | 84% | DailySummary・MemoryViewer・削除/保存期間・JSON export実装済み |
-| 自律発話 (autonomous speech) | 91% | 文脈反応の短文化・quiet/focus/DND抑制を強化 |
+| fallback / RuleProvider | 95% | ReactionIntent別発話、低品質fallback削減、provider/status traceを追加 |
+| 記憶システム | 91% | Memory v2編集・削除・固定・カテゴリ・prompt投入・保存メモimportを追加 |
+| 自律発話 (autonomous speech) | 94% | ReactionIntentとrecent historyで重複抑制。30分以上のfield QA pending |
 | 音声入力 (Voice) | 83% | FFmpeg WAV変換、VoicePage transcript preview、session isolation、click抑制、speech priority、blank/noise rejection。会話品質はfield QA pending |
 | キャラクター表現 | 91% | compact描画安定を維持し、追加表情だけsprite fallbackするようQA調整 |
-| 設定 UI | 98% | TabErrorBoundary、アップデート/デバッグタブ、Onboarding、Memory retention、text input、trace/settings snapshot表示 |
-| 透明性 UI | 95% | raw JSON preview・snake/camel両対応・3秒後キャプチャ説明改善 |
+| 設定 UI | 99% | AI provider、Observation、Memory v2、custom app classification、filename samples境界を表示 |
+| 透明性 UI | 98% | provider/model/intent/fallback/suppression、保存/非保存、外部AI送信境界を表示 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 99% | v1.0.0 stable notes / Known Issues / v2 roadmap draft整理 |
-| Windows installer / CI | 84% | Release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
-| **総合** | **~96〜97%** | v1.0.4 interaction trace / settings consistency / voice session isolation。Conversation qualityはfield QA pending |
+| リリース品質 (docs) | 99% | v1.5.1でv1.6.0 Daily-use Beta QA gateを整理。field QA未実施を明示 |
+| Windows installer / CI | 89% | v1.2.0〜v1.5.0 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
+| **総合** | **~99%** | v1.6.0 Daily-use Beta前。1週間常駐・updater/installer実機QAが残る |
 
 ---
 
@@ -76,6 +76,12 @@
 | v1.0.2 | Voice transcript debug and prompt repair: transcript preview・voice fallback・QualityFilter強化 |
 | v1.0.3 | Voice interaction priority and response hotfix: voice後click抑制・speech priority・blank transcript rejection・観測質問fallback |
 | v1.0.4 | Interaction trace/settings/voice coherence: session isolation・trace・settings consistency・text input・speech interval model |
+| v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル |
+| v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 |
+| v1.3.0 | App Classification拡張・classification reason・custom classification UI |
+| v1.4.0 | Memory v2: 保存メモ編集・固定・カテゴリ・prompt投入・import |
+| v1.5.0 | Optional Filename Samples: 明示ON・揮発表示・非保存/非送信境界 |
+| v1.5.1 | Daily-use Beta QA readiness prep: 1週間常駐QA gate・日次記録フォーマット整理 |
 
 ---
 
@@ -90,15 +96,15 @@
 
 ---
 
-## 次の目標: v1.0.4 field QA / 必要なら v1.0.5 conversation/settings hotfix
+## 次の目標: v1.6.0 Daily-use Beta field QA / 必要なら v1.5.x hotfix
 
-優先候補A: **v1.0.4 field QA** ← **推奨**
-- 連続voice入力で前回transcriptが混ざらないか確認
-- 自律移動OFF / 自律発話OFF / interval preset が実動作に反映されるか確認
-- Interaction traceで入力・source・fallback reason・settings snapshotが追えるか確認
+優先候補A: **v1.6.0 Daily-use Beta field QA** ← **推奨**
+- v1.5.1で整理したgateに沿って7日間常駐QAを開始
+- updater / installer / latest.json / signatureを実インストール環境で確認
+- OpenAIなし、Ollama fallback、RuleProvider fallback、Memory v2、filename samples境界を日常利用で確認
 
 | 作業 | 優先度 |
 |------|--------|
-| v1.0.4 field QA | 高 |
-| Voice実機QA | 高 |
-| 残QA修正 | 中 |
+| v1.6.0 Daily-use Beta field QA | 高 |
+| updater / installer実機QA | 高 |
+| v1.5.x hotfix | 中 |

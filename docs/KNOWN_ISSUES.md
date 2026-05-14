@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-15 (v1.5.0)**
+**最終更新: 2026-05-15 (v1.5.1)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -33,6 +33,49 @@
 | v1.3.0 | pending | App Classification拡張、classification reason、custom classification UIはfield QA pending |
 | v1.4.0 | pending | Memory v2編集・固定・カテゴリ・prompt投入・保存メモimportはfield QA pending |
 | v1.5.0 | pending | Optional Filename Samplesの明示ON/OFF・揮発表示・非保存・非送信境界はfield QA pending |
+| v1.5.1 | pending | Daily-use Beta QA readiness prep。1週間常駐QAは未実施で、v1.6.0判定前に実機記録が必要 |
+
+## v1.5.1 Daily-use Beta Readiness Gate
+
+v1.6.0 Daily-use Betaへ進む前に、以下を実機で確認する。
+この表は実施計画であり、現時点では通過扱いにしない。
+
+| Gate | 状態 | 通過条件 |
+|---|---|---|
+| 1週間常駐 | pending | 7日間、起動・sleep復帰・通常作業中にcrashや操作不能がない |
+| updater実機更新 | pending | 既存インストールから最新版へ更新でき、`latest.json` とinstaller署名の取得に失敗しない |
+| installer再実行 | pending | NSIS installerで上書きインストールでき、設定・memoryが消えない |
+| OpenAIなし | pending | API key未設定またはquota不足でもOllama/RuleProvider fallbackで破綻しない |
+| Ollama fallback | pending | Ollama未起動・model missing・timeout時に原因とfallback先がDiagnosticsで見える |
+| RuleProvider fallback | pending | 外部AIなしでも短く自然な発話になり、provider/sourceを追える |
+| Memory v2 | pending | 保存メモの一覧・編集・削除・export/importが期待通りで、未承認transcript等を保存しない |
+| Observation visibility | pending | 何を見ている/見ていない/保存している/保存していないかがUIで確認できる |
+| Filename samples | pending | 明示ON時だけ揮発表示され、Memory export / Timeline / OpenAI payloadへraw filenameが入らない |
+| Diagnostics / Debug | pending | provider/model/intent/fallback/suppression reasonが主要発話経路で追跡できる |
+| UI comfort | pending | 変な監視アプリに見えず、speech bubbleや全文パネルが日常利用で邪魔になりすぎない |
+| Critical issueなし | pending | crash、不可視の外部送信、データ消失、更新不能、監視境界の誤表示がない |
+
+### 1週間常駐QA 日次記録フォーマット
+
+各日、`docs/FIELD_QA_NOTES.md` に以下の形で追記する。
+
+```md
+### v1.6.0 Daily-use QA Day N
+
+- 日付:
+- 実行時間:
+- 起動経路: installer / updater / dev build
+- AI provider構成: OpenAI / Ollama / RuleProvider
+- 主要作業:
+- crash / freeze:
+- updater / installer:
+- memory export/import:
+- observation / diagnostics:
+- filename samples:
+- 気になった発話:
+- critical issue:
+- 次の対応:
+```
 
 ## v1.5.0 Field QA Watch Points
 
