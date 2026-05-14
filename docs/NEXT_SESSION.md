@@ -27,8 +27,9 @@
 ✅ npm run build → ✓ built (v1.2.0)
 ✅ cargo build  → Finished dev profile (v1.2.0)
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.1.4 success
-🔲 v1.2.0 Release workflow → push後に確認必要
+✅ GitHub Actions / Windows Installer → v1.2.0 success (run 25876320136)
+✅ Windows Installer artifact → `amispi-companion_1.2.0_x64-setup.exe`
+✅ Updater artifact → `latest.json`
 ```
 
 ---

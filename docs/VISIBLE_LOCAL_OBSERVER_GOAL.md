@@ -169,6 +169,8 @@ v1.2.0 の到達点:
 - speech_shown metadata に reactionIntent を保存
 - 低品質fallback文を削除または強cooldown文へ置換
 - OpenAI / Ollama / RuleProvider のいずれでも intent trace を追える状態にした
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 
