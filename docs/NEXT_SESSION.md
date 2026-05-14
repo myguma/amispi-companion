@@ -29,11 +29,11 @@
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
 ✅ cargo test observation::tests → 3 passed (v1.5.4)
 ✅ bash -n scripts/daily-use-beta-preflight.sh → passed
-✅ npm run qa:preflight → commit/release後に再確認
+✅ npm run qa:preflight → failures 0 / warnings 0 (network access run)
 ✅ git diff --check → clean
-🔲 v1.5.4 Release workflow → push後に確認必要
-🔲 Windows Installer artifact → push後に確認必要
-🔲 Updater artifact → push後に確認必要
+✅ v1.5.4 Release workflow → success (run 25891609978)
+✅ Windows Installer artifact → amispi-companion_1.5.4_x64-setup.exe
+✅ Updater artifact → latest.json
 ```
 
 ---
@@ -79,7 +79,7 @@
 | v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | ✅ automated QA passed / field QA pending |
 | v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | ✅ automated QA passed / field QA pending |
 | v1.5.3 | Daily-use Beta preflight script・QA入口確認自動化 | ✅ automated QA passed / field QA pending |
-| v1.5.4 | Daily-use Beta preflight GitHub照会robust化 | 🔲 release前 / automated QA中 |
+| v1.5.4 | Daily-use Beta preflight GitHub照会robust化 | ✅ automated QA passed / field QA pending |
 
 ## v1.5.4 実装詳細
 
@@ -88,10 +88,12 @@
 - `npm run qa:preflight` のGitHub照会をretry付きに変更
 - `gh run list` / `gh release view` の結果をJSONとして保存し、Nodeでasset名とworkflow状態を確認
 - GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくいようにした
+- v1.5.4 release workflow success、installer / signature / latest.json artifact確認済み
+- release後の `npm run qa:preflight` は failures 0 / warnings 0 を確認済み
 
 ### Field QA で確認すべき項目 (v1.5.4)
 
-- release後に `npm run qa:preflight` が failures 0 になるか
+- release後に `npm run qa:preflight` が failures 0 / warnings 0 になるか
 - GitHub照会が一時失敗してもretryで復帰するか
 - v1.6.0 field QA通過扱いと混同されないか
 

@@ -25,7 +25,7 @@
 | 透明性 UI | 98% | provider/model/intent/fallback/suppression、保存/非保存、外部AI送信境界を表示 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 99% | v1.5.4でDaily-use Beta preflightのGitHub照会をrobust化。field QA未実施を明示 |
-| Windows installer / CI | 91% | v1.2.0〜v1.5.3 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
+| Windows installer / CI | 92% | v1.2.0〜v1.5.4 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
 | **総合** | **~99%** | v1.6.0 Daily-use Beta前。1週間常駐・updater/installer実機QAが残る |
 
 ---
@@ -102,7 +102,7 @@
 ## 次の目標: v1.6.0 Daily-use Beta field QA / 必要なら v1.5.x hotfix
 
 優先候補A: **v1.6.0 Daily-use Beta field QA** ← **推奨**
-- v1.5.3の `npm run qa:preflight` を実行してから、checklistに沿って7日間常駐QAを開始
+- v1.5.4の `npm run qa:preflight` を実行してから、checklistに沿って7日間常駐QAを開始
 - updater / installer / latest.json / signatureを実インストール環境で確認
 - OpenAIなし、Ollama fallback、RuleProvider fallback、Memory v2、filename samples境界を日常利用で確認
 

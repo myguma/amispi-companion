@@ -238,6 +238,9 @@ v1.5.4 の到達点:
 - `npm run qa:preflight` のGitHub照会をretry付きに変更
 - Release workflow / release assets確認をJSONベースへ変更
 - GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくい状態にした
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
+- release後の `npm run qa:preflight` は failures 0 / warnings 0 確認済み
 
 ## 直近の次の一手
 
