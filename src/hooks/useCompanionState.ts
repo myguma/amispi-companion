@@ -389,17 +389,28 @@ export function useCompanionState(
             return;
           }
 
+          let aiMeta: { aiProvider?: string; aiModel?: string; aiStatus?: string; aiFallbackReason?: string } = {};
           try {
             const output = await getNewAIResponse(ctx);
+            const aiResult = getLastAIResult();
+            aiMeta = {
+              aiProvider: aiResult.source,
+              aiModel: aiResult.model,
+              aiStatus: aiResult.status,
+              aiFallbackReason: aiResult.fallbackReason,
+            };
             if (output.shouldSpeak && output.text) {
               text = output.text;
               emotion = output.emotion ?? null;
             }
           } catch { /* AI エラー → reaction fallback */ }
 
-          text ??= fireReaction("randomIdle");
+          if (!text) {
+            text = fireReaction("randomIdle");
+            if (text) aiMeta = { aiProvider: "rule", aiStatus: "fallback", aiFallbackReason: "ai_no_speech_or_error" };
+          }
           if (text) {
-            const shown = triggerSpeak(text, { emotion, source: "autonomous", priority: 20 });
+            const shown = triggerSpeak(text, { emotion, source: "autonomous", priority: 20, ...aiMeta });
             if (shown) {
               updateAutonomousSpeechDebug({ lastAutonomousSpeechAt: Date.now(), suppressionReason: "allowed" });
               if (s.cryEnabled && s.playCryOnAutonomousSpeech && !s.quietMode && !s.doNotDisturb) {
