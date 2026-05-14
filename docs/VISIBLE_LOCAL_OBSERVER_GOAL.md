@@ -212,6 +212,8 @@ v1.5.1 の到達点:
 - 1週間常駐QA / updater / installer / OpenAIなし / Ollama fallback / RuleProvider fallback / Memory v2 / Observation visibility / filename samples / Diagnostics の通過条件をdocsへ固定
 - `docs/FIELD_QA_NOTES.md` へ日次記録フォーマットを追加
 - critical issueなしを実機で確認するまではv1.6.0へ進まない方針を明記
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 

@@ -25,7 +25,7 @@
 | 透明性 UI | 98% | provider/model/intent/fallback/suppression、保存/非保存、外部AI送信境界を表示 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
 | リリース品質 (docs) | 99% | v1.5.1でv1.6.0 Daily-use Beta QA gateを整理。field QA未実施を明示 |
-| Windows installer / CI | 89% | v1.2.0〜v1.5.0 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
+| Windows installer / CI | 90% | v1.2.0〜v1.5.1 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
 | **総合** | **~99%** | v1.6.0 Daily-use Beta前。1週間常駐・updater/installer実機QAが残る |
 
 ---
