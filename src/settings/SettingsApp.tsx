@@ -16,7 +16,7 @@ import { ObservationPage } from "./pages/ObservationPage";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { getSettings, useSettings } from "./store";
 
-type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug";
+type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug" | "diagnostics";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "onboarding", label: "はじめに" },
