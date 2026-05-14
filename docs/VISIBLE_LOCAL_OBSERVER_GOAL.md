@@ -191,6 +191,8 @@ v1.4.0 の到達点:
 - Debug / Diagnosticsでprompt投入対象memoryが見える
 - Memory export JSONから保存メモだけをimport可能。発話ログ・観測ログはimportしない
 - OpenAI送信はAI設定の「保存メモを送る」が別許可。OFFなら保存メモをOpenAI promptから除外
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 

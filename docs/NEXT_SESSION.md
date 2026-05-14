@@ -28,7 +28,9 @@
 ✅ cargo build  → Finished dev profile (v1.4.0)
 ✅ cargo test app_classification → passed (v1.3.0)
 ✅ git diff --check → clean
-🔲 v1.4.0 Release workflow → push後に確認必要
+✅ GitHub Actions / Windows Installer → v1.4.0 success (run 25888562984)
+✅ Windows Installer artifact → `amispi-companion_1.4.0_x64-setup.exe`
+✅ Updater artifact → `latest.json`
 ```
 
 ---
@@ -69,7 +71,7 @@
 | v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル | ✅ field QA pending |
 | v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
 | v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
-| v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | 🔲 release前 / automated QA中 |
+| v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
 
 ## v1.4.0 実装詳細
 
