@@ -145,7 +145,8 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.5.4 まで進んでいる。
+現在 v1.5.4 までrelease済み。
+v1.6.0 Daily-use Beta は Day 0 / preflight まで進み、Day 1 実機QA待ちである。
 
 v1.1.4 の到達点:
 
@@ -242,12 +243,19 @@ v1.5.4 の到達点:
 - Windows installer / signature / latest.json artifact 確認済み
 - release後の `npm run qa:preflight` は failures 0 / warnings 0 確認済み
 
+v1.6.0 Daily-use Beta Day 0 の到達点:
+
+- `npm run qa:preflight` をnetwork access runで実行し、failures 0 / warnings 0 を確認
+- `docs/V1_6_FIELD_QA_AUDIT.md` を追加し、完成判定20項目とv1.6.0 release criteriaの未達証拠を明示
+- `docs/FIELD_QA_NOTES.md` にDay 1 worksheetを追加
+- 7日間常駐QA、installer/updater実機経路、OpenAI/Ollama/RuleProvider、Memory v2、Observation/Diagnostics、filename samples、UI comfortは未通過のまま維持
+
 ## 直近の次の一手
 
-まず v1.5.0〜v1.5.4 実機QA 結果を踏まえる。
+まず v1.6.0 Daily-use Beta Day 1 の実機QA結果を踏まえる。
 
 問題があれば v1.5.x hotfix として最小修正する。
-問題がなければ v1.6.0 Daily-use Beta field QA を開始する。
+問題がなければ Day 2 以降のfield QAへ進む。
 
 v1.1.4 QA観点:
 
