@@ -81,6 +81,45 @@
 - filename samples 明示ON/OFFと非保存/非送信境界
 - UI comfort / speech quality / critical issueなし
 
+### Day 1 / 起動・基本操作・Debug / Diagnostics visibility 記録欄
+
+Day 1 は、この欄を埋めるまで passed 扱いにしない。
+最低2時間、installed app または dev build を起動したまま通常操作する。
+
+- 日付:
+- 実行時間:
+- 起動経路: installer / updater / dev build
+- app version:
+- OS / environment:
+- AI provider構成:
+- 起動結果:
+- 2時間常駐結果:
+- crash / freeze / 操作不能:
+- companion表示 / click / drag / right click:
+- settings open / close:
+- Debugで確認できた項目:
+  - current provider / model:
+  - reactionIntent:
+  - fallback reason:
+  - suppression reason:
+  - observation snapshot / current app:
+  - memory / saved notes summary:
+- Diagnosticsで確認できた項目:
+  - observation enabled / disabled scope:
+  - storage / non-storage boundary:
+  - external AI send scope:
+  - provider status:
+  - fallback status:
+- speech bubble / full text panel:
+- provider/model badge表示条件:
+- UpdateBadge / hit test:
+- 気になった発話:
+- privacy boundary issue:
+- critical issue:
+- evidence links / screenshots:
+- Day 1判定: pending / passed / failed
+- 次の対応:
+
 ---
 
 ## v1.5.4 での更新内容

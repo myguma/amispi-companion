@@ -55,7 +55,7 @@ v1.6.0 release候補ごとに必ず実行する。
 
 | Day | 状態 | 最低確認時間 | 重点 |
 |---|---|---:|---|
-| Day 1 | pending | 2h | 起動、基本操作、Debug / Diagnostics visibility |
+| Day 1 | pending | 2h | 起動、基本操作、Debug / Diagnostics visibility。記録欄は `docs/FIELD_QA_NOTES.md` |
 | Day 2 | pending | 2h | OpenAIなし、Ollama未起動、RuleProvider fallback |
 | Day 3 | pending | 2h | Memory v2 edit/delete/export/import |
 | Day 4 | pending | 2h | Observation visibility、custom app classification |

@@ -174,7 +174,7 @@
 
 ## 次に着手する候補
 
-- v1.6.0 Daily-use Beta Day 1: 2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認し、`docs/FIELD_QA_NOTES.md` に記録する
+- v1.6.0 Daily-use Beta Day 1: 2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認し、`docs/FIELD_QA_NOTES.md` のDay 1記録欄を埋める
 - v1.5.x hotfix: Day 1以降のfield QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 
 ## v1.4.0 実装詳細
