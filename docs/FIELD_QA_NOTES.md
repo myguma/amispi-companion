@@ -34,8 +34,26 @@
 > v1.0.2 field QAではWhisperが聞こえていることを確認。残問題はvoice long press後のclick誤発火とvoice返答品質。v1.0.3でpriority/suppress/noise rejectionを修正。
 > v1.0.3 field QAでは、過去transcript由来の返答混入、設定値と動作の不一致、内部理由不可視が残った。v1.0.4でsession isolation / interaction trace / settings consistencyを追加。
 > v1.5.1 では v1.6.0 Daily-use Betaへ進む前の1週間常駐QA gateと日次記録フォーマットを固定。実機QA自体は未実施。
+> v1.5.2 では古いv0.2.0 daily-use beta checklistをv1.6.0向けrunbookへ刷新。実機QA自体は未実施。
 
-**更新: 2026-05-15 (v1.5.1)**
+**更新: 2026-05-15 (v1.5.2)**
+
+---
+
+## v1.5.2 での更新内容
+
+### Daily-use Beta checklist refresh
+
+**整理内容:**
+- `docs/DAILY_USE_BETA_CHECKLIST.md` をv1.6.0 Daily-use Beta向けに更新
+- preflight、automated checks、7日間常駐QA、product gates、privacy boundary regression checks、release criteriaを1つのrunbookへ整理
+- updater / installer / OpenAI / Ollama / RuleProvider / Memory v2 / filename samples / Diagnosticsをv1.6.0入口条件として明記
+- 実機QA未実施項目はpendingのまま維持
+
+**field QA pending:**
+- `docs/DAILY_USE_BETA_CHECKLIST.md` に沿った7日間常駐QA
+- product gatesとprivacy boundary regression checksの実機確認
+- v1.6.0 release前のinstaller / updater / latest.json / signature確認
 
 ---
 

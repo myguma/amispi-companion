@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-15 (v1.5.1)**
+**最終更新: 2026-05-15 (v1.5.2)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -34,6 +34,7 @@
 | v1.4.0 | pending | Memory v2編集・固定・カテゴリ・prompt投入・保存メモimportはfield QA pending |
 | v1.5.0 | pending | Optional Filename Samplesの明示ON/OFF・揮発表示・非保存・非送信境界はfield QA pending |
 | v1.5.1 | pending | Daily-use Beta QA readiness prep。1週間常駐QAは未実施で、v1.6.0判定前に実機記録が必要 |
+| v1.5.2 | pending | Daily-use Beta checklist refresh。v1.6.0用runbookは準備済み、実機QAは未実施 |
 
 ## v1.5.1 Daily-use Beta Readiness Gate
 

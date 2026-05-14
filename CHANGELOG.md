@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.5.2] — 2026-05-15
+
+### Added
+
+- `docs/DAILY_USE_BETA_CHECKLIST.md` をv1.6.0 Daily-use Beta向けに刷新
+- 7日間常駐QA、preflight、automated checks、product gates、privacy boundary regression checks、release criteriaを1つのrunbookに整理
+- v1.6.0を実機QAなしで完了扱いにしない判定ルールを明記
+
+### Fixed / Improved
+
+- 古いv0.2.0 daily-use beta checklistを現在のVisible Local Observer Companion基準に更新
+- updater / installer / OpenAI / Ollama / RuleProvider / Memory v2 / filename samples / DiagnosticsのQA観点をv1.6.0入口条件へ接続
+
+---
+
 ## [1.5.1] — 2026-05-15
 
 ### Added

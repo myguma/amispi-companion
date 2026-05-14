@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.5.1 まで進んでいる。
+現在 v1.5.2 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -215,9 +215,16 @@ v1.5.1 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.5.2 の到達点:
+
+- `docs/DAILY_USE_BETA_CHECKLIST.md` をv1.6.0 Daily-use Beta向けに刷新
+- preflight / automated checks / 7日間常駐QA / product gates / privacy boundary regression checks / release criteria を1つのrunbookへ整理
+- 古いv0.2.0 checklistを現在のOpenAI / Ollama / RuleProvider / Memory v2 / filename samples / Diagnostics基準へ更新
+- 実機QA未実施項目はpendingのまま維持
+
 ## 直近の次の一手
 
-まず v1.5.0 / v1.5.1 実機QA 結果を踏まえる。
+まず v1.5.0〜v1.5.2 実機QA 結果を踏まえる。
 
 問題があれば v1.5.x hotfix として最小修正する。
 問題がなければ v1.6.0 Daily-use Beta field QA を開始する。

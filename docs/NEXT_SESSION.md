@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.5.1)**
+**最終更新: 2026-05-15 (v1.5.2)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.5.1
-**フェーズ:** Visible Local Observer Companion — Daily-use Beta QA readiness prep
+**バージョン:** v1.5.2
+**フェーズ:** Visible Local Observer Companion — Daily-use Beta checklist refresh
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,14 +24,14 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.5.1)
-✅ cargo build  → Finished dev profile (v1.5.1)
+✅ npm run build → ✓ built (v1.5.2)
+✅ cargo build  → Finished dev profile (v1.5.2)
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
-✅ cargo test observation::tests → 3 passed (v1.5.1)
+✅ cargo test observation::tests → 3 passed (v1.5.2)
 ✅ git diff --check → clean
-✅ v1.5.1 Release workflow → success (run 25889952281)
-✅ Windows Installer artifact → amispi-companion_1.5.1_x64-setup.exe
-✅ Updater artifact → latest.json
+🔲 v1.5.2 Release workflow → push後に確認必要
+🔲 Windows Installer artifact → push後に確認必要
+🔲 Updater artifact → push後に確認必要
 ```
 
 ---
@@ -58,7 +58,7 @@
 
 ---
 
-## v1.0.6〜v1.5.1 完了済み
+## v1.0.6〜v1.5.2 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -75,6 +75,23 @@
 | v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
 | v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | ✅ automated QA passed / field QA pending |
 | v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | ✅ automated QA passed / field QA pending |
+| v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | 🔲 release前 / automated QA中 |
+
+## v1.5.2 実装詳細
+
+### 変更内容
+
+- `docs/DAILY_USE_BETA_CHECKLIST.md` をv1.6.0 Daily-use Beta向けに刷新
+- preflight / automated checks / 7日間常駐QA / product gates / privacy boundary regression checks / release criteria を1つのrunbookに整理
+- v1.6.0を実機QAなしで完了扱いにしない判定ルールを明記
+- 古いv0.2.0 daily-use beta checklistを、OpenAI / Ollama / RuleProvider / Memory v2 / filename samples / Diagnosticsを含む現在基準へ更新
+
+### Field QA で確認すべき項目 (v1.5.2)
+
+- `docs/DAILY_USE_BETA_CHECKLIST.md` に沿って7日間QAを実行できるか
+- product gates と privacy boundary regression checks が実機記録と対応しているか
+- checklistの通過扱いとknown issuesのpending状態が矛盾しないか
+- v1.6.0 release前に installer / updater / latest.json / signature を実機確認できるか
 
 ## v1.5.1 実装詳細
 
@@ -118,7 +135,7 @@
 
 ## 次に着手する候補
 
-- v1.5.x hotfix: v1.5.0 / v1.5.1 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
+- v1.5.x hotfix: v1.5.0〜v1.5.2 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 - 問題がなければ v1.6.0 Daily-use Beta field QAを開始する
 
 ## v1.4.0 実装詳細
