@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.5.2)**
+**最終更新: 2026-05-15 (v1.5.3)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.5.2
-**フェーズ:** Visible Local Observer Companion — Daily-use Beta checklist refresh
+**バージョン:** v1.5.3
+**フェーズ:** Visible Local Observer Companion — Daily-use Beta preflight script
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,14 +24,16 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.5.2)
-✅ cargo build  → Finished dev profile (v1.5.2)
+✅ npm run build → ✓ built (v1.5.3)
+✅ cargo build  → Finished dev profile (v1.5.3)
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
-✅ cargo test observation::tests → 3 passed (v1.5.2)
+✅ cargo test observation::tests → 3 passed (v1.5.3)
+✅ bash -n scripts/daily-use-beta-preflight.sh → passed
+✅ npm run qa:preflight → failures 0 / warnings 4 (release前想定)
 ✅ git diff --check → clean
-✅ v1.5.2 Release workflow → success (run 25890462209)
-✅ Windows Installer artifact → amispi-companion_1.5.2_x64-setup.exe
-✅ Updater artifact → latest.json
+🔲 v1.5.3 Release workflow → push後に確認必要
+🔲 Windows Installer artifact → push後に確認必要
+🔲 Updater artifact → push後に確認必要
 ```
 
 ---
@@ -58,7 +60,7 @@
 
 ---
 
-## v1.0.6〜v1.5.2 完了済み
+## v1.0.6〜v1.5.3 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -76,6 +78,23 @@
 | v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | ✅ automated QA passed / field QA pending |
 | v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | ✅ automated QA passed / field QA pending |
 | v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | ✅ automated QA passed / field QA pending |
+| v1.5.3 | Daily-use Beta preflight script・QA入口確認自動化 | 🔲 release前 / automated QA中 |
+
+## v1.5.3 実装詳細
+
+### 変更内容
+
+- `scripts/daily-use-beta-preflight.sh` を追加
+- `npm run qa:preflight` からread-only preflightを実行可能にした
+- branch / working tree / version files / latest tag / Release workflow / release assets / known issues を一括確認
+- `docs/DAILY_USE_BETA_CHECKLIST.md` のPreflightへ実行手順を追加
+- 実機QA通過判定は行わず、v1.6.0 QA開始前の入口確認だけに限定
+
+### Field QA で確認すべき項目 (v1.5.3)
+
+- v1.6.0 QA開始前に `npm run qa:preflight` が failures 0 になるか
+- warningsがある場合に、実機QA開始前の判断材料として読めるか
+- preflight成功をfield QA通過と誤解しない運用になっているか
 
 ## v1.5.2 実装詳細
 
@@ -135,7 +154,7 @@
 
 ## 次に着手する候補
 
-- v1.5.x hotfix: v1.5.0〜v1.5.2 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
+- v1.5.x hotfix: v1.5.0〜v1.5.3 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 - 問題がなければ v1.6.0 Daily-use Beta field QAを開始する
 
 ## v1.4.0 実装詳細

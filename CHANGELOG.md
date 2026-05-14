@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.3] — 2026-05-15
+
+### Added
+
+- `npm run qa:preflight` を追加し、v1.6.0 Daily-use Beta QA開始前のread-only preflightを一括確認できるようにした
+- `scripts/daily-use-beta-preflight.sh` を追加。branch、working tree、version files、latest tag、Release workflow、release assets、known issuesを確認する
+- `docs/DAILY_USE_BETA_CHECKLIST.md` のPreflightにスクリプト実行手順を追加
+
+### Fixed / Improved
+
+- v1.6.0 field QAを通過扱いにせず、QA開始前の入口確認だけを自動化する運用にした
+
+---
+
 ## [1.5.2] — 2026-05-15
 
 ### Added

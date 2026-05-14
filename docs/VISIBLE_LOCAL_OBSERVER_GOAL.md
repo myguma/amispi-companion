@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.5.2 まで進んでいる。
+現在 v1.5.3 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -224,9 +224,16 @@ v1.5.2 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.5.3 の到達点:
+
+- `scripts/daily-use-beta-preflight.sh` を追加
+- `npm run qa:preflight` でbranch / working tree / version files / latest tag / Release workflow / release assets / known issuesをread-only確認可能
+- `docs/DAILY_USE_BETA_CHECKLIST.md` のPreflightへ実行手順を追加
+- preflightはfield QA通過判定ではなく、v1.6.0 QA開始前の入口確認に限定
+
 ## 直近の次の一手
 
-まず v1.5.0〜v1.5.2 実機QA 結果を踏まえる。
+まず v1.5.0〜v1.5.3 実機QA 結果を踏まえる。
 
 問題があれば v1.5.x hotfix として最小修正する。
 問題がなければ v1.6.0 Daily-use Beta field QA を開始する。

@@ -35,8 +35,25 @@
 > v1.0.3 field QAでは、過去transcript由来の返答混入、設定値と動作の不一致、内部理由不可視が残った。v1.0.4でsession isolation / interaction trace / settings consistencyを追加。
 > v1.5.1 では v1.6.0 Daily-use Betaへ進む前の1週間常駐QA gateと日次記録フォーマットを固定。実機QA自体は未実施。
 > v1.5.2 では古いv0.2.0 daily-use beta checklistをv1.6.0向けrunbookへ刷新。実機QA自体は未実施。
+> v1.5.3 では v1.6.0 field QA開始前のread-only preflight scriptを追加。実機QA自体は未実施。
 
-**更新: 2026-05-15 (v1.5.2)**
+**更新: 2026-05-15 (v1.5.3)**
+
+---
+
+## v1.5.3 での更新内容
+
+### Daily-use Beta preflight script
+
+**整理内容:**
+- `scripts/daily-use-beta-preflight.sh` を追加
+- `npm run qa:preflight` から実行できるようにした
+- branch、working tree、version files、latest tag、Release workflow、release assets、known issuesをread-onlyで確認
+- field QA通過判定は行わず、入口状態の確認だけに限定
+
+**field QA pending:**
+- `npm run qa:preflight` をv1.6.0 QA開始前に実行
+- 7日間常駐QA、installer / updater実機確認、product gates、privacy boundary regression checks
 
 ---
 
