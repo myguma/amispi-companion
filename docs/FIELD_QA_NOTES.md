@@ -36,8 +36,24 @@
 > v1.5.1 では v1.6.0 Daily-use Betaへ進む前の1週間常駐QA gateと日次記録フォーマットを固定。実機QA自体は未実施。
 > v1.5.2 では古いv0.2.0 daily-use beta checklistをv1.6.0向けrunbookへ刷新。実機QA自体は未実施。
 > v1.5.3 では v1.6.0 field QA開始前のread-only preflight scriptを追加。実機QA自体は未実施。
+> v1.5.4 では preflightのGitHub照会をretry/JSON確認へ変更。実機QA自体は未実施。
 
-**更新: 2026-05-15 (v1.5.3)**
+**更新: 2026-05-15 (v1.5.4)**
+
+---
+
+## v1.5.4 での更新内容
+
+### Daily-use Beta preflight robustness
+
+**整理内容:**
+- `npm run qa:preflight` のGitHub照会をretry付きにした
+- Release workflow / release assets確認をJSONベースへ変更
+- GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくいようにした
+
+**field QA pending:**
+- v1.6.0 QA開始前のpreflight再実行
+- 7日間常駐QA、installer / updater実機確認、product gates、privacy boundary regression checks
 
 ---
 

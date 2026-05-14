@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.5.3 まで進んでいる。
+現在 v1.5.4 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -233,9 +233,15 @@ v1.5.3 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.5.4 の到達点:
+
+- `npm run qa:preflight` のGitHub照会をretry付きに変更
+- Release workflow / release assets確認をJSONベースへ変更
+- GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくい状態にした
+
 ## 直近の次の一手
 
-まず v1.5.0〜v1.5.3 実機QA 結果を踏まえる。
+まず v1.5.0〜v1.5.4 実機QA 結果を踏まえる。
 
 問題があれば v1.5.x hotfix として最小修正する。
 問題がなければ v1.6.0 Daily-use Beta field QA を開始する。

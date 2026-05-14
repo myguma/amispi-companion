@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.4] — 2026-05-15
+
+### Fixed / Improved
+
+- `npm run qa:preflight` のGitHub照会をretry付きにし、Release workflow / release assets確認をJSONベースへ変更
+- GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくいようにした
+
+---
+
 ## [1.5.3] — 2026-05-15
 
 ### Added

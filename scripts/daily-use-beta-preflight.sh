@@ -29,6 +29,25 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+capture_with_retry() {
+  local output_file="$1"
+  shift
+  local attempts=3
+  local delay=2
+  local attempt=1
+
+  : > "$output_file"
+  while [[ "$attempt" -le "$attempts" ]]; do
+    if "$@" > "$output_file" 2>/dev/null; then
+      return 0
+    fi
+    sleep "$delay"
+    attempt=$((attempt + 1))
+  done
+
+  return 1
+}
+
 json_value() {
   node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); console.log(process.argv.slice(2).reduce((v,k)=>v && v[k], data) ?? '')" "$@"
 }
@@ -116,37 +135,69 @@ if ! command_exists gh; then
   warn "gh is not available; skipping GitHub release checks"
 else
   if [[ -n "${EXPECTED_TAG:-}" ]]; then
-    RUN_LINE="$(gh run list --limit 10 2>/dev/null | grep -F "Release" | grep -F "$EXPECTED_TAG" | head -1 || true)"
-    if [[ "$RUN_LINE" == completed$'\t'success$'\t'* ]]; then
+    RUN_FILE="$(mktemp)"
+    RELEASE_FILE="$(mktemp)"
+    trap 'rm -f "${RUN_FILE:-}" "${RELEASE_FILE:-}"' EXIT
+
+    if capture_with_retry "$RUN_FILE" gh run list --limit 20 --json headBranch,workflowName,status,conclusion; then
+      RUN_MATCH="$(node -e "
+const fs = require('fs');
+const tag = process.argv[1];
+const runs = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const run = runs.find((r) => r.headBranch === tag && /Release/.test(r.workflowName || ''));
+if (run) console.log([run.status, run.conclusion].join(' '));
+" "$EXPECTED_TAG" "$RUN_FILE" 2>/dev/null || true)"
+    else
+      RUN_MATCH=""
+    fi
+
+    if [[ "$RUN_MATCH" == "completed success" ]]; then
       pass "release workflow succeeded for $EXPECTED_TAG"
     else
       warn "release workflow success not found for $EXPECTED_TAG"
     fi
 
-    RELEASE_JSON="$(gh release view "$EXPECTED_TAG" --json assets,isDraft,isPrerelease,tagName 2>/dev/null || true)"
-    if [[ -z "$RELEASE_JSON" ]]; then
+    if ! capture_with_retry "$RELEASE_FILE" gh release view "$EXPECTED_TAG" --json assets,isDraft,isPrerelease,tagName; then
       warn "GitHub release not found for $EXPECTED_TAG"
     else
-      if printf '%s' "$RELEASE_JSON" | grep -q "\"tagName\":\"$EXPECTED_TAG\""; then
+      RELEASE_TAG="$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync(process.argv[1], 'utf8')).tagName || '')" "$RELEASE_FILE" 2>/dev/null || true)"
+      if [[ "$RELEASE_TAG" == "$EXPECTED_TAG" ]]; then
         pass "GitHub release exists for $EXPECTED_TAG"
       else
         warn "GitHub release tag mismatch for $EXPECTED_TAG"
       fi
 
       SETUP_NAME="amispi-companion_${PKG_VERSION}_x64-setup.exe"
-      if printf '%s' "$RELEASE_JSON" | grep -q "\"name\":\"$SETUP_NAME\""; then
+      HAS_SETUP="$(node -e "
+const fs = require('fs');
+const name = process.argv[1];
+const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+console.log((data.assets || []).some((asset) => asset.name === name) ? 'yes' : 'no');
+" "$SETUP_NAME" "$RELEASE_FILE" 2>/dev/null || true)"
+      if [[ "$HAS_SETUP" == "yes" ]]; then
         pass "installer asset exists ($SETUP_NAME)"
       else
         fail "installer asset missing ($SETUP_NAME)"
       fi
 
-      if printf '%s' "$RELEASE_JSON" | grep -q "\"name\":\"$SETUP_NAME.sig\""; then
+      HAS_SIG="$(node -e "
+const fs = require('fs');
+const name = process.argv[1];
+const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+console.log((data.assets || []).some((asset) => asset.name === name) ? 'yes' : 'no');
+" "$SETUP_NAME.sig" "$RELEASE_FILE" 2>/dev/null || true)"
+      if [[ "$HAS_SIG" == "yes" ]]; then
         pass "installer signature asset exists"
       else
         fail "installer signature asset missing"
       fi
 
-      if printf '%s' "$RELEASE_JSON" | grep -q "\"name\":\"latest.json\""; then
+      HAS_LATEST="$(node -e "
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync(process.argv[1], 'utf8'));
+console.log((data.assets || []).some((asset) => asset.name === 'latest.json') ? 'yes' : 'no');
+" "$RELEASE_FILE" 2>/dev/null || true)"
+      if [[ "$HAS_LATEST" == "yes" ]]; then
         pass "updater asset exists (latest.json)"
       else
         fail "updater asset missing (latest.json)"

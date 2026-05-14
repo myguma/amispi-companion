@@ -3,7 +3,7 @@
 > 各領域の進捗を数値で追う。開発判断の基準として使う。
 > セッション完了後に必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.5.3)**
+**最終更新: 2026-05-15 (v1.5.4)**
 
 ---
 
@@ -24,7 +24,7 @@
 | 設定 UI | 99% | AI provider、Observation、Memory v2、custom app classification、filename samples境界を表示 |
 | 透明性 UI | 98% | provider/model/intent/fallback/suppression、保存/非保存、外部AI送信境界を表示 |
 | ウィンドウ hit test | 97% | 通常時は吹き出し+キャラ楕円+右下UpdateBadge、ContextMenu中のみ全域interactive |
-| リリース品質 (docs) | 99% | v1.5.3でDaily-use Beta preflightを追加。field QA未実施を明示 |
+| リリース品質 (docs) | 99% | v1.5.4でDaily-use Beta preflightのGitHub照会をrobust化。field QA未実施を明示 |
 | Windows installer / CI | 91% | v1.2.0〜v1.5.3 release workflow継続成功。Node.js 20 deprecation annotationはknown issue |
 | **総合** | **~99%** | v1.6.0 Daily-use Beta前。1週間常駐・updater/installer実機QAが残る |
 
@@ -84,6 +84,7 @@
 | v1.5.1 | Daily-use Beta QA readiness prep: 1週間常駐QA gate・日次記録フォーマット整理 |
 | v1.5.2 | Daily-use Beta checklist refresh: v1.6.0 runbook・privacy boundary regression checks整理 |
 | v1.5.3 | Daily-use Beta preflight script: QA開始前のread-only入口確認を追加 |
+| v1.5.4 | Daily-use Beta preflight robustness: GitHub照会をretry/JSON確認へ変更 |
 
 ---
 

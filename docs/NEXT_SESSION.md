@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.5.3)**
+**最終更新: 2026-05-15 (v1.5.4)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.5.3
-**フェーズ:** Visible Local Observer Companion — Daily-use Beta preflight script
+**バージョン:** v1.5.4
+**フェーズ:** Visible Local Observer Companion — Daily-use Beta preflight robustness
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,16 +24,16 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.5.3)
-✅ cargo build  → Finished dev profile (v1.5.3)
+✅ npm run build → ✓ built (v1.5.4)
+✅ cargo build  → Finished dev profile (v1.5.4)
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
-✅ cargo test observation::tests → 3 passed (v1.5.3)
+✅ cargo test observation::tests → 3 passed (v1.5.4)
 ✅ bash -n scripts/daily-use-beta-preflight.sh → passed
-✅ npm run qa:preflight → failures 0 / warnings 2 (GitHub照会は直接確認済み)
+✅ npm run qa:preflight → commit/release後に再確認
 ✅ git diff --check → clean
-✅ v1.5.3 Release workflow → success (run 25891019250)
-✅ Windows Installer artifact → amispi-companion_1.5.3_x64-setup.exe
-✅ Updater artifact → latest.json
+🔲 v1.5.4 Release workflow → push後に確認必要
+🔲 Windows Installer artifact → push後に確認必要
+🔲 Updater artifact → push後に確認必要
 ```
 
 ---
@@ -60,7 +60,7 @@
 
 ---
 
-## v1.0.6〜v1.5.3 完了済み
+## v1.0.6〜v1.5.4 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -79,6 +79,21 @@
 | v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | ✅ automated QA passed / field QA pending |
 | v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | ✅ automated QA passed / field QA pending |
 | v1.5.3 | Daily-use Beta preflight script・QA入口確認自動化 | ✅ automated QA passed / field QA pending |
+| v1.5.4 | Daily-use Beta preflight GitHub照会robust化 | 🔲 release前 / automated QA中 |
+
+## v1.5.4 実装詳細
+
+### 変更内容
+
+- `npm run qa:preflight` のGitHub照会をretry付きに変更
+- `gh run list` / `gh release view` の結果をJSONとして保存し、Nodeでasset名とworkflow状態を確認
+- GitHub APIの一時的な接続揺れでpreflightが誤warningを出しにくいようにした
+
+### Field QA で確認すべき項目 (v1.5.4)
+
+- release後に `npm run qa:preflight` が failures 0 になるか
+- GitHub照会が一時失敗してもretryで復帰するか
+- v1.6.0 field QA通過扱いと混同されないか
 
 ## v1.5.3 実装詳細
 
@@ -154,7 +169,7 @@
 
 ## 次に着手する候補
 
-- v1.5.x hotfix: v1.5.0〜v1.5.3 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
+- v1.5.x hotfix: v1.5.0〜v1.5.4 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 - 問題がなければ v1.6.0 Daily-use Beta field QAを開始する
 
 ## v1.4.0 実装詳細
