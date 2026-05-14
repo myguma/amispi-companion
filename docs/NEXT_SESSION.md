@@ -29,9 +29,9 @@
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
 ✅ cargo test observation::tests → 3 passed (v1.5.2)
 ✅ git diff --check → clean
-🔲 v1.5.2 Release workflow → push後に確認必要
-🔲 Windows Installer artifact → push後に確認必要
-🔲 Updater artifact → push後に確認必要
+✅ v1.5.2 Release workflow → success (run 25890462209)
+✅ Windows Installer artifact → amispi-companion_1.5.2_x64-setup.exe
+✅ Updater artifact → latest.json
 ```
 
 ---
@@ -75,7 +75,7 @@
 | v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
 | v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | ✅ automated QA passed / field QA pending |
 | v1.5.1 | Daily-use Beta QA readiness prep・1週間常駐QA gate整理 | ✅ automated QA passed / field QA pending |
-| v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | 🔲 release前 / automated QA中 |
+| v1.5.2 | Daily-use Beta checklist refresh・v1.6.0 runbook更新 | ✅ automated QA passed / field QA pending |
 
 ## v1.5.2 実装詳細
 

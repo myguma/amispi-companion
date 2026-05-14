@@ -221,6 +221,8 @@ v1.5.2 の到達点:
 - preflight / automated checks / 7日間常駐QA / product gates / privacy boundary regression checks / release criteria を1つのrunbookへ整理
 - 古いv0.2.0 checklistを現在のOpenAI / Ollama / RuleProvider / Memory v2 / filename samples / Diagnostics基準へ更新
 - 実機QA未実施項目はpendingのまま維持
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 
