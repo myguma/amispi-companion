@@ -42,6 +42,7 @@ const ENGINE_OPTIONS: { v: AIEngine; label: string; note: string }[] = [
 
 function sourceLabel(source: LastAIResultDebug["source"]): { text: string; color: string } {
   switch (source) {
+    case "openai":   return { text: "openai",   color: "#2f80ed" };
     case "ollama":   return { text: "ollama",   color: "#4a90d9" };
     case "rule":     return { text: "rule",     color: "#888" };
     case "mock":     return { text: "mock",     color: "#f0a030" };
@@ -50,8 +51,19 @@ function sourceLabel(source: LastAIResultDebug["source"]): { text: string; color
   }
 }
 
+function statusColor(status: LastAIResultDebug["status"]): string {
+  switch (status) {
+    case "success": return "#4caf7d";
+    case "fallback": return "#f0a030";
+    case "failed": return "#e05050";
+    case "skipped": return "#999";
+    default: return "#bbb";
+  }
+}
+
 function LastResultPanel({ result }: { result: LastAIResultDebug }) {
   const { text: srcText, color } = sourceLabel(result.source);
+  const statColor = statusColor(result.status);
   const ago = result.updatedAt > 0
     ? `${Math.round((Date.now() - result.updatedAt) / 1000)}秒前`
     : "—";
@@ -66,10 +78,22 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
           display: "inline-block", padding: "1px 8px", borderRadius: 10,
           fontSize: 11, fontWeight: 700, background: color + "22", color,
         }}>source: {srcText}</span>
+        {result.status && (
+          <span style={{
+            display: "inline-block", padding: "1px 8px", borderRadius: 10,
+            fontSize: 11, fontWeight: 700, background: statColor + "22", color: statColor,
+          }}>status: {result.status}</span>
+        )}
         <span style={{ color: "#bbb", fontSize: 11 }}>{ago}</span>
       </div>
+      {result.fallbackFrom && (
+        <div style={{ color: "#8a6a30" }}>fallbackFrom: {result.fallbackFrom}</div>
+      )}
       {result.fallbackReason && (
         <div style={{ color: "#e05050" }}>reason: {result.fallbackReason}</div>
+      )}
+      {result.qualityRejectedReason && (
+        <div style={{ color: "#c06040" }}>qualityRejectedReason: {result.qualityRejectedReason}</div>
       )}
       {result.model && (
         <div style={{ color: "#666" }}>model: {result.model}</div>
@@ -79,13 +103,83 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
       )}
       {result.responsePreview && (
         <div style={{ color: "#444", fontStyle: "italic" }}>
-          「{result.responsePreview}{result.responsePreview.length >= 60 ? "…" : ""}」
+          「{result.responsePreview}{result.responsePreview.length >= 80 ? "…" : ""}」
         </div>
       )}
       {result.errorMessage && (
         <div style={{ color: "#e05050", fontSize: 11 }}>error: {result.errorMessage}</div>
       )}
     </div>
+  );
+}
+
+function OpenAITestSection({ model, timeoutMs }: { model: string; timeoutMs: number }) {
+  const [testStatus, setTestStatus] = useState<"idle" | "running" | "done" | "err">("idle");
+  const [testOutput, setTestOutput] = useState<string>("");
+  const [lastResult, setLastResult] = useState<LastAIResultDebug>(getLastAIResult());
+
+  useEffect(() => {
+    const unsub = subscribeLastAIResult(() => setLastResult({ ...getLastAIResult() }));
+    return unsub;
+  }, []);
+
+  const runTestResponse = useCallback(async () => {
+    setTestStatus("running");
+    setTestOutput("");
+    try {
+      const settings = getSettings();
+      const events = getRecentEvents(10);
+      const ctx = buildCompanionContext("click", EMPTY_SNAPSHOT, events, settings);
+      const out = await getAIResponse(ctx);
+      const result = getLastAIResult();
+      setLastResult({ ...result });
+      if (out.shouldSpeak && out.text && result.source === "openai" && result.status === "success") {
+        setTestOutput(out.text);
+        setTestStatus("done");
+      } else if (out.shouldSpeak && out.text) {
+        setTestOutput(`${result.source}/${result.status ?? "-"}: ${out.text}`);
+        setTestStatus("err");
+      } else {
+        setTestOutput(`shouldSpeak: false / reason: ${out.reason ?? result.fallbackReason ?? "-"}`);
+        setTestStatus("err");
+      }
+    } catch (e) {
+      setTestOutput((e instanceof Error ? e.message : String(e)).slice(0, 160));
+      setTestStatus("err");
+    }
+  }, []);
+
+  return (
+    <>
+      <SectionHead title="OpenAI テスト" />
+      <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 0", borderBottom: "1px solid #f0f0f0", flexWrap: "wrap" }}>
+        <button
+          onClick={() => void runTestResponse()}
+          disabled={testStatus === "running"}
+          style={{
+            fontSize: 12, padding: "4px 12px", border: "1px solid #2f80ed",
+            borderRadius: 6, background: "white", color: "#2f80ed", cursor: "pointer",
+          }}
+        >
+          {testStatus === "running" ? "テスト中…" : "OpenAI 発話テスト"}
+        </button>
+        <span style={{ fontSize: 11, color: "#999" }}>{model} / timeout {timeoutMs}ms</span>
+      </div>
+      {testStatus !== "idle" && (
+        <div style={{ padding: "6px 0", fontSize: 12, borderBottom: "1px solid #f0f0f0" }}>
+          <div style={{ color: testStatus === "done" ? "#4caf7d" : testStatus === "err" ? "#e05050" : "#f0a030", marginBottom: 2 }}>
+            {testStatus === "running" ? "OpenAI 応答待ち中…" :
+             testStatus === "done" ? "✓ OpenAI 応答成功" : "× OpenAI 応答またはフォールバック"}
+          </div>
+          {testOutput && (
+            <div style={{ color: testStatus === "done" ? "#444" : "#e05050", fontStyle: testStatus === "done" ? "italic" : "normal", wordBreak: "break-word" }}>
+              {testStatus === "done" ? `「${testOutput}」` : testOutput}
+            </div>
+          )}
+        </div>
+      )}
+      <LastResultPanel result={lastResult} />
+    </>
   );
 }
 
@@ -496,6 +590,8 @@ export function AIPage() {
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6, padding: "6px 0" }}>
             DebugページでOpenAIへ送る内容のプレビューを確認できます。
           </div>
+
+          <OpenAITestSection model={s.openaiModel} timeoutMs={s.openaiTimeoutMs} />
         </>
       )}
 

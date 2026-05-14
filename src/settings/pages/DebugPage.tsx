@@ -11,6 +11,8 @@ import type { ObservationSignal } from "../../systems/observation/observationSig
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
 import { getOpenAIPayloadPreview, subscribeOpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
 import type { OpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
+import { getAIRuntimeTraceSnapshot, getAIRuntimeTraces, subscribeAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
+import type { AIRuntimeTraceEntry, AIRuntimeTraceSnapshot } from "../../systems/debug/aiRuntimeTraceStore";
 
 function Toggle({
   label, note, checked, onChange,
@@ -62,11 +64,17 @@ export function DebugPage() {
   const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
   const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
   const [openaiPreview, setOpenaiPreview] = useState<OpenAIPayloadPreview | null>(getOpenAIPayloadPreview());
+  const [aiRuntime, setAiRuntime] = useState<AIRuntimeTraceSnapshot>(getAIRuntimeTraceSnapshot());
+  const [aiRuntimeTraces, setAiRuntimeTraces] = useState<AIRuntimeTraceEntry[]>(getAIRuntimeTraces());
 
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
   useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
   useEffect(() => subscribeCurrentSignals(() => setSignals([...getCurrentSignals()])), []);
   useEffect(() => subscribeOpenAIPayloadPreview(() => setOpenaiPreview(getOpenAIPayloadPreview())), []);
+  useEffect(() => subscribeAIRuntimeTrace(() => {
+    setAiRuntime({ ...getAIRuntimeTraceSnapshot() });
+    setAiRuntimeTraces([...getAIRuntimeTraces()]);
+  }), []);
   useEffect(() => {
     const timer = setInterval(() => setTimelineCount(getObservationTimeline().length), 5000);
     return () => clearInterval(timer);
@@ -99,6 +107,20 @@ export function DebugPage() {
         <div>autonomousMovementEnabled: {String(s.autonomousMovementEnabled)}</div>
         <div>voiceInputEnabled: {String(s.voiceInputEnabled)}</div>
         <div>cryEnabled / autonomousCry: {String(s.cryEnabled)} / {String(s.playCryOnAutonomousSpeech)}</div>
+      </div>
+
+      <SectionHead title="AI Runtime Trace" />
+      <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
+        <div>lastProviderUsed: {aiRuntime.lastProviderUsed ?? "-"}</div>
+        <div>lastModelUsed: {aiRuntime.lastModelUsed ?? "-"}</div>
+        <div>lastStatus: {aiRuntime.lastStatus ?? "-"}</div>
+        <div>lastLatencyMs: {aiRuntime.lastLatencyMs !== null ? `${aiRuntime.lastLatencyMs}ms` : "-"}</div>
+        <div>lastFallbackReason: {aiRuntime.lastFallbackReason ?? "-"}</div>
+        {aiRuntimeTraces.slice(-3).reverse().map((t) => (
+          <div key={t.eventId} style={{ color: "#888", paddingTop: 3 }}>
+            {new Date(t.timestamp).toLocaleTimeString()} — {t.provider}/{t.status ?? "-"} {t.model ?? "-"} {t.fallbackReason ? `fallback=${t.fallbackReason}` : ""}
+          </div>
+        ))}
       </div>
 
       <SectionHead title="現在のObservationSignals" />

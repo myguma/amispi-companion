@@ -4,6 +4,7 @@ import { RuleProvider } from "./RuleProvider";
 import { OllamaProvider } from "./OllamaProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
 import { getSettings } from "../../settings/store";
+import { recordAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
 
 // ──────────────────────────────────────────
 // LastAIResultDebug — 最後のAI応答デバッグ情報
@@ -22,6 +23,7 @@ export function subscribeLastAIResult(fn: () => void): () => void {
 
 function setLastResult(r: LastAIResultDebug): void {
   _lastResult = r;
+  recordAIRuntimeTrace(r);
   _resultSubs.forEach((fn) => fn());
 }
 
@@ -125,6 +127,17 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       });
       // key 未設定時は rule にフォールバック
       const ruleOut = await STATIC_PROVIDERS.rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
+      if (ruleOut.shouldSpeak && ruleOut.text) {
+        setLastResult({
+          source: "rule",
+          status: "fallback",
+          trigger,
+          fallbackFrom: "openai",
+          fallbackReason: "openai_key_empty",
+          responsePreview: ruleOut.text.slice(0, 80),
+          updatedAt: Date.now(),
+        });
+      }
       return ruleOut;
     }
 
@@ -158,6 +171,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       }
 
       openaiFailReason = out.reason ?? "openai_no_speech";
+      const qualityRejected = openaiFailReason === "openai_empty_or_too_long";
       setLastResult({
         source: "fallback",
         status: "fallback",
@@ -166,6 +180,8 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         fallbackReason: openaiFailReason,
         model: s.openaiModel,
         latencyMs,
+        qualityRejected,
+        qualityRejectedReason: qualityRejected ? openaiFailReason : undefined,
         updatedAt: Date.now(),
       });
     } catch (e) {

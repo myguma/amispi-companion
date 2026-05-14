@@ -7,6 +7,8 @@ import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observ
 import type { ObservationSignal } from "../../systems/observation/observationSignals";
 import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../systems/debug/autonomousSpeechDebugStore";
 import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
+import { getAIRuntimeTraceSnapshot, subscribeAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
+import type { AIRuntimeTraceSnapshot } from "../../systems/debug/aiRuntimeTraceStore";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -56,6 +58,7 @@ export function DiagnosticsPage() {
   const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
   const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
   const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug);
+  const [aiRuntime, setAiRuntime] = useState<AIRuntimeTraceSnapshot>(getAIRuntimeTraceSnapshot);
 
   useEffect(() => {
     const unsub = subscribeCurrentSignals(() => setSignals([...getCurrentSignals()]));
@@ -64,6 +67,11 @@ export function DiagnosticsPage() {
 
   useEffect(() => {
     const unsub = subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() }));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeAIRuntimeTrace(() => setAiRuntime({ ...getAIRuntimeTraceSnapshot() }));
     return unsub;
   }, []);
 
@@ -144,6 +152,11 @@ export function DiagnosticsPage() {
         s.aiEngine === "openai" ? `openai / ${s.openaiModel} (⚠ クラウド送信あり)` :
                                   `${s.aiEngine} / ${s.ollamaModel}`
       } />
+      <InfoRow label="lastProviderUsed" value={aiRuntime.lastProviderUsed ?? "-"} />
+      <InfoRow label="lastModelUsed" value={aiRuntime.lastModelUsed ?? "-"} />
+      <InfoRow label="lastStatus" value={aiRuntime.lastStatus ?? "-"} />
+      <InfoRow label="lastLatencyMs" value={aiRuntime.lastLatencyMs !== null ? `${aiRuntime.lastLatencyMs}ms` : "-"} />
+      <InfoRow label="lastFallbackReason" value={aiRuntime.lastFallbackReason ?? "-"} />
       <InfoRow label="Quiet Mode" value={s.quietMode ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="Do Not Disturb" value={s.doNotDisturb ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="次回発話予定" value={fmtTime(autoDebug.nextAutonomousSpeechAt)} />

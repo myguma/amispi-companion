@@ -420,7 +420,7 @@ export default function App() {
           {tinyText ? (
             <TinyWhisper text={tinyText} />
           ) : (
-            <SpeechBubble text={speechText} />
+            <SpeechBubble text={speechText} debugMode={settings.debugModeEnabled} aiResult={lastAIResult} />
           )}
         </div>
       )}

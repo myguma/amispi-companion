@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.3] — 2026-05-14
+
+### Fixed / Improved
+
+- OpenAI 成功時の AI result source が `ollama` として記録される問題を修正
+- AI runtime trace store を追加し、Debug / Diagnostics に lastProviderUsed / lastModelUsed / lastStatus / lastLatencyMs / lastFallbackReason を表示
+- `speech_shown` に aiProvider / aiModel / aiStatus / fallbackReason / qualityRejectedReason を記録
+- OpenAI 発話テストボタンを追加し、OpenAI成功とフォールバックを区別して表示
+- speech bubble の3行 clamp を解除し、長文をスクロール表示できるよう調整
+- Debug Mode 時のみ speech bubble に provider/model/status badge を表示
+- 低品質応答 reject と fallback の理由を trace / speech metadata から追跡可能にした
+
+---
+
 ## [1.1.2] — 2026-05-14
 
 ### Fixed / Improved
