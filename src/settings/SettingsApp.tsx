@@ -147,6 +147,7 @@ export function SettingsApp() {
           {tab === "memory"       && <MemoryPage />}
           {tab === "update"       && <UpdatePage />}
           {tab === "debug"        && <DebugPage />}
+          {tab === "diagnostics"  && <DiagnosticsPage />}
         </TabErrorBoundary>
       </div>
 
