@@ -93,14 +93,22 @@ export type AIProviderOutput = {
   reason?: string;
 };
 
+export type AIResultSource = "openai" | "ollama" | "rule" | "mock" | "fallback" | "none";
+export type AIResultStatus = "success" | "failed" | "skipped" | "fallback";
+
 export type LastAIResultDebug = {
-  source: "ollama" | "rule" | "mock" | "fallback" | "none";
+  source: AIResultSource;
+  status?: AIResultStatus;
+  trigger?: string;
   fallbackReason?: string;
+  fallbackFrom?: AIResultSource;
   model?: string;
   baseUrl?: string;
   latencyMs?: number;
   responsePreview?: string;
   errorMessage?: string;
+  qualityRejected?: boolean;
+  qualityRejectedReason?: string;
   updatedAt: number;
 };
 
