@@ -28,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "memory",       label: "記憶" },
   { id: "update",       label: "アップデート" },
   { id: "debug",        label: "デバッグ" },
+  { id: "diagnostics",  label: "診断" },
 ];
 
 // タブごとのエラーをキャッチし、白画面を防ぐ
