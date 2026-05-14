@@ -6,6 +6,9 @@ import { getInteractionTraces, subscribeInteractionTrace } from "../../systems/d
 import type { InteractionTraceEntry } from "../../systems/debug/interactionTraceStore";
 import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../systems/debug/autonomousSpeechDebugStore";
 import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
+import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
+import type { ObservationSignal } from "../../systems/observation/observationSignals";
+import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
 
 function Toggle({
   label, note, checked, onChange,
@@ -54,9 +57,16 @@ export function DebugPage() {
   const [s, update] = useSettings();
   const [traces, setTraces] = useState<InteractionTraceEntry[]>(getInteractionTraces());
   const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug());
+  const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
+  const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
 
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
   useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
+  useEffect(() => subscribeCurrentSignals(() => setSignals([...getCurrentSignals()])), []);
+  useEffect(() => {
+    const timer = setInterval(() => setTimelineCount(getObservationTimeline().length), 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div>
@@ -69,20 +79,47 @@ export function DebugPage() {
       />
       <div style={{ marginTop: 14, fontSize: 12, lineHeight: 1.7, color: "#777" }}>
         ONにすると、companion window内で viewport / character / speech / update badge の矩形と状態を確認できます。
-        speech表示時にキャラが見切れる場合は、この表示をONにした状態でスクリーンショットを確認します。
       </div>
 
-      <SectionHead title="現在有効な設定値" />
+      <SectionHead title="現在設定スナップショット" />
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
-        <div>autonomousMovementEnabled: {String(s.autonomousMovementEnabled)}</div>
-        <div>movementFrequency: {s.movementFrequency}</div>
+        <div>observationLevel: {s.observationLevel}</div>
+        <div>memoryMode: {s.memoryMode}</div>
         <div>autonomousSpeechEnabled: {String(s.autonomousSpeechEnabled)}</div>
         <div>speechInterval: {s.autonomousSpeechIntervalPreset}</div>
         <div>safetyCapEnabled: {String(s.autonomousSpeechSafetyCapEnabled)}</div>
-        <div>legacy max/hour: {s.maxAutonomousReactionsPerHour}</div>
+        <div>sleepSpeechEnabled: {String(s.sleepSpeechEnabled)} / {s.sleepSpeechIntervalPreset}</div>
         <div>quiet/focus/DND: {String(s.quietMode)} / {String(s.focusMode)} / {String(s.doNotDisturb)}</div>
-        <div>cryEnabled / autonomousCry: {String(s.cryEnabled)} / {String(s.playCryOnAutonomousSpeech)}</div>
+        <div>filenameSignalsEnabled: {String(s.filenameSignalsEnabled)}</div>
+        <div>folderMetadataEnabled: {String(s.permissions.folderMetadataEnabled)}</div>
+        <div>autonomousMovementEnabled: {String(s.autonomousMovementEnabled)}</div>
         <div>voiceInputEnabled: {String(s.voiceInputEnabled)}</div>
+        <div>cryEnabled / autonomousCry: {String(s.cryEnabled)} / {String(s.playCryOnAutonomousSpeech)}</div>
+      </div>
+
+      <SectionHead title="現在のObservationSignals" />
+      <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
+        {signals.length === 0 ? (
+          <div style={{ color: "#bbb" }}>シグナルなし (コンパニオンWindow起動後に表示)</div>
+        ) : signals.map((sig) => (
+          <div key={sig.kind}>
+            <strong>{sig.kind}</strong>: {sig.summary} ({Math.round(sig.strength * 100)}%)
+          </div>
+        ))}
+        {signals.length > 0 && (() => {
+          const top = signals.reduce((a, b) => b.strength > a.strength ? b : a);
+          return <div style={{ color: "#7a50d0", marginTop: 4 }}>topSignal: {top.kind} — {top.summary}</div>;
+        })()}
+      </div>
+
+      <SectionHead title="Observation Timeline" />
+      <div style={{ fontSize: 11, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10, marginTop: 8 }}>
+        <div>記録件数: {timelineCount}件</div>
+        {getObservationTimeline().slice(-5).reverse().map((e) => (
+          <div key={e.id} style={{ paddingTop: 3, color: "#888" }}>
+            {new Date(e.timestamp).toLocaleTimeString()} — {e.type}: {e.summary}
+          </div>
+        ))}
       </div>
 
       <SectionHead title="自律発話スケジューリング状態" />
@@ -103,6 +140,9 @@ export function DebugPage() {
         <div><strong>next:</strong> {fmtTime(autoDebug.nextSleepSpeechAt)}</div>
         <div><strong>lastSpoke:</strong> {fmtTime(autoDebug.lastSleepSpeechAt)}</div>
         <div><strong>suppression:</strong> {autoDebug.sleepSpeechSuppressionReason ?? "none"}</div>
+        <div style={{ fontSize: 10, color: "#bbb", marginTop: 2 }}>
+          ※ sleep発話はautonomousSpeechEnabled=falseでも動作します (sleepSpeechEnabled=trueなら)
+        </div>
       </div>
 
       <SectionHead title="直近の発話トレース" />

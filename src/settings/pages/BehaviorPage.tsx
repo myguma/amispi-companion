@@ -1,6 +1,7 @@
 // 動作設定ページ
 
 import { useSettings } from "../store";
+import type { CompanionSettings } from "../types";
 
 function Toggle({
   label, note, checked, onChange,
@@ -69,8 +70,64 @@ function SectionHead({ title }: { title: string }) {
   return <div style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 16, marginBottom: 4 }}>{title}</div>;
 }
 
+// Watchful Modeプリセット判定
+function isWatchfulPreset(s: CompanionSettings): boolean {
+  return (
+    s.observationLevel === "watchful" &&
+    !s.quietMode &&
+    !s.doNotDisturb &&
+    s.autonomousSpeechEnabled &&
+    (s.autonomousSpeechIntervalPreset === "lively" || s.autonomousSpeechIntervalPreset === "normal") &&
+    s.sleepSpeechEnabled &&
+    s.filenameSignalsEnabled
+  );
+}
+
+// バランスプリセット判定
+function isBalancedPreset(s: CompanionSettings): boolean {
+  return (
+    s.observationLevel === "balanced" &&
+    s.autonomousSpeechEnabled &&
+    s.sleepSpeechEnabled &&
+    s.filenameSignalsEnabled &&
+    !s.quietMode
+  );
+}
+
+// 静かにプリセット判定
+function isQuietPreset(s: CompanionSettings): boolean {
+  return (
+    s.observationLevel === "minimal" &&
+    s.quietMode &&
+    !s.autonomousSpeechEnabled &&
+    !s.sleepSpeechEnabled &&
+    !s.filenameSignalsEnabled
+  );
+}
+
+function activePreset(s: CompanionSettings): "watchful" | "balanced" | "quiet" | "custom" {
+  if (isWatchfulPreset(s)) return "watchful";
+  if (isBalancedPreset(s)) return "balanced";
+  if (isQuietPreset(s)) return "quiet";
+  return "custom";
+}
+
 export function BehaviorPage() {
   const [s, update] = useSettings();
+  const preset = activePreset(s);
+
+  const btnBase: React.CSSProperties = {
+    fontSize: 11, padding: "4px 10px", borderRadius: 12, cursor: "pointer",
+    transition: "all 0.15s",
+  };
+  const btnActive: React.CSSProperties = {
+    ...btnBase, border: "1.5px solid #7a50d0",
+    background: "#ede5ff", color: "#5a30b0", fontWeight: 700,
+  };
+  const btnInactive: React.CSSProperties = {
+    ...btnBase, border: "1px solid #ddd",
+    background: "white", color: "#888",
+  };
 
   return (
     <div>
@@ -81,18 +138,19 @@ export function BehaviorPage() {
           <button
             onClick={() => update({
               observationLevel: "watchful",
+              quietMode: false,
+              doNotDisturb: false,
+              focusMode: false,
               autonomousSpeechEnabled: true,
-              autonomousSpeechIntervalPreset: "normal",
+              autonomousSpeechIntervalPreset: "lively",
+              autonomousSpeechSafetyCapEnabled: false,
               sleepSpeechEnabled: true,
               filenameSignalsEnabled: true,
               permissions: { ...s.permissions, folderMetadataEnabled: true },
             })}
-            style={{
-              fontSize: 11, padding: "4px 10px", border: "1px solid #a890f0",
-              borderRadius: 12, background: "#f4f0ff", color: "#6a40d0", cursor: "pointer",
-            }}
+            style={preset === "watchful" ? btnActive : btnInactive}
           >
-            Watchful Mode
+            {preset === "watchful" ? "✓ Watchful Mode" : "Watchful Mode"}
           </button>
           <button
             onClick={() => update({
@@ -102,31 +160,31 @@ export function BehaviorPage() {
               sleepSpeechEnabled: true,
               filenameSignalsEnabled: true,
             })}
-            style={{
-              fontSize: 11, padding: "4px 10px", border: "1px solid #ddd",
-              borderRadius: 12, background: "white", color: "#888", cursor: "pointer",
-            }}
+            style={preset === "balanced" ? btnActive : btnInactive}
           >
-            バランス
+            {preset === "balanced" ? "✓ バランス" : "バランス"}
           </button>
           <button
             onClick={() => update({
               observationLevel: "minimal",
+              quietMode: true,
+              doNotDisturb: false,
               autonomousSpeechEnabled: false,
               sleepSpeechEnabled: false,
               filenameSignalsEnabled: false,
-              quietMode: true,
             })}
-            style={{
-              fontSize: 11, padding: "4px 10px", border: "1px solid #ddd",
-              borderRadius: 12, background: "white", color: "#888", cursor: "pointer",
-            }}
+            style={preset === "quiet" ? btnActive : btnInactive}
           >
-            静かに
+            {preset === "quiet" ? "✓ 静かに" : "静かに"}
           </button>
         </div>
+        {preset === "custom" && (
+          <div style={{ fontSize: 10, color: "#b080f0", marginTop: 4 }}>
+            手動調整中 (Custom)
+          </div>
+        )}
         <div style={{ fontSize: 10, color: "#bbb", marginTop: 4, lineHeight: 1.5 }}>
-          Watchful: ローカル観察を少し増やす。画面録画・常時マイク・外部送信はしない。
+          Watchful: 観察モード。1〜2分間隔で発話。画面録画・常時マイク・外部送信はしない。
         </div>
       </div>
       <Toggle label="おとなしくする (Quiet Mode)" note="自律発話と観測反応を止めます。クリック反応は残ります" checked={s.quietMode} onChange={(v) => update({ quietMode: v })} />

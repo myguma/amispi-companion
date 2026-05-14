@@ -603,11 +603,14 @@ export function TransparencyPage() {
             <span style={{ fontSize: 11, color: "#999", display: "block" }}>ウィンドウタイトルのみ。ファイル内容・URLは取得しない</span>
           </label>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
-          <input type="checkbox" id="fn_perm" checked={false} disabled style={{ width: 16, height: 16, flexShrink: 0 }} />
-          <label htmlFor="fn_perm" style={{ color: "#bbb", cursor: "not-allowed" }}>
-            <span style={{ fontSize: 13 }}>ファイル名 (将来実装予定)</span>
-          </label>
+        <div style={{ padding: "6px 0", fontSize: 12 }}>
+          <div style={{ color: "#444" }}>
+            ファイル名由来シグナル: <strong style={{ color: settings.filenameSignalsEnabled ? "#4a8040" : "#aaa" }}>{settings.filenameSignalsEnabled ? "使用中" : "無効"}</strong>
+          </div>
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6 }}>
+            例: インストーラーが多い / DAWプロジェクトがある / 音声書き出しっぽい<br />
+            ファイル名そのもの (raw): 未使用・保存しません
+          </div>
         </div>
       </Section>
 

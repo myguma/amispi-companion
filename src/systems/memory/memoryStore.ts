@@ -234,6 +234,20 @@ export function saveMemoryNote(text: string): void {
 }
 
 /**
+ * 保存済みメモ一覧（note_savedイベント）を新しい順で返す
+ */
+export function getSavedMemoryNotes(): MemoryEvent[] {
+  return loadEvents().filter((e) => e.type === "note_saved").reverse();
+}
+
+/**
+ * 指定IDのイベントを削除する
+ */
+export function deleteEventById(id: string): void {
+  saveEvents(loadEvents().filter((e) => e.id !== id));
+}
+
+/**
  * 特定タイプのイベントのみ削除する
  */
 export function clearEventsByType(type: MemoryEventType): void {

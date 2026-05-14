@@ -35,6 +35,8 @@ import { useObservationReactions } from "./companion/reactions/useObservationRea
 import type { ObservationSnapshot } from "./observation/types";
 import { EMPTY_SNAPSHOT } from "./observation/types";
 import { addObservationEvent, pruneObservationTimeline } from "./systems/observation/observationTimelineStore";
+import { buildObservationSignals } from "./systems/observation/observationSignals";
+import { setCurrentSignals } from "./systems/observation/currentSignalStore";
 import { useVoiceRecorder } from "./systems/voice/useVoiceRecorder";
 import { subscribeTextMessages } from "./systems/conversation/textMessageBus";
 import "./styles/index.css";
@@ -166,6 +168,25 @@ export default function App() {
     }
   }, [state, settings.cryEnabled]);
 
+  // sleep_entered をObservation Timelineに記録
+  const prevStateForTimelineRef = useRef<typeof state>("idle");
+  useEffect(() => {
+    const prev = prevStateForTimelineRef.current;
+    prevStateForTimelineRef.current = state;
+    if (state === "sleep" && prev !== "sleep") {
+      addObservationEvent("sleep_entered", "スリープ状態に入った", { source: "system" });
+    }
+  }, [state]);
+
+  // companion発話をObservation Timelineに記録 (text本文は保存しない)
+  const prevSpeechTextRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (speechText && speechText !== prevSpeechTextRef.current) {
+      addObservationEvent("companion_reacted", "発話", { source: "companion" });
+    }
+    prevSpeechTextRef.current = speechText;
+  }, [speechText]);
+
   // クリック音: ユーザーgesture 文脈で即座に再生
   const handleCharacterClick = useCallback(() => {
     const handled = onCharacterClick();
@@ -215,6 +236,7 @@ export default function App() {
           },
         });
         setSnapshot(snap);
+        setCurrentSignals(buildObservationSignals(snap));
 
         // スナップショット変化からObservationイベントを生成
         const prev = prevSnapshotRef.current;

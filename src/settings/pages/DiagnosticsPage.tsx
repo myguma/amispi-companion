@@ -1,7 +1,12 @@
-// 診断ページ — Voice / Observation / Memory の設定状態を確認する
+// 診断ページ — Voice / Observation / Memory / 発話抑制の内部状態を確認する
+import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import { getMemoryStats } from "../../systems/memory/memoryStore";
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
+import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
+import type { ObservationSignal } from "../../systems/observation/observationSignals";
+import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../systems/debug/autonomousSpeechDebugStore";
+import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -25,13 +30,66 @@ function CheckRow({ label, ok, note }: { label: string; ok: boolean | null; note
   );
 }
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", borderBottom: "1px solid #f4f4f4", fontSize: 12 }}>
+      <span style={{ color: "#666" }}>{label}</span>
+      <span style={{ color: "#333", fontWeight: 500 }}>{value}</span>
+    </div>
+  );
+}
+
+function fmtTime(ts: number | null): string {
+  if (!ts) return "-";
+  return new Date(ts).toLocaleTimeString();
+}
+
+function fmtMs(ms: number | null): string {
+  if (!ms) return "-";
+  if (ms >= 60_000) return `${Math.round(ms / 60_000)}分`;
+  return `${Math.round(ms / 1000)}秒`;
+}
+
 export function DiagnosticsPage() {
   const [s] = useSettings();
   const memStats = getMemoryStats();
-  const timelineCount = getObservationTimeline().length;
+  const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
+  const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
+  const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug);
+
+  useEffect(() => {
+    const unsub = subscribeCurrentSignals(() => setSignals([...getCurrentSignals()]));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() }));
+    return unsub;
+  }, []);
+
+  // Timeline count は他windowで更新されるためポーリング
+  useEffect(() => {
+    const timer = setInterval(() => setTimelineCount(getObservationTimeline().length), 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const ffmpegOk = s.ffmpegExecutablePath.trim().length > 0;
   const voiceEnabled = s.voiceInputEnabled;
+  const topSig = signals.length > 0
+    ? signals.reduce((a, b) => b.strength > a.strength ? b : a)
+    : null;
+
+  // 現在の発話抑制理由を推定（設定ベース）
+  const suppressReasons: string[] = [];
+  if (!s.autonomousSpeechEnabled) suppressReasons.push("自律発話 OFF");
+  if (s.quietMode) suppressReasons.push("Quiet Mode");
+  if (s.doNotDisturb) suppressReasons.push("Do Not Disturb");
+  if (s.focusMode) suppressReasons.push("Focus Mode");
+  if (s.suppressWhenFullscreen) suppressReasons.push("全画面抑制 (条件次第)");
+  if (s.autonomousSpeechSafetyCapEnabled) suppressReasons.push("安全キャップ ON (旧式)");
+  if (autoDebug.suppressionReason && autoDebug.suppressionReason !== "allowed") {
+    suppressReasons.push(`実行時: ${autoDebug.suppressionReason}`);
+  }
 
   return (
     <div>
@@ -52,26 +110,62 @@ export function DiagnosticsPage() {
       )}
 
       <SectionHead title="観察 (Observation)" />
-      <CheckRow label="観察レベル" ok={true} note={s.observationLevel} />
-      <CheckRow label="フォルダメタデータ" ok={s.permissions.folderMetadataEnabled} note={s.permissions.folderMetadataEnabled ? "Downloads / Desktop をスキャン" : "無効"} />
-      <CheckRow label="Filename signals" ok={s.filenameSignalsEnabled} note="インストーラー / DAW / 音声書き出しなどを検知" />
-      <CheckRow label="Observation Timeline" ok={timelineCount >= 0} note={`${timelineCount}件記録済み`} />
+      <InfoRow label="観察レベル" value={s.observationLevel} />
+      <InfoRow label="フォルダメタデータ" value={s.permissions.folderMetadataEnabled ? "ON" : "OFF"} />
+      <InfoRow label="Filename signals" value={s.filenameSignalsEnabled ? "ON" : "OFF"} />
+      <InfoRow label="Observation Timeline" value={`${timelineCount}件記録済み`} />
+      {signals.length > 0 ? (
+        <div style={{ padding: "4px 0 2px" }}>
+          <div style={{ fontSize: 11, color: "#888", marginBottom: 3 }}>現在のシグナル ({signals.length}件):</div>
+          {signals.slice(0, 4).map((sig) => (
+            <div key={sig.kind} style={{ fontSize: 11, color: "#555", paddingLeft: 8, lineHeight: 1.7 }}>
+              {sig.summary} <span style={{ color: "#bbb" }}>({Math.round(sig.strength * 100)}%)</span>
+            </div>
+          ))}
+          {topSig && (
+            <div style={{ fontSize: 11, color: "#7a50d0", paddingLeft: 8 }}>topSignal: {topSig.kind} — {topSig.summary}</div>
+          )}
+        </div>
+      ) : (
+        <div style={{ fontSize: 11, color: "#bbb", padding: "3px 0" }}>シグナルなし (コンパニオンWindow起動後に表示)</div>
+      )}
 
       <SectionHead title="記憶 (Memory)" />
-      <CheckRow label="Memory Mode" ok={true} note={s.memoryMode} />
-      <CheckRow label="記録件数" ok={memStats.totalEvents > 0} note={`${memStats.totalEvents}件`} />
-      <CheckRow label="保持期間" ok={s.memoryRetentionDays > 0 || s.memoryRetentionDays === 0} note={s.memoryRetentionDays === 0 ? "無期限" : `${s.memoryRetentionDays}日`} />
+      <InfoRow label="Memory Mode" value={s.memoryMode} />
+      <InfoRow label="記録件数" value={`${memStats.totalEvents}件`} />
+      <InfoRow label="保持期間" value={s.memoryRetentionDays === 0 ? "無期限" : `${s.memoryRetentionDays}日`} />
+      <InfoRow label="保存メモ" value={`${memStats.noteCount}件`} />
 
       <SectionHead title="自律発話 (Autonomous Speech)" />
-      <CheckRow label="自律発話" ok={s.autonomousSpeechEnabled} note={s.autonomousSpeechEnabled ? `間隔: ${s.autonomousSpeechIntervalPreset}` : "無効"} />
-      <CheckRow label="Sleep発話" ok={s.sleepSpeechEnabled} note={`プリセット: ${s.sleepSpeechIntervalPreset}`} />
+      <CheckRow label="自律発話" ok={s.autonomousSpeechEnabled} note={s.autonomousSpeechEnabled ? `間隔: ${s.autonomousSpeechIntervalPreset}` : "無効 — Watchful Modeで自動ON"} />
+      <CheckRow label="Sleep発話" ok={s.sleepSpeechEnabled} note={`プリセット: ${s.sleepSpeechIntervalPreset} / autonomousSpeechと独立して動作`} />
       <CheckRow label="AI エンジン" ok={s.aiEngine !== "none"} note={s.aiEngine === "none" ? "なし (rule-based fallback)" : `${s.aiEngine} / ${s.ollamaModel}`} />
+      <InfoRow label="Quiet Mode" value={s.quietMode ? "ON (抑制中)" : "OFF"} />
+      <InfoRow label="Do Not Disturb" value={s.doNotDisturb ? "ON (抑制中)" : "OFF"} />
+      <InfoRow label="次回発話予定" value={fmtTime(autoDebug.nextAutonomousSpeechAt)} />
+      <InfoRow label="前回発話" value={fmtTime(autoDebug.lastAutonomousSpeechAt)} />
+      <InfoRow label="次回sleep発話" value={fmtTime(autoDebug.nextSleepSpeechAt)} />
+      {suppressReasons.length > 0 && (
+        <div style={{ padding: "4px 0 2px" }}>
+          <div style={{ fontSize: 11, color: "#c06040", marginBottom: 2 }}>発話抑制中の理由:</div>
+          {suppressReasons.map((r) => (
+            <div key={r} style={{ fontSize: 11, color: "#c08060", paddingLeft: 8 }}>• {r}</div>
+          ))}
+        </div>
+      )}
+      <InfoRow label="抑制理由 (実行時)" value={autoDebug.suppressionReason ?? "なし"} />
+      <InfoRow label="次回まで" value={fmtMs(autoDebug.autonomousSpeechDelayMs)} />
 
-      <div style={{ marginTop: 16, padding: "10px 12px", background: "#f5f0ff", borderRadius: 8, fontSize: 11, color: "#6a40d0", lineHeight: 1.7 }}>
+      <SectionHead title="プライバシー境界" />
+      <div style={{ marginTop: 8, padding: "10px 12px", background: "#f5f0ff", borderRadius: 8, fontSize: 11, color: "#6a40d0", lineHeight: 1.8 }}>
         <strong>このアプリは完全ローカルです</strong><br />
-        ・クラウドAI / クラウドSTT は使いません<br />
-        ・常時マイク / Screen Capture / OCR はしません<br />
-        ・外部APIへの送信はしません
+        ✗ クラウドAI / クラウドSTT: 未接続<br />
+        ✗ 常時マイク監視: なし<br />
+        ✗ Screen Capture / OCR: なし<br />
+        ✗ raw filename 保存: なし<br />
+        ✗ transcript 永続保存: なし<br />
+        ✗ window title 本文保存: なし<br />
+        ✗ 外部APIへの送信: なし
       </div>
     </div>
   );

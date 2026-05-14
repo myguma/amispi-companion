@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.1] — 2026-05-14
+
+### Fixed (v1.1.0 実機QA hotfix)
+
+- **Observation Timeline 空問題**: `observationTimelineStore`にBroadcastChannelを追加。コンパニオンWindowで生成したイベントが設定WindowのUI(別JSコンテキスト)に即時同期されるように修正
+- **Sleep発話がautonomousSpeechEnabledに依存する設計バグ**: `scheduleSleepSpeech`から`autonomousSpeechRef.current`チェックを削除。sleep発話は`sleepSpeechEnabled`のみで独立制御されるよう修正
+- **BehaviorPage プリセットボタン非同期**: 現在の設定値からプリセット(Watchful/Balanced/Quiet/Custom)を検出してボタンをハイライト表示。Watchful押下で`quietMode/doNotDisturb/focusMode/autonomousSpeechSafetyCapEnabled`を明示的に解除するよう修正
+- **Watchful Mode設定矛盾**: Watchful押下で`autonomousSpeechIntervalPreset="lively"`(1〜2分間隔)を設定し、quietMode/DND/focusMode/safetyCapも同時に解除
+- **ObservationSignals未接続**: `buildObservationSignals`を観測ポーリングに接続。BroadcastChannel経由で設定Windowに配信。DiagnosticsPage/DebugPageに現在シグナルを表示
+- **sleep_entered / companion_reacted タイムライン未記録**: App.txsにuseEffectを追加し、sleep遷移と発話をObservation Timelineに記録
+- **note_saved 確認・削除UIなし**: MemoryPageに保存済みメモ一覧と削除ボタンを追加。`getSavedMemoryNotes()`/`deleteEventById()`をmemoryStoreに追加
+- **TransparencyPage filename混乱**: 「ファイル名(将来実装予定)」disabledチェックボックスを削除。実装済みfilename-derived signalsと未実装raw filenameサンプルの区別を明記
+
+### Added
+
+- `src/systems/observation/currentSignalStore.ts`: 現在のObservationSignalをBroadcastChannel経由でWindowsに配信する揮発ストア
+- `memoryStore`: `getSavedMemoryNotes()` / `deleteEventById(id)` 追加
+- DiagnosticsPage: ObservationSignals表示・発話抑制理由・タイムライン件数・privacy境界確認を追加
+- DebugPage: 現在設定スナップショット・ObservationSignals・Observation Timelineを追加
+
+---
+
 ## [1.1.0] — 2026-05-14
 
 ### Added (Watchful Local Observer Companion Foundation)

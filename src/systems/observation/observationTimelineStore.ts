@@ -1,5 +1,6 @@
 // observationTimelineStore.ts — Observation Timeline
 // 構造化されたイベントを記録する。raw dataは保存しない。
+// BroadcastChannelによりコンパニオンWindow↔設定Windowを同期する。
 
 const STORAGE_KEY = "amispi_observation_timeline";
 const MAX_EVENTS = 200;
@@ -51,6 +52,27 @@ function save(events: ObservationEvent[]): void {
 let events: ObservationEvent[] = load();
 const subscribers = new Set<() => void>();
 
+const channel = typeof BroadcastChannel !== "undefined"
+  ? new BroadcastChannel("amispi_obs_timeline")
+  : null;
+
+channel?.addEventListener("message", (msg) => {
+  const incoming = msg.data as { kind: string; event?: ObservationEvent } | undefined;
+  if (!incoming) return;
+  if (incoming.kind === "clear") {
+    events = [];
+    save(events);
+    notify();
+    return;
+  }
+  if (incoming.kind === "event" && incoming.event?.id) {
+    if (events.some((e) => e.id === incoming.event!.id)) return;
+    events = [...events.slice(-(MAX_EVENTS - 1)), incoming.event];
+    save(events);
+    notify();
+  }
+});
+
 function notify(): void {
   subscribers.forEach((fn) => fn());
 }
@@ -71,6 +93,7 @@ export function addObservationEvent(
   };
   events = [...events.slice(-(MAX_EVENTS - 1)), event];
   save(events);
+  channel?.postMessage({ kind: "event", event });
   notify();
 }
 
@@ -98,6 +121,7 @@ export function subscribeObservationTimeline(fn: () => void): () => void {
 export function clearObservationTimeline(): void {
   events = [];
   save(events);
+  channel?.postMessage({ kind: "clear" });
   notify();
 }
 

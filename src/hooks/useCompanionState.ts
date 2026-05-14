@@ -427,11 +427,12 @@ export function useCompanionState(
   const scheduleSleepSpeech = useCallback(() => {
     if (sleepSpeechTimerRef.current) clearTimeout(sleepSpeechTimerRef.current);
     const s0 = getSettings();
-    if (!s0.sleepSpeechEnabled || !autonomousSpeechRef.current) {
+    // sleep発話は sleepSpeechEnabled のみで制御。自律発話全体の ON/OFF とは独立。
+    if (!s0.sleepSpeechEnabled) {
       updateAutonomousSpeechDebug({
-        sleepSpeechEnabled: s0.sleepSpeechEnabled,
+        sleepSpeechEnabled: false,
         sleepSpeechIntervalPreset: s0.sleepSpeechIntervalPreset,
-        sleepSpeechSuppressionReason: !autonomousSpeechRef.current ? "disabled" : "disabled",
+        sleepSpeechSuppressionReason: "disabled",
       });
       return;
     }
@@ -460,9 +461,8 @@ export function useCompanionState(
         return;
       }
       const s = getSettings();
-      if (!s.sleepSpeechEnabled || !autonomousSpeechRef.current || s.quietMode || s.doNotDisturb) {
+      if (!s.sleepSpeechEnabled || s.quietMode || s.doNotDisturb) {
         const reason = !s.sleepSpeechEnabled ? "disabled"
-          : !autonomousSpeechRef.current ? "disabled"
           : s.quietMode ? "quiet"
           : "dnd";
         updateAutonomousSpeechDebug({ sleepSpeechSuppressionReason: reason, nextSleepSpeechAt: null });

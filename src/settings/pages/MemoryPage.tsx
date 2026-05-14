@@ -13,6 +13,8 @@ import {
   pruneExpiredEvents,
   buildMemoryExportPayload,
   saveMemoryNote,
+  getSavedMemoryNotes,
+  deleteEventById,
   type MemoryStats,
   type MemoryRetentionResult,
   type MemoryExportPayload,
@@ -583,9 +585,47 @@ export function MemoryPage() {
           </div>
           {noteSaved && <div style={{ fontSize: 11, color: "#4caf7d", marginTop: 4 }}>記憶に保存しました</div>}
           <div style={{ fontSize: 11, color: "#999", marginTop: 6 }}>
-            保存されたメモは上の「記録ログ」の「メモ」フィルタで確認できます。Memory exportにも含まれます。
+            Memory exportにも含まれます。保存場所: localStorage (ローカルのみ・外部送信なし)
           </div>
         </div>
+
+        {/* 保存済みメモ一覧 */}
+        {(() => {
+          const notes = getSavedMemoryNotes();
+          if (notes.length === 0) return (
+            <div style={{ fontSize: 11, color: "#bbb", padding: "6px 0 2px" }}>保存済みメモはありません</div>
+          );
+          return (
+            <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>保存済み: {notes.length}件</div>
+              {notes.map((note) => (
+                <div key={note.id} style={{
+                  display: "flex", alignItems: "flex-start", gap: 8,
+                  padding: "5px 0", borderBottom: "1px solid #e8f5e9", fontSize: 12,
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: "#333" }}>{String(note.data?.text ?? "")}</div>
+                    <div style={{ fontSize: 10, color: "#aaa" }}>{new Date(note.timestamp).toLocaleString()}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!window.confirm("このメモを削除しますか？")) return;
+                      deleteEventById(note.id);
+                      refresh();
+                    }}
+                    style={{
+                      fontSize: 11, padding: "2px 8px", border: "1px solid #ddd",
+                      borderRadius: 4, background: "white", color: "#c06040", cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  >
+                    削除
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </Section>
 
       {/* 削除コントロール */}
