@@ -319,7 +319,15 @@ export function useCompanionState(
       setSpriteEmotion(resolvedOptions.emotion ?? null);
       setState("speaking");
       lastSpeechAtRef.current = Date.now();
-      logEvent("speech_shown", { text: line, source, priority });
+      logEvent("speech_shown", {
+        text: line,
+        source,
+        priority,
+        ...(resolvedOptions.aiProvider !== undefined && { aiProvider: resolvedOptions.aiProvider }),
+        ...(resolvedOptions.aiModel !== undefined && { aiModel: resolvedOptions.aiModel }),
+        ...(resolvedOptions.aiStatus !== undefined && { aiStatus: resolvedOptions.aiStatus }),
+        ...(resolvedOptions.aiFallbackReason !== undefined && { aiFallbackReason: resolvedOptions.aiFallbackReason }),
+      });
 
       if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
       speechTimerRef.current = setTimeout(() => {
