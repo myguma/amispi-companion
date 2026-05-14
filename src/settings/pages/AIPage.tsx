@@ -95,6 +95,9 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
       {result.httpStatus !== undefined && (
         <div style={{ color: "#8a6a30" }}>httpStatus: {result.httpStatus}</div>
       )}
+      {result.intent && (
+        <div style={{ color: "#666" }}>intent: {result.intent}</div>
+      )}
       {result.fallbackReason && (
         <div style={{ color: "#e05050" }}>reason: {result.fallbackReason}</div>
       )}
@@ -174,6 +177,7 @@ function OpenAIStatusCard({ result, configuredModel }: { result: LastAIResultDeb
       <div style={{ marginTop: 4, color: "#666" }}>configured model: {configuredModel}</div>
       <div style={{ color: "#666" }}>actual provider used: {result.source}</div>
       <div style={{ color: "#666" }}>actual model used: {result.model ?? "-"}</div>
+      <div style={{ color: "#666" }}>intent: {result.intent ?? "-"}</div>
       <div style={{ color: "#666" }}>status: {result.status ?? "-"}</div>
       <div style={{ color: "#666" }}>fallbackFrom: {result.fallbackFrom ?? "-"}</div>
       <div style={{ color: "#666" }}>fallbackTo: {result.fallbackTo ?? (result.fallbackFrom ? result.source : "-")}</div>

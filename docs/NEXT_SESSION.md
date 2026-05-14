@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.1.4)**
+**最終更新: 2026-05-15 (v1.2.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.1.4
-**フェーズ:** Safe Visible Local Observer Companion — OpenAI fallback可視化・speech bubble長文UI hotfix
+**バージョン:** v1.2.0
+**フェーズ:** Visible Local Observer Companion — ReactionIntent system / 発話人格改善
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,11 +24,11 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.1.4)
-✅ cargo build  → Finished dev profile (v1.1.4)
+✅ npm run build → ✓ built (v1.2.0)
+✅ cargo build  → Finished dev profile (v1.2.0)
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.1.3 success
-🔲 v1.1.4 Release workflow → push後に確認必要
+✅ GitHub Actions / Windows Installer → v1.1.4 success
+🔲 v1.2.0 Release workflow → push後に確認必要
 ```
 
 ---
@@ -55,7 +55,7 @@
 
 ---
 
-## v1.0.6〜v1.1.4 完了済み
+## v1.0.6〜v1.2.0 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -67,6 +67,34 @@
 | v1.1.2 | 発話バリエーション改善・AppCategory強化・OpenAI provider | ✅ field QA pending |
 | v1.1.3 | AI runtime trace・OpenAI test・provider/model badge・speech_shown AI metadata | ✅ field QA pending |
 | v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル | ✅ field QA pending |
+| v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
+
+## v1.2.0 実装詳細
+
+### 変更内容
+
+- `ReactionIntent` 型を追加し、発話前に `quiet_presence` / `observation` / `suggestion` / `question` / `memory_reflection` / `creative_prompt` / `technical_prompt` / `cleanup_prompt` / `focus_support` / `playful` / `careful_warning` を選択
+- `buildCompanionContext()` が activity / ObservationSignal / recent events / voice or text input から intent を付与
+- PromptBuilder が intent を LLM prompt に含め、OpenAI / Ollama の発話意図を明示
+- RuleProvider が intent に応じて creative / technical / cleanup / focus / memory / playful の発話プールを選択
+- AI runtime trace / DebugPage / DiagnosticsPage / AIPage に reactionIntent を表示
+- `speech_shown` metadata に `reactionIntent` を保存し、Memory export で provider/model/status/fallbackReason と一緒に追跡可能
+- 観測 reaction fallback でも `rule` / `fallback` / `reactionIntent` / `reaction_fallback` を記録
+- `静かだね` / `作業中？` / `ここにいる` / `呼んだ？` / `ん` / `...` 等の低品質fallback文を削除または強cooldownの文へ置換
+
+### Field QA で確認すべき項目 (v1.2.0)
+
+- 自律発話後、Debug / Diagnostics に reactionIntent が表示されるか
+- Memory export の `speech_shown` に `reactionIntent` / `aiProvider` / `aiModel` / `aiStatus` が入るか
+- OpenAI / Ollama / RuleProvider のいずれでも provider/model/status/intent/fallbackReason を追跡できるか
+- 30分常駐しても `静かだね` / `作業中？` / `ここにいる` / `呼んだ？` / `ん` / `...` が短時間連発しないか
+- observation reaction fallback の発話でも `reactionIntent` と `reaction_fallback` が残るか
+- voice/text の local_router 応答でも `reactionIntent` が `speech_shown` に残るか
+
+## 次に着手する候補
+
+- v1.2.x hotfix: v1.2.0 field QA で intent trace 欠落・低品質文・過長文が出た場合の最小修正
+- 問題がなければ v1.3.0 App Classification へ進む
 
 ## v1.1.4 Auth / Billing Notes
 

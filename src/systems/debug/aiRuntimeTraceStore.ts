@@ -4,6 +4,7 @@ export type AIRuntimeTraceEntry = {
   eventId: string;
   timestamp: number;
   provider: LastAIResultDebug["source"];
+  intent?: LastAIResultDebug["intent"];
   model?: string;
   status?: LastAIResultDebug["status"];
   latencyMs?: number;
@@ -22,6 +23,7 @@ export type AIRuntimeTraceSnapshot = {
   lastProviderUsed: LastAIResultDebug["source"] | null;
   lastModelUsed: string | null;
   lastStatus: LastAIResultDebug["status"] | null;
+  lastIntent: LastAIResultDebug["intent"] | null;
   lastLatencyMs: number | null;
   lastFallbackReason: string | null;
   lastSafeReason: string | null;
@@ -37,6 +39,7 @@ let snapshot: AIRuntimeTraceSnapshot = {
   lastProviderUsed: null,
   lastModelUsed: null,
   lastStatus: null,
+  lastIntent: null,
   lastLatencyMs: null,
   lastFallbackReason: null,
   lastSafeReason: null,
@@ -71,6 +74,7 @@ export function recordAIRuntimeTrace(result: LastAIResultDebug): void {
     eventId: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     timestamp: Date.now(),
     provider: result.source,
+    intent: result.intent,
     model: result.model,
     status: result.status,
     latencyMs: result.latencyMs,
@@ -90,6 +94,7 @@ export function recordAIRuntimeTrace(result: LastAIResultDebug): void {
     lastProviderUsed: result.source,
     lastModelUsed: result.model ?? null,
     lastStatus: result.status ?? null,
+    lastIntent: result.intent ?? null,
     lastLatencyMs: result.latencyMs ?? null,
     lastFallbackReason: result.fallbackReason ?? null,
     lastSafeReason: result.safeReason ?? null,

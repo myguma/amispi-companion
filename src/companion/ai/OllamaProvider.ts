@@ -103,9 +103,9 @@ export class OllamaProvider implements AIProvider {
     } catch (e) {
       const msg = (e instanceof Error ? e.message : String(e)).slice(0, 100);
       if (msg.includes("timed out") || msg.includes("deadline")) {
-        return { shouldSpeak: false, reason: "timeout" };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "timeout" };
       }
-      return { shouldSpeak: false, reason: `error:${msg}` };
+      return { shouldSpeak: false, intent: ctx.reactionIntent, reason: `error:${msg}` };
     }
   }
 
@@ -127,15 +127,15 @@ export class OllamaProvider implements AIProvider {
         }),
       });
       clearTimeout(timeId);
-      if (!res.ok) return { shouldSpeak: false, reason: "http_error" };
+      if (!res.ok) return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "http_error" };
       const json = await res.text();
       return this._parseResponse(json, ctx);
     } catch (e) {
       clearTimeout(timeId);
       if ((e as Error).name === "AbortError") {
-        return { shouldSpeak: false, reason: "timeout" };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "timeout" };
       }
-      return { shouldSpeak: false, reason: "error" };
+      return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "error" };
     }
   }
 
@@ -146,11 +146,11 @@ export class OllamaProvider implements AIProvider {
       const filtered = filterGeneratedText(raw, { trigger: ctx.trigger, voiceInput: ctx.voiceInput });
       if (!filtered.ok) {
         console.warn("[Ollama] filtered:", filtered.reason, "|", raw.slice(0, 80));
-        return { shouldSpeak: false, reason: filtered.reason };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: filtered.reason };
       }
-      return { text: filtered.text, shouldSpeak: true };
+      return { text: filtered.text, shouldSpeak: true, intent: ctx.reactionIntent };
     } catch (e) {
-      return { shouldSpeak: false, reason: `parse_error:${String(e).slice(0, 60)}` };
+      return { shouldSpeak: false, intent: ctx.reactionIntent, reason: `parse_error:${String(e).slice(0, 60)}` };
     }
   }
 }

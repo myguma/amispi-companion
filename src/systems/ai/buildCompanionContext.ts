@@ -8,6 +8,7 @@ import type { AITrigger, CompanionContext } from "../../companion/ai/types";
 import { inferActivity } from "../../companion/activity/inferActivity";
 import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
 import { buildObservationSignals } from "../observation/observationSignals";
+import { selectReactionIntent } from "../../companion/ai/reactionIntent";
 
 export function buildCompanionContext(
   trigger: AITrigger,
@@ -20,7 +21,7 @@ export function buildCompanionContext(
   const memorySummary   = buildMemorySummary(recentEvents);
   const signals         = buildObservationSignals(snapshot);
 
-  return {
+  const ctx: CompanionContext = {
     trigger,
     recentEvents,
     observation: snapshot,
@@ -37,4 +38,5 @@ export function buildCompanionContext(
     },
     voiceInput,
   };
+  return { ...ctx, reactionIntent: selectReactionIntent(ctx) };
 }

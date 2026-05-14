@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0] — 2026-05-15
+
+### Added
+
+- `ReactionIntent` system を追加し、`quiet_presence` / `observation` / `suggestion` / `question` / `memory_reflection` / `creative_prompt` / `technical_prompt` / `cleanup_prompt` / `focus_support` / `playful` / `careful_warning` を明示的に選択
+- 発話 intent を `CompanionContext`、AI provider output、AI runtime trace、`speech_shown` metadata に伝播
+- Debug / Diagnostics / AI test 表示に reaction intent を追加
+
+### Fixed / Improved
+
+- RuleProvider が `ReactionIntent`、ObservationSignal、app activity、recent speech history を使って発話プールを選ぶよう改善
+- OpenAI / Ollama 出力を同じ品質フィルタに通し、低品質 fallback 文を拒否可能にした
+- `静かだね` / `作業中？` / `ここにいる` / `呼んだ？` / `ん` / `...` などの短すぎる fallback 文を削除または強 cooldown の文へ置換
+- 観測 reaction fallback でも provider/status/fallbackReason/reactionIntent を `speech_shown` に記録
+
+---
+
 ## [1.1.4] — 2026-05-14
 
 ### Fixed / Improved

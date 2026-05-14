@@ -14,7 +14,9 @@ import { getSettings } from "../../settings/store";
 import type { ReactionTrigger } from "./types";
 import { getAllEvents } from "../../systems/memory/memoryStore";
 import { buildCompanionContext } from "../../systems/ai/buildCompanionContext";
-import { getAIResponse as getNewAIResponse } from "../ai/AIProviderManager";
+import { getAIResponse as getNewAIResponse, getLastAIResult } from "../ai/AIProviderManager";
+import type { ReactionIntent } from "../ai/types";
+import { ensureReactionIntent } from "../ai/reactionIntent";
 import { buildMemorySummary } from "../memory/buildMemorySummary";
 
 // deepFocus / gaming / watchingVideo 中は自律発話を抑制する
@@ -28,7 +30,16 @@ function isValidTransitionFrom(prev: InferredActivity): boolean {
 
 export function useObservationReactions(
   snapshot: ObservationSnapshot,
-  triggerSpeak: (text: string, options?: { source?: "autonomous"; priority?: number }) => boolean
+  triggerSpeak: (text: string, options?: {
+    source?: "autonomous";
+    priority?: number;
+    aiProvider?: string;
+    aiModel?: string;
+    aiStatus?: string;
+    reactionIntent?: ReactionIntent;
+    fallbackReason?: string;
+    qualityRejectedReason?: string;
+  }) => boolean
 ): { tinyText: string | null } {
   const prevSnapshotRef = useRef<ObservationSnapshot>(EMPTY_SNAPSHOT);
   const hasInitialized  = useRef(false);
@@ -68,6 +79,7 @@ export function useObservationReactions(
     // 固定テキストによる発火 (AI 失敗時の fallback)
     const fire = (trigger: ReactionTrigger, tags?: string[]): boolean => {
       if (talkedEnoughToday) return false;
+      const fallbackCtx = ensureReactionIntent(buildCompanionContext("observation", snapshot, allEvents, s));
       const r = selectReaction({
         trigger,
         tags,
@@ -92,7 +104,14 @@ export function useObservationReactions(
         if (r.displayMode === "tiny") {
           showTiny(r.text, r.durationMs);
         } else if (r.displayMode === "bubble") {
-          triggerSpeak(r.text, { source: "autonomous", priority: 20 });
+          triggerSpeak(r.text, {
+            source: "autonomous",
+            priority: 20,
+            aiProvider: "rule",
+            aiStatus: "fallback",
+            reactionIntent: fallbackCtx.reactionIntent,
+            fallbackReason: "reaction_fallback",
+          });
         }
       }
       return true;
@@ -104,10 +123,20 @@ export function useObservationReactions(
       if (s.doNotDisturb || s.quietMode) return false;
       if (s.focusMode) return fire(trigger, tags);
       try {
-        const ctx    = buildCompanionContext("observation", snapshot, allEvents, s);
+        const ctx    = ensureReactionIntent(buildCompanionContext("observation", snapshot, allEvents, s));
         const output = await getNewAIResponse(ctx);
         if (output.shouldSpeak && output.text) {
-          triggerSpeak(output.text, { source: "autonomous", priority: 20 });
+          const aiDebug = getLastAIResult();
+          triggerSpeak(output.text, {
+            source: "autonomous",
+            priority: 20,
+            aiProvider: aiDebug.source,
+            aiModel: aiDebug.model,
+            aiStatus: aiDebug.status,
+            reactionIntent: aiDebug.intent ?? output.intent ?? ctx.reactionIntent,
+            fallbackReason: aiDebug.fallbackReason,
+            qualityRejectedReason: aiDebug.qualityRejectedReason,
+          });
           return true;
         }
       } catch { /* AI エラー → fire() へ */ }

@@ -4,16 +4,11 @@
 import type { AIProvider, MemoryEvent } from "../../types/companion";
 
 const MOCK_RESPONSES = [
-  "Something stirs in the quiet.",
-  "I've been thinking.",
-  "Time moves differently here.",
-  "You've been busy.",
-  "Is everything all right?",
-  "I notice things you don't.",
-  "The session grows long.",
-  "Interesting.",
-  "...",
-  "Keep going.",
+  "小さく起きてる",
+  "静かに見てる",
+  "少しだけ聞いてる",
+  "ここから見てる",
+  "少し間があるみたい",
 ];
 
 export class MockProvider implements AIProvider {

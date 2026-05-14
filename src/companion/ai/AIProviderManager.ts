@@ -5,6 +5,7 @@ import { OllamaProvider } from "./OllamaProvider";
 import { OpenAIProvider } from "./OpenAIProvider";
 import { getSettings } from "../../settings/store";
 import { recordAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
+import { ensureReactionIntent } from "./reactionIntent";
 
 // ──────────────────────────────────────────
 // LastAIResultDebug — 最後のAI応答デバッグ情報
@@ -39,13 +40,16 @@ const STATIC_PROVIDERS: Record<string, AIProvider> = {
 };
 
 export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOutput> {
+  ctx = ensureReactionIntent(ctx);
   const s      = getSettings();
   const engine = s.aiEngine ?? "none";
   const trigger = ctx.trigger;
+  const intent = ctx.reactionIntent;
+  const baseTrace = { trigger, intent };
 
   if (engine === "none") {
-    setLastResult({ source: "none", status: "skipped", trigger, updatedAt: Date.now() });
-    return { shouldSpeak: false, reason: "engine_none" };
+    setLastResult({ source: "none", status: "skipped", ...baseTrace, updatedAt: Date.now() });
+    return { shouldSpeak: false, intent, reason: "engine_none" };
   }
 
   const t0 = Date.now();
@@ -59,13 +63,13 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "fallback",
         status: "failed",
-        trigger,
+        ...baseTrace,
         fallbackReason: avail.reason,
         baseUrl: s.ollamaBaseUrl,
         model: s.ollamaModel,
         updatedAt: Date.now(),
       });
-      return { shouldSpeak: false, reason: avail.reason };
+      return { shouldSpeak: false, intent, reason: avail.reason };
     }
 
     try {
@@ -76,7 +80,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         setLastResult({
           source: "ollama",
           status: "success",
-          trigger,
+          ...baseTrace,
           model: s.ollamaModel,
           baseUrl: s.ollamaBaseUrl,
           latencyMs,
@@ -87,7 +91,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         setLastResult({
           source: "fallback",
           status: "fallback",
-          trigger,
+          ...baseTrace,
           fallbackReason: out.reason ?? "empty_response",
           fallbackFrom: "ollama",
           model: s.ollamaModel,
@@ -102,7 +106,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "fallback",
         status: "failed",
-        trigger,
+        ...baseTrace,
         fallbackFrom: "ollama",
         fallbackReason: "exception",
         model: s.ollamaModel,
@@ -110,7 +114,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         latencyMs,
         updatedAt: Date.now(),
       });
-      return { shouldSpeak: false, reason: "error" };
+      return { shouldSpeak: false, intent, reason: "error" };
     }
   }
 
@@ -120,7 +124,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "fallback",
         status: "skipped",
-        trigger,
+        ...baseTrace,
         fallbackFrom: "openai",
         fallbackReason: "missing_api_key",
         safeReason: "missing_api_key",
@@ -132,7 +136,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         setLastResult({
           source: "rule",
           status: "fallback",
-          trigger,
+          ...baseTrace,
           fallbackFrom: "openai",
           fallbackTo: "rule",
           fallbackReason: "missing_api_key",
@@ -166,7 +170,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         setLastResult({
           source: "openai",
           status: "success",
-          trigger,
+          ...baseTrace,
           model: s.openaiModel,
           baseUrl: s.openaiBaseUrl,
           latencyMs,
@@ -184,7 +188,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "fallback",
         status: "fallback",
-        trigger,
+        ...baseTrace,
         fallbackFrom: "openai",
         fallbackReason: openaiFailReason,
         safeReason: openaiSafeReason,
@@ -203,7 +207,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "fallback",
         status: "failed",
-        trigger,
+        ...baseTrace,
         fallbackFrom: "openai",
         fallbackReason: openaiFailReason,
         safeReason: openaiSafeReason,
@@ -224,7 +228,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
           setLastResult({
             source: "ollama",
             status: "fallback",
-            trigger,
+            ...baseTrace,
             fallbackFrom: "openai",
             fallbackTo: "ollama",
             fallbackReason: openaiFailReason,
@@ -246,7 +250,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       setLastResult({
         source: "rule",
         status: "fallback",
-        trigger,
+        ...baseTrace,
         fallbackFrom: "openai",
         fallbackTo: "rule",
         fallbackReason: openaiFailReason,
@@ -265,8 +269,8 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
   const provider = STATIC_PROVIDERS[engine] ?? STATIC_PROVIDERS.rule;
 
   if (!(await provider.isAvailable())) {
-    setLastResult({ source: "fallback", status: "failed", trigger, fallbackReason: "unavailable", updatedAt: Date.now() });
-    return { shouldSpeak: false, reason: "unavailable" };
+    setLastResult({ source: "fallback", status: "failed", ...baseTrace, fallbackReason: "unavailable", updatedAt: Date.now() });
+    return { shouldSpeak: false, intent, reason: "unavailable" };
   }
 
   try {
@@ -275,7 +279,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     setLastResult({
       source: engine as AIResultSource,
       status: out.shouldSpeak ? "success" : "skipped",
-      trigger,
+      ...baseTrace,
       latencyMs,
       responsePreview: out.text?.slice(0, 80),
       updatedAt: Date.now(),
@@ -285,11 +289,11 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     setLastResult({
       source: "fallback",
       status: "failed",
-      trigger,
+      ...baseTrace,
       fallbackReason: "exception",
       errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
       updatedAt: Date.now(),
     });
-    return { shouldSpeak: false, reason: "error" };
+    return { shouldSpeak: false, intent, reason: "error" };
   }
 }

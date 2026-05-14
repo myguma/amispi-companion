@@ -3,6 +3,7 @@
 
 import type { CompanionContext } from "../../companion/ai/types";
 import { topSignal } from "../observation/observationSignals";
+import { describeReactionIntent } from "../../companion/ai/reactionIntent";
 
 const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトップ常駐キャラクターです。
 
@@ -26,6 +27,7 @@ const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトッ
 - 文章を途中で切らない。"continued" や "続く" で終わらない。
 - 同じ単語や文節を繰り返さない。
 - 毎回「夜」「朝」「昼」など時刻・時間帯に言及しない。時刻は文脈として使うだけ。
+- 発話意図に従う。意図から外れた雑な呼びかけだけで終わらない。
 
 クリック時の良い例 (短く自然に・時刻に言及しない):
 - 「ここにいる」
@@ -37,7 +39,7 @@ const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトッ
 観察時の良い例:
 - 「音楽、聞こえてる」
 - 「だいぶ時間が経ったね」
-- 「ずっとここにいるよ」
+- 「静かに見てる」
 
 悪い例 (絶対にやらない):
 - 「夜が深まったね」「夜が深いね」→ 時刻への偏重・単調
@@ -45,6 +47,7 @@ const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトッ
 - 「静まり continued.」→ 英語混入・文章が途切れている
 - 「見慣れた姿だ。。」→ 句読点が壊れている
 - 「お手伝いできます」→ アシスタント発言
+- 「静かだね」「作業中？」「ここにいる」「呼んだ？」「ん」「...」→ 低品質fallback
 - "It's a nice day" → 英語禁止
 
 必ず日本語一文のみを出力すること。説明・前置き・コードブロック不要。`;
@@ -105,13 +108,16 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
 }
 
 export function buildPrompt(ctx: CompanionContext): { system: string; user: string } {
-  const { activityInsight, memorySummary, observation, recentEvents, trigger, signals } = ctx;
+  const { activityInsight, memorySummary, observation, recentEvents, trigger, signals, reactionIntent } = ctx;
   const isConversationalInput = (trigger === "voice" || trigger === "text") && !!ctx.voiceInput?.trim();
 
   const contextLines: string[] = [];
 
   // トリガー種別ヒント (時刻より先に置いて LLM の注意を引く)
   contextLines.push(`状況: ${triggerHint(trigger)}`);
+  if (reactionIntent) {
+    contextLines.push(`発話意図: ${reactionIntent} — ${describeReactionIntent(reactionIntent)}`);
+  }
 
   // 時刻 (参考情報として後方に置く)
   const hour = new Date().getHours();

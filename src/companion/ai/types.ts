@@ -20,6 +20,19 @@ export type AITrigger =
   | "voice"
   | "text";
 
+export type ReactionIntent =
+  | "quiet_presence"
+  | "observation"
+  | "suggestion"
+  | "question"
+  | "memory_reflection"
+  | "creative_prompt"
+  | "technical_prompt"
+  | "cleanup_prompt"
+  | "focus_support"
+  | "playful"
+  | "careful_warning";
+
 /** 発話生成に必要な統合コンテキスト */
 export type CompanionContext = {
   trigger: AITrigger;
@@ -29,6 +42,8 @@ export type CompanionContext = {
   memorySummary: CompanionMemorySummary;
   /** 現在の ObservationSignals (プロンプト・RuleProvider で参照) */
   signals?: ObservationSignal[];
+  /** 発話の意図。provider/model と同じ debug trace に載せる */
+  reactionIntent?: ReactionIntent;
   /** autonomous speech / quiet / focus / DND etc. */
   speechSettings: {
     autonomousSpeechEnabled: boolean;
@@ -89,6 +104,7 @@ export type AIProviderOutput = {
   text?: string;
   emotion?: CompanionEmotion;
   shouldSpeak: boolean;
+  intent?: ReactionIntent;
   confidence?: number;
   reason?: string;
   safeReason?: string;
@@ -103,6 +119,7 @@ export type LastAIResultDebug = {
   source: AIResultSource;
   status?: AIResultStatus;
   trigger?: string;
+  intent?: ReactionIntent;
   fallbackReason?: string;
   safeReason?: string;
   fallbackFrom?: AIResultSource;

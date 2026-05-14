@@ -113,6 +113,7 @@ export function DebugPage() {
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
         <div>effectiveProvider: {aiRuntime.lastProviderUsed ?? "-"}</div>
         <div>effectiveModel: {aiRuntime.lastModelUsed ?? "-"}</div>
+        <div>reactionIntent: {aiRuntime.lastIntent ?? "-"}</div>
         <div>lastStatus: {aiRuntime.lastStatus ?? "-"}</div>
         <div>lastLatencyMs: {aiRuntime.lastLatencyMs !== null ? `${aiRuntime.lastLatencyMs}ms` : "-"}</div>
         <div>lastFallbackReason: {aiRuntime.lastFallbackReason ?? "-"}</div>
@@ -126,7 +127,7 @@ export function DebugPage() {
         )}
         {aiRuntimeTraces.slice(-3).reverse().map((t) => (
           <div key={t.eventId} style={{ color: "#888", paddingTop: 3 }}>
-            {new Date(t.timestamp).toLocaleTimeString()} — {t.fallbackFrom ? `${t.fallbackFrom} failed → ${t.provider}` : t.provider}/{t.status ?? "-"} {t.model ?? "-"} {t.safeReason ?? t.fallbackReason ?? ""}
+            {new Date(t.timestamp).toLocaleTimeString()} — {t.fallbackFrom ? `${t.fallbackFrom} failed → ${t.provider}` : t.provider}/{t.status ?? "-"} {t.model ?? "-"} intent:{t.intent ?? "-"} {t.safeReason ?? t.fallbackReason ?? ""}
           </div>
         ))}
       </div>

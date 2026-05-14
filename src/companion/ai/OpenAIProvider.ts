@@ -8,6 +8,7 @@ import type { AIProvider, AIProviderOutput, CompanionContext } from "./types";
 import { buildPrompt } from "../../systems/ai/PromptBuilder";
 import { topSignal } from "../../systems/observation/observationSignals";
 import { getSavedMemoryNotes } from "../../systems/memory/memoryStore";
+import { filterGeneratedText } from "../../systems/ai/QualityFilter";
 
 /** DebugPage に表示するペイロードプレビュー (センシティブデータを含まない) */
 export type OpenAIPayloadPreview = {
@@ -110,7 +111,7 @@ export class OpenAIProvider implements AIProvider {
 
   async respond(ctx: CompanionContext): Promise<AIProviderOutput> {
     if (!this.apiKey.trim()) {
-      return { shouldSpeak: false, reason: "openai_key_empty" };
+      return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "openai_key_empty" };
     }
 
     // buildPrompt は既にraw dataを含まない安全な形式
@@ -165,29 +166,34 @@ export class OpenAIProvider implements AIProvider {
       if (!res.ok) {
         const bodyText = (await res.text().catch(() => "")).slice(0, 2000);
         const details = normalizeOpenAIHttpError(res.status, bodyText);
-        return { shouldSpeak: false, httpStatus: res.status, ...details };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, httpStatus: res.status, ...details };
       }
 
       let json: { choices?: { message?: { content?: string } }[] };
       try {
         json = await res.json() as { choices?: { message?: { content?: string } }[] };
       } catch {
-        return { shouldSpeak: false, reason: "invalid_response", safeReason: "invalid_response" };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "invalid_response", safeReason: "invalid_response" };
       }
       const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
 
       if (!raw || raw.length > 120) {
-        return { shouldSpeak: false, reason: "openai_empty_or_too_long", safeReason: "invalid_response" };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "openai_empty_or_too_long", safeReason: "invalid_response" };
       }
 
-      return { text: raw, shouldSpeak: true, emotion: "idle" };
+      const filtered = filterGeneratedText(raw, { trigger: ctx.trigger, voiceInput: ctx.voiceInput });
+      if (!filtered.ok) {
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: filtered.reason, safeReason: "quality_rejected" };
+      }
+
+      return { text: filtered.text, shouldSpeak: true, emotion: "idle", intent: ctx.reactionIntent };
     } catch (e) {
       clearTimeout(timer);
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("abort") || msg.includes("AbortError")) {
-        return { shouldSpeak: false, reason: "timeout", safeReason: "timeout" };
+        return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "timeout", safeReason: "timeout" };
       }
-      return { shouldSpeak: false, reason: "network_error", safeReason: "network_error" };
+      return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "network_error", safeReason: "network_error" };
     }
   }
 }

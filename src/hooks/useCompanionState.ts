@@ -17,6 +17,7 @@ import { recordClick, isOverClicked, resetClicks } from "../companion/reactions/
 import { classifyBreak } from "../companion/memory/memorySummary";
 // buildMemorySummary: scheduleIdleSpeechのtodaySpeechCount廃止により不要になったため削除
 import { getAIResponse as getNewAIResponse, getLastAIResult } from "../companion/ai/AIProviderManager";
+import type { ReactionIntent } from "../companion/ai/types";
 import { buildCompanionContext } from "../systems/ai/buildCompanionContext";
 import { canSpeak } from "../companion/speech/SpeechPolicy";
 import { countInLastHour } from "../companion/reactions/reactionHistory";
@@ -68,6 +69,7 @@ type SpeechOptions = {
   aiProvider?: string;
   aiModel?: string;
   aiStatus?: string;
+  reactionIntent?: ReactionIntent;
   fallbackReason?: string;
   qualityRejectedReason?: string;
 };
@@ -90,7 +92,7 @@ const SLEEP_SPEECH_LINES = [
   "少し寝てた",
   "まだ、ここにいる",
   "小さく起きた",
-  "静かだね",
+  "静かに戻った",
   "夢を見てた",
 ];
 
@@ -131,6 +133,7 @@ function aiSpeechMetaFromLastResult(): SpeechOptions {
     aiProvider: aiResult.source,
     aiModel: aiResult.model,
     aiStatus: aiResult.status,
+    reactionIntent: aiResult.intent,
     fallbackReason: aiResult.fallbackReason,
     qualityRejectedReason: aiResult.qualityRejectedReason,
   };
@@ -338,6 +341,7 @@ export function useCompanionState(
         ...(resolvedOptions.aiProvider !== undefined && { aiProvider: resolvedOptions.aiProvider }),
         ...(resolvedOptions.aiModel !== undefined && { aiModel: resolvedOptions.aiModel }),
         ...(resolvedOptions.aiStatus !== undefined && { aiStatus: resolvedOptions.aiStatus }),
+        ...(resolvedOptions.reactionIntent !== undefined && { reactionIntent: resolvedOptions.reactionIntent }),
         ...(resolvedOptions.fallbackReason !== undefined && { fallbackReason: resolvedOptions.fallbackReason }),
         ...(resolvedOptions.qualityRejectedReason !== undefined && { qualityRejectedReason: resolvedOptions.qualityRejectedReason }),
       });
@@ -414,7 +418,7 @@ export function useCompanionState(
 
           if (!text) {
             text = fireReaction("randomIdle");
-            if (text) aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", fallbackReason: aiMeta.fallbackReason ?? "ai_no_speech_or_error" };
+            if (text) aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", reactionIntent: aiMeta.reactionIntent ?? ctx.reactionIntent, fallbackReason: aiMeta.fallbackReason ?? "ai_no_speech_or_error" };
           }
           if (text) {
             const shown = triggerSpeak(text, { emotion, source: "autonomous", priority: 20, ...aiMeta });
@@ -562,7 +566,7 @@ export function useCompanionState(
 
     if (!text) {
       text = fireReaction("click") ?? pickDialogue("touch_reaction");
-      aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", fallbackReason: aiMeta.fallbackReason ?? "click_reaction_fallback" };
+      aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", reactionIntent: aiMeta.reactionIntent ?? ctx.reactionIntent, fallbackReason: aiMeta.fallbackReason ?? "click_reaction_fallback" };
     }
     triggerSpeak(text, { emotion, source: "manual_click", priority: 60, ...aiMeta });
   }, [triggerSpeak, fireReaction]);
@@ -647,11 +651,12 @@ export function useCompanionState(
 
       const aiDebug = getLastAIResult();
       const speechAiMeta: SpeechOptions = routed
-        ? { aiProvider: "rule", aiStatus: "success", fallbackReason: "local_router" }
+        ? { aiProvider: "rule", aiStatus: "success", reactionIntent: ctx.reactionIntent, fallbackReason: "local_router" }
         : {
             aiProvider: aiDebug.source,
             aiModel: aiDebug.model,
             aiStatus: aiDebug.status,
+            reactionIntent: aiDebug.intent ?? ctx.reactionIntent,
             fallbackReason: aiDebug.fallbackReason,
             qualityRejectedReason: aiDebug.qualityRejectedReason,
           };
@@ -659,6 +664,7 @@ export function useCompanionState(
         text = buildVoiceFallback(validated.text, ctx);
         speechAiMeta.aiProvider = aiDebug.source;
         speechAiMeta.aiStatus = "fallback";
+        speechAiMeta.reactionIntent ??= aiDebug.intent ?? ctx.reactionIntent;
         speechAiMeta.fallbackReason = aiDebug.fallbackReason ?? "voice_fallback";
         patchLastVoiceDebug({
           aiSource: aiDebug.source,
@@ -861,11 +867,12 @@ export function useCompanionState(
       }
       const aiDebug = getLastAIResult();
       const speechAiMeta: SpeechOptions = routed
-        ? { aiProvider: "rule", aiStatus: "success", fallbackReason: "local_router" }
+        ? { aiProvider: "rule", aiStatus: "success", reactionIntent: ctx.reactionIntent, fallbackReason: "local_router" }
         : {
             aiProvider: aiDebug.source,
             aiModel: aiDebug.model,
             aiStatus: aiDebug.status,
+            reactionIntent: aiDebug.intent ?? ctx.reactionIntent,
             fallbackReason: aiDebug.fallbackReason,
             qualityRejectedReason: aiDebug.qualityRejectedReason,
           };
@@ -873,6 +880,7 @@ export function useCompanionState(
         text = buildVoiceFallback(transcript, ctx);
         speechAiMeta.aiProvider = aiDebug.source;
         speechAiMeta.aiStatus = "fallback";
+        speechAiMeta.reactionIntent ??= aiDebug.intent ?? ctx.reactionIntent;
         speechAiMeta.fallbackReason = aiDebug.fallbackReason ?? "voice_fallback";
         patchLastVoiceDebug({
           aiSource: aiDebug.source,
@@ -949,11 +957,12 @@ export function useCompanionState(
 
     const aiDebug = getLastAIResult();
     const speechAiMeta: SpeechOptions = routed
-      ? { aiProvider: "rule", aiStatus: "success", fallbackReason: "local_router" }
+      ? { aiProvider: "rule", aiStatus: "success", reactionIntent: ctx.reactionIntent, fallbackReason: "local_router" }
       : {
           aiProvider: aiDebug.source,
           aiModel: aiDebug.model,
           aiStatus: aiDebug.status,
+          reactionIntent: aiDebug.intent ?? ctx.reactionIntent,
           fallbackReason: aiDebug.fallbackReason,
           qualityRejectedReason: aiDebug.qualityRejectedReason,
         };
@@ -961,6 +970,7 @@ export function useCompanionState(
       response = buildVoiceFallback(textInput, ctx);
       speechAiMeta.aiProvider = aiDebug.source;
       speechAiMeta.aiStatus = "fallback";
+      speechAiMeta.reactionIntent ??= aiDebug.intent ?? ctx.reactionIntent;
       speechAiMeta.fallbackReason = aiDebug.fallbackReason ?? "text_fallback";
     }
     const shown = triggerSpeak(response, { emotion, source: "voice", priority: 90, lockMs: 1_800, ...speechAiMeta });
@@ -1098,7 +1108,7 @@ export function useCompanionState(
         }
         // 休憩なし or 反応が抑制されていれば通常の時刻挨拶にフォールバック
         text ??= fireReaction("timedGreeting", [getTimeTag()]) ?? pickTimedGreeting();
-        aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", fallbackReason: aiMeta.fallbackReason ?? "return_greeting_fallback" };
+        aiMeta = { ...aiMeta, aiProvider: "rule", aiStatus: "fallback", reactionIntent: aiMeta.reactionIntent ?? ctx.reactionIntent, fallbackReason: aiMeta.fallbackReason ?? "return_greeting_fallback" };
       }
 
       triggerSpeak(text, { emotion, source: "system", priority: 80, ...aiMeta });

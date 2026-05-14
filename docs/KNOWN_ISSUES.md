@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-14 (v1.1.4)**
+**最終更新: 2026-05-15 (v1.2.0)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -29,6 +29,15 @@
 | v1.1.2 | pending | 発話バリエーション・unknown category発話・AppCategory強化・PromptBuilder ObservationSignals・OpenAI provider骨格はfield QA pending |
 | v1.1.3 | pending | AI runtime trace・OpenAI test・provider/model badge・長文speech bubbleはfield QA pending |
 | v1.1.4 | pending | OpenAI 429分類・fallback表示明確化・speech bubble全文パネルはfield QA pending |
+| v1.2.0 | pending | ReactionIntent trace、低品質fallback削減、30分常駐時の重複抑制はfield QA pending |
+
+## v1.2.0 Field QA Watch Points
+
+- Debug / Diagnostics に reactionIntent が表示されないケースがないか
+- `speech_shown` export で `reactionIntent` が欠落する発話経路がないか
+- OpenAI / Ollama failure 後の RuleProvider fallback でも intent / provider / model / fallback reason を追えるか
+- `静かだね` / `作業中？` / `ここにいる` / `呼んだ？` / `ん` / `...` が短時間で出ないか
+- intent によって発話が不自然に固定化されないか
 
 ## OpenAI / ChatGPT Auth Boundary
 

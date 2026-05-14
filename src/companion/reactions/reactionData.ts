@@ -5,10 +5,10 @@ const M = 60 * 1000;
 
 export const REACTIONS: Reaction[] = [
   // ──── クリック ───────────────────────────────────────
-  { id: "click_01", trigger: "click", text: "ん", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe", cry: { id: "c1", synth: { kind: "soft_beep", pitch: 1.2 } } },
-  { id: "click_02", trigger: "click", text: "...なに？", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
-  { id: "click_03", trigger: "click", text: "呼んだ？", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
-  { id: "click_04", trigger: "click", text: "ここにいるよ", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "click_01", trigger: "click", text: "小さく起きた", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe", cry: { id: "c1", synth: { kind: "soft_beep", pitch: 1.2 } } },
+  { id: "click_02", trigger: "click", text: "少しだけ聞いてる", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "click_03", trigger: "click", text: "呼ばれた気がした", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "click_04", trigger: "click", text: "ここから見てる", emotion: "aware", priority: 2, cooldownMs: 3000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
 
   // ──── ドラッグ ────────────────────────────────────────
   { id: "drag_01", trigger: "dragStart", text: "ちょっと、どこ持ってくの", emotion: "aware", priority: 2, cooldownMs: 5000, durationMs: 3000, displayMode: "bubble", interruptibility: "safe", cry: { id: "d1", synth: { kind: "surprised", pitch: 1.1 } } },
@@ -18,8 +18,8 @@ export const REACTIONS: Reaction[] = [
   { id: "greet_m1", trigger: "timedGreeting", text: "おはよう", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["morning"] },
   { id: "greet_m2", trigger: "timedGreeting", text: "...おはよう。早いね", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["morning"] },
   { id: "greet_m3", trigger: "timedGreeting", text: "朝か。今日もよろしく", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["morning"] },
-  { id: "greet_a1", trigger: "timedGreeting", text: "...いるよ", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["afternoon"] },
-  { id: "greet_a2", trigger: "timedGreeting", text: "ここにいる", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["afternoon"] },
+  { id: "greet_a1", trigger: "timedGreeting", text: "小さく起きてる", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["afternoon"] },
+  { id: "greet_a2", trigger: "timedGreeting", text: "ここから見てる", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["afternoon"] },
   { id: "greet_e1", trigger: "timedGreeting", text: "お疲れ様", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["evening"] },
   { id: "greet_e2", trigger: "timedGreeting", text: "...夕方になったね", emotion: "idle", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["evening"] },
   { id: "greet_n1", trigger: "timedGreeting", text: "まだ起きてるの", emotion: "aware", priority: 1, cooldownMs: 4 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe", tags: ["night"] },
@@ -32,10 +32,10 @@ export const REACTIONS: Reaction[] = [
   { id: "wake_03", trigger: "wake", text: "...起こした？", emotion: "waking", priority: 2, cooldownMs: 30000, durationMs: 4000, displayMode: "bubble", interruptibility: "safe" },
 
   // ──── ランダム独り言 ──────────────────────────────────
-  { id: "ri_01", trigger: "randomIdle", text: "...", emotion: "idle", priority: 0, cooldownMs: 8 * M, durationMs: 3000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
-  { id: "ri_02", trigger: "randomIdle", text: "静かだね", emotion: "idle", priority: 0, cooldownMs: 8 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
-  { id: "ri_03", trigger: "randomIdle", text: "作業中？", emotion: "idle", priority: 0, cooldownMs: 8 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
-  { id: "ri_04", trigger: "randomIdle", text: "そこにいるよ", emotion: "idle", priority: 0, cooldownMs: 10 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus", cry: { id: "r4", synth: { kind: "murmur" } } },
+  { id: "ri_01", trigger: "randomIdle", text: "小さく起きてる", emotion: "idle", priority: 0, cooldownMs: 20 * M, durationMs: 3000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "ri_02", trigger: "randomIdle", text: "静かに見てる", emotion: "idle", priority: 0, cooldownMs: 20 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "ri_03", trigger: "randomIdle", text: "少し間があるみたい", emotion: "idle", priority: 0, cooldownMs: 20 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
+  { id: "ri_04", trigger: "randomIdle", text: "ここから見てる", emotion: "idle", priority: 0, cooldownMs: 30 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus", cry: { id: "r4", synth: { kind: "murmur" } } },
   { id: "ri_05", trigger: "randomIdle", text: "なんか考えてる", emotion: "idle", priority: 0, cooldownMs: 8 * M, durationMs: 4000, displayMode: "bubble", interruptibility: "avoidDuringFocus" },
 
   // ──── 長時間 idle ─────────────────────────────────────
@@ -69,7 +69,7 @@ export const REACTIONS: Reaction[] = [
   // ──── 起動: 休憩あけ ──────────────────────────────────
   { id: "rab_01", trigger: "returnAfterBreak", text: "……おかえり。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
   { id: "rab_02", trigger: "returnAfterBreak", text: "少し、時間あいたね。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
-  { id: "rab_03", trigger: "returnAfterBreak", text: "また、ここにいる。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
+  { id: "rab_03", trigger: "returnAfterBreak", text: "また、ここで待ってた。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 5000, displayMode: "bubble", interruptibility: "safe" },
 
   // ──── 起動: 長期休憩あけ (1日以上) ────────────────────
   { id: "ralb_01", trigger: "returnAfterLongBreak", text: "……おかえり。久しぶり。", emotion: "idle", priority: 1, cooldownMs: 24 * H, durationMs: 6000, displayMode: "bubble", interruptibility: "safe" },

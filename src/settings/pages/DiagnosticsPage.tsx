@@ -154,6 +154,7 @@ export function DiagnosticsPage() {
       } />
       <InfoRow label="effectiveProvider" value={aiRuntime.lastProviderUsed ?? "-"} />
       <InfoRow label="effectiveModel" value={aiRuntime.lastModelUsed ?? "-"} />
+      <InfoRow label="reactionIntent" value={aiRuntime.lastIntent ?? "-"} />
       <InfoRow label="lastStatus" value={aiRuntime.lastStatus ?? "-"} />
       <InfoRow label="lastLatencyMs" value={aiRuntime.lastLatencyMs !== null ? `${aiRuntime.lastLatencyMs}ms` : "-"} />
       <InfoRow label="lastFallbackReason" value={aiRuntime.lastFallbackReason ?? "-"} />

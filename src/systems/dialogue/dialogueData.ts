@@ -57,7 +57,7 @@ const DIALOGUE_DATA: DialogueEntry[] = [
       "まだ起きてるの",
       "...深夜だよ",
       "夜更かしかな",
-      "...一緒にいるよ",
+      "静かに起きてる",
     ],
   },
 
@@ -65,12 +65,12 @@ const DIALOGUE_DATA: DialogueEntry[] = [
   {
     id: "tr_01",
     trigger: "touch_reaction",
-    lines: ["ん", "...なに？", "呼んだ？", "ここにいるよ"],
+    lines: ["小さく起きた", "少しだけ聞いてる", "呼ばれた気がした", "ここから見てる"],
   },
   {
     id: "tr_02",
     trigger: "touch_reaction",
-    lines: ["どうしたの", "...うん", "何かあった？"],
+    lines: ["どうしたの", "少しだけ聞いてる", "何かあった？"],
     weight: 0.5,
   },
 
@@ -102,7 +102,7 @@ const DIALOGUE_DATA: DialogueEntry[] = [
   {
     id: "ri_01",
     trigger: "random_idle",
-    lines: ["...", "静かだね", "ここにいるよ", "少し間がある"],
+    lines: ["小さく起きてる", "静かに見てる", "ここから見てる", "少し間がある"],
     weight: 2,
   },
   {
@@ -141,7 +141,7 @@ export function pickTimedGreeting(): string {
  */
 export function pickDialogue(trigger: DialogueTrigger): string {
   const entries = DIALOGUE_DATA.filter((e) => e.trigger === trigger);
-  if (entries.length === 0) return "...";
+  if (entries.length === 0) return "小さく起きてる";
 
   const totalWeight = entries.reduce((sum, e) => sum + (e.weight ?? 1), 0);
   let rand = Math.random() * totalWeight;
