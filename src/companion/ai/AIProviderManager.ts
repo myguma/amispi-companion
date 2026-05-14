@@ -1,4 +1,4 @@
-import type { AIProvider, AIProviderOutput, CompanionContext, LastAIResultDebug } from "./types";
+import type { AIProvider, AIProviderOutput, CompanionContext, LastAIResultDebug, AIResultSource } from "./types";
 import { MockProvider } from "./MockProvider";
 import { RuleProvider } from "./RuleProvider";
 import { OllamaProvider } from "./OllamaProvider";
@@ -7,10 +7,10 @@ import { getSettings } from "../../settings/store";
 
 // ──────────────────────────────────────────
 // LastAIResultDebug — 最後のAI応答デバッグ情報
-// useLastAIResult() で AI設定画面から参照できる
+// useLastAIResult() で AI設定画面・DebugPage から参照できる
 // ──────────────────────────────────────────
 
-let _lastResult: LastAIResultDebug = { source: "none", updatedAt: 0 };
+let _lastResult: LastAIResultDebug = { source: "none", status: "skipped", updatedAt: 0 };
 const _resultSubs = new Set<() => void>();
 
 export function getLastAIResult(): LastAIResultDebug { return _lastResult; }
@@ -39,9 +39,10 @@ const STATIC_PROVIDERS: Record<string, AIProvider> = {
 export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOutput> {
   const s      = getSettings();
   const engine = s.aiEngine ?? "none";
+  const trigger = ctx.trigger;
 
   if (engine === "none") {
-    setLastResult({ source: "none", updatedAt: Date.now() });
+    setLastResult({ source: "none", status: "skipped", trigger, updatedAt: Date.now() });
     return { shouldSpeak: false, reason: "engine_none" };
   }
 
@@ -51,11 +52,12 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
   if (engine === "ollama") {
     const provider = new OllamaProvider(s.ollamaBaseUrl, s.ollamaModel, s.ollamaTimeoutMs);
 
-    // checkAvailability で詳細な失敗理由を取得 (isAvailable は boolean しか返さない)
     const avail = await provider.checkAvailability();
     if (!avail.available) {
       setLastResult({
         source: "fallback",
+        status: "failed",
+        trigger,
         fallbackReason: avail.reason,
         baseUrl: s.ollamaBaseUrl,
         model: s.ollamaModel,
@@ -71,16 +73,21 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       if (out.shouldSpeak && out.text) {
         setLastResult({
           source: "ollama",
+          status: "success",
+          trigger,
           model: s.ollamaModel,
           baseUrl: s.ollamaBaseUrl,
           latencyMs,
-          responsePreview: out.text.slice(0, 60),
+          responsePreview: out.text.slice(0, 80),
           updatedAt: Date.now(),
         });
       } else {
         setLastResult({
           source: "fallback",
+          status: "fallback",
+          trigger,
           fallbackReason: out.reason ?? "empty_response",
+          fallbackFrom: "ollama",
           model: s.ollamaModel,
           baseUrl: s.ollamaBaseUrl,
           latencyMs,
@@ -92,6 +99,9 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       const latencyMs = Date.now() - t0;
       setLastResult({
         source: "fallback",
+        status: "failed",
+        trigger,
+        fallbackFrom: "ollama",
         fallbackReason: "exception",
         model: s.ollamaModel,
         errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
@@ -105,11 +115,17 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
   // ── OpenAI ────────────────────────────────────────────────────
   if (engine === "openai") {
     if (!s.openaiApiKey?.trim()) {
-      setLastResult({ source: "fallback", fallbackReason: "openai_key_empty", updatedAt: Date.now() });
+      setLastResult({
+        source: "fallback",
+        status: "skipped",
+        trigger,
+        fallbackFrom: "openai",
+        fallbackReason: "openai_key_empty",
+        updatedAt: Date.now(),
+      });
       // key 未設定時は rule にフォールバック
-      const rule = STATIC_PROVIDERS.rule;
-      const out = await rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
-      return out;
+      const ruleOut = await STATIC_PROVIDERS.rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
+      return ruleOut;
     }
 
     const provider = new OpenAIProvider(
@@ -121,30 +137,49 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       s.openaiSendMemoryNotes,
     );
 
+    let openaiFailReason: string | undefined;
+
     try {
       const out      = await provider.respond(ctx);
       const latencyMs = Date.now() - t0;
 
       if (out.shouldSpeak && out.text) {
         setLastResult({
-          source: "ollama",  // DebugPage表示の都合でollama枠を流用 (cloud扱い)
+          source: "openai",
+          status: "success",
+          trigger,
           model: s.openaiModel,
           baseUrl: s.openaiBaseUrl,
           latencyMs,
-          responsePreview: out.text.slice(0, 60),
+          responsePreview: out.text.slice(0, 80),
           updatedAt: Date.now(),
         });
         return out;
       }
 
-      // OpenAI が shouldSpeak: false → Ollama にフォールバック
-      const reason = out.reason ?? "openai_no_speech";
-      setLastResult({ source: "fallback", fallbackReason: reason, updatedAt: Date.now() });
-    } catch (e) {
+      openaiFailReason = out.reason ?? "openai_no_speech";
       setLastResult({
         source: "fallback",
-        fallbackReason: "openai_exception",
+        status: "fallback",
+        trigger,
+        fallbackFrom: "openai",
+        fallbackReason: openaiFailReason,
+        model: s.openaiModel,
+        latencyMs,
+        updatedAt: Date.now(),
+      });
+    } catch (e) {
+      const latencyMs = Date.now() - t0;
+      openaiFailReason = "openai_exception";
+      setLastResult({
+        source: "fallback",
+        status: "failed",
+        trigger,
+        fallbackFrom: "openai",
+        fallbackReason: openaiFailReason,
+        model: s.openaiModel,
         errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
+        latencyMs,
         updatedAt: Date.now(),
       });
     }
@@ -152,13 +187,39 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     // OpenAI 失敗 → Ollama → Rule の順でフォールバック
     if (s.ollamaBaseUrl) {
       const ollamaProvider = new OllamaProvider(s.ollamaBaseUrl, s.ollamaModel, s.ollamaTimeoutMs);
-      const avail = await ollamaProvider.checkAvailability().catch(() => ({ available: false, reason: "check_failed" }));
+      const avail = await ollamaProvider.checkAvailability().catch(() => ({ available: false as const, reason: "check_failed" }));
       if (avail.available) {
         const out = await ollamaProvider.respond(ctx).catch(() => null);
-        if (out?.shouldSpeak && out.text) return out;
+        if (out?.shouldSpeak && out.text) {
+          setLastResult({
+            source: "ollama",
+            status: "fallback",
+            trigger,
+            fallbackFrom: "openai",
+            fallbackReason: openaiFailReason,
+            model: s.ollamaModel,
+            latencyMs: Date.now() - t0,
+            responsePreview: out.text.slice(0, 80),
+            updatedAt: Date.now(),
+          });
+          return out;
+        }
       }
     }
+
     const ruleOut = await STATIC_PROVIDERS.rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
+    if (ruleOut.shouldSpeak && ruleOut.text) {
+      setLastResult({
+        source: "rule",
+        status: "fallback",
+        trigger,
+        fallbackFrom: "openai",
+        fallbackReason: openaiFailReason,
+        latencyMs: Date.now() - t0,
+        responsePreview: ruleOut.text.slice(0, 80),
+        updatedAt: Date.now(),
+      });
+    }
     return ruleOut;
   }
 
@@ -166,7 +227,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
   const provider = STATIC_PROVIDERS[engine] ?? STATIC_PROVIDERS.rule;
 
   if (!(await provider.isAvailable())) {
-    setLastResult({ source: "fallback", fallbackReason: "unavailable", updatedAt: Date.now() });
+    setLastResult({ source: "fallback", status: "failed", trigger, fallbackReason: "unavailable", updatedAt: Date.now() });
     return { shouldSpeak: false, reason: "unavailable" };
   }
 
@@ -174,15 +235,19 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     const out      = await provider.respond(ctx);
     const latencyMs = Date.now() - t0;
     setLastResult({
-      source: engine as "rule" | "mock",
+      source: engine as AIResultSource,
+      status: out.shouldSpeak ? "success" : "skipped",
+      trigger,
       latencyMs,
-      responsePreview: out.text?.slice(0, 60),
+      responsePreview: out.text?.slice(0, 80),
       updatedAt: Date.now(),
     });
     return out;
   } catch (e) {
     setLastResult({
       source: "fallback",
+      status: "failed",
+      trigger,
       fallbackReason: "exception",
       errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
       updatedAt: Date.now(),
