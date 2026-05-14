@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.0.7] — 2026-05-14
+
+### Added (Observation Timeline and Observation Center)
+
+- **Observation Timeline**:
+  - `src/systems/observation/observationTimelineStore.ts` 新規作成
+  - 構造化イベントをlocalStorageに保存（最大200件、retention対応）
+  - 検知イベント: active_app_changed / idle_started / user_returned / media_started/stopped / folder_signal_changed / companion_reacted / sleep_entered
+  - raw data（タイトル/ファイル名/transcriptなど）は保存しない
+  - `pruneObservationTimeline(retentionDays)` でmemoryRetentionDaysに従って整理
+- **Observation Center UI**:
+  - 設定ウィンドウに「観察」タブを追加（`ObservationPage.tsx`）
+  - 観察レベルプリセット: 最小 / バランス / 観察モード / カスタム
+  - 現在見ているものの表示（ON/OFF状態）
+  - 最近検知したことのタイムライン表示（最新30件）
+  - タイムラインクリア機能
+  - watchfulモード時のみウィンドウタイトルオプション表示
+- **Settings**:
+  - `observationLevel: "minimal" | "balanced" | "watchful" | "custom"` 追加（default: balanced）
+  - ObservationPage からlevel変更時に関連設定も自動更新
+
+### Maintained
+
+- compact 200x280 window / click-through / hit test
+- raw filename / window title / transcript は Timeline に含めない
+- v1.0.5/v1.0.6 の全機能
+
 ## [1.0.6] — 2026-05-14
 
 ### Changed (Whisper language, sleep speech, filename-derived signals)

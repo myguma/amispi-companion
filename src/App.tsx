@@ -34,6 +34,7 @@ import { getLastAIResult, subscribeLastAIResult } from "./companion/ai/AIProvide
 import { useObservationReactions } from "./companion/reactions/useObservationReactions";
 import type { ObservationSnapshot } from "./observation/types";
 import { EMPTY_SNAPSHOT } from "./observation/types";
+import { addObservationEvent, pruneObservationTimeline } from "./systems/observation/observationTimelineStore";
 import { useVoiceRecorder } from "./systems/voice/useVoiceRecorder";
 import { subscribeTextMessages } from "./systems/conversation/textMessageBus";
 import "./styles/index.css";
@@ -70,6 +71,7 @@ export default function App() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [lastAIResult, setLastAIResult] = useState(getLastAIResult());
   const onboardingOpenRequestedRef = useRef(false);
+  const prevSnapshotRef = useRef<ObservationSnapshot | null>(null);
   const characterStageRef = useRef<HTMLDivElement | null>(null);
   const speechLayerRef = useRef<HTMLDivElement | null>(null);
   const updateBadgeRef = useRef<HTMLDivElement | null>(null);
@@ -135,6 +137,11 @@ export default function App() {
     onboardingOpenRequestedRef.current = true;
     void invoke("open_settings_window");
   }, [settings.onboardingCompleted]);
+
+  // 起動時にObservation Timelineの古いイベントを削除
+  useEffect(() => {
+    pruneObservationTimeline(settings.memoryRetentionDays);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 常時最前面
   useEffect(() => {
@@ -208,6 +215,48 @@ export default function App() {
           },
         });
         setSnapshot(snap);
+
+        // スナップショット変化からObservationイベントを生成
+        const prev = prevSnapshotRef.current;
+        prevSnapshotRef.current = snap;
+
+        if (prev) {
+          // アプリ変化
+          const prevCat = prev.activeApp?.category;
+          const newCat = snap.activeApp?.category;
+          if (prevCat !== newCat && newCat && newCat !== "self") {
+            addObservationEvent("active_app_changed", `${newCat}に切り替え`, { signalKind: "app_category" });
+          }
+
+          // アイドル開始 (5分閾値)
+          const prevIdleMs = prev.idle.idleMs;
+          const newIdleMs = snap.idle.idleMs;
+          if (prevIdleMs < 5 * 60 * 1000 && newIdleMs >= 5 * 60 * 1000) {
+            addObservationEvent("idle_started", "5分以上操作なし", { signalKind: "idle" });
+          }
+
+          // 操作再開
+          if (prevIdleMs >= 5 * 60 * 1000 && newIdleMs < 30 * 1000) {
+            addObservationEvent("user_returned", "操作再開", { signalKind: "idle" });
+          }
+
+          // メディア開始/停止
+          const prevMedia = prev.media?.audioLikelyActive;
+          const newMedia = snap.media?.audioLikelyActive;
+          if (!prevMedia && newMedia) {
+            addObservationEvent("media_started", snap.media?.mediaKind === "music" ? "音楽が始まった" : "メディア再生中", { signalKind: "media" });
+          } else if (prevMedia && !newMedia) {
+            addObservationEvent("media_stopped", "メディア停止", { signalKind: "media" });
+          }
+
+          // folder signals change (downloads)
+          const prevDlSignals = prev.folders.downloads?.filenameSignals ?? [];
+          const newDlSignals = snap.folders.downloads?.filenameSignals ?? [];
+          const addedSignals = newDlSignals.filter((s: string) => !prevDlSignals.includes(s));
+          if (addedSignals.length > 0) {
+            addObservationEvent("folder_signal_changed", `Downloadsに新しい気配: ${addedSignals.join(", ")}`, { signalKind: "folder_signals" });
+          }
+        }
       } catch {
         // 権限エラー等 — サイレント失敗
       }

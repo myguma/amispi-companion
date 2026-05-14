@@ -10,6 +10,7 @@ export type VoiceInputMode = "off" | "pushToTalk";
 export type STTEngine = "mock" | "whisperCli";
 export type WhisperLanguage = "ja" | "auto" | "en" | "pt" | "es" | "ko" | "zh" | "fr" | "de" | "custom";
 export type SleepSpeechIntervalPreset = "veryRare" | "rare" | "off";
+export type ObservationLevel = "minimal" | "balanced" | "watchful" | "custom";
 
 export type CompanionSettings = {
   quietMode: boolean;
@@ -65,6 +66,7 @@ export type CompanionSettings = {
   sleepSpeechEnabled: boolean;
   sleepSpeechIntervalPreset: SleepSpeechIntervalPreset;
   filenameSignalsEnabled: boolean;
+  observationLevel: ObservationLevel;
 
   // 将来フェーズ用
   mediaAwarenessEnabled: boolean;

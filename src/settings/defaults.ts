@@ -52,6 +52,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   sleepSpeechEnabled: true,
   sleepSpeechIntervalPreset: "veryRare",
   filenameSignalsEnabled: true,
+  observationLevel: "balanced",
 
   mediaAwarenessEnabled: false,
   screenUnderstandingEnabled: false,

@@ -12,14 +12,16 @@ import { MemoryPage } from "./pages/MemoryPage";
 import { UpdatePage } from "./pages/UpdatePage";
 import { DebugPage } from "./pages/DebugPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
+import { ObservationPage } from "./pages/ObservationPage";
 import { getSettings, useSettings } from "./store";
 
-type Tab = "onboarding" | "transparency" | "behavior" | "ai" | "voice" | "memory" | "update" | "debug";
+type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "onboarding", label: "はじめに" },
   { id: "transparency", label: "無明が見ているもの" },
   { id: "behavior",     label: "動作設定" },
+  { id: "observation",  label: "観察" },
   { id: "ai",           label: "AI エンジン" },
   { id: "voice",        label: "音声" },
   { id: "memory",       label: "記憶" },
@@ -137,6 +139,7 @@ export function SettingsApp() {
           {tab === "onboarding"    && <OnboardingPage onDone={() => setTab("transparency")} />}
           {tab === "transparency" && <TransparencyPage />}
           {tab === "behavior"     && <BehaviorPage />}
+          {tab === "observation"  && <ObservationPage />}
           {tab === "ai"           && <AIPage />}
           {tab === "voice"        && <VoicePage />}
           {tab === "memory"       && <MemoryPage />}
