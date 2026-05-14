@@ -23,6 +23,7 @@
 | v1.0.5 hotfix | pending | prompt汚染修正、hearing_test local router、autonomous speech pacing、safetyCapはfield QA pending |
 | v1.0.6 | pending | Whisper言語指定(-l ja)、sleep発話、filename-derived signalsはfield QA pending |
 | v1.0.7 | pending | Observation Timeline、Observation Center、observationLevelはfield QA pending |
+| v1.0.8 | pending | Memory Mode、長期記憶候補、記録層の明示化はfield QA pending |
 
 ## Non-goals
 

@@ -12,12 +12,14 @@ import {
   countExpiredEvents,
   pruneExpiredEvents,
   buildMemoryExportPayload,
+  saveMemoryNote,
   type MemoryStats,
   type MemoryRetentionResult,
   type MemoryExportPayload,
 } from "../../systems/memory/memoryStore";
 import { buildDailySummary, type DailySummary } from "../../companion/memory/dailySummary";
 import { useSettings } from "../store";
+import type { MemoryMode } from "../types";
 
 // ────────────────────────────────────────────────
 // ユーティリティ
@@ -303,6 +305,8 @@ export function MemoryPage() {
   const [lastRetentionResult, setLastRetentionResult] = useState<MemoryRetentionResult | null>(null);
   const [appVersion, setAppVersion] = useState("dev");
   const [exportStatus, setExportStatus] = useState<string | null>(null);
+  const [noteInput, setNoteInput] = useState("");
+  const [noteSaved, setNoteSaved] = useState(false);
 
   useEffect(() => {
     if (!isTauri) return;
@@ -386,6 +390,15 @@ export function MemoryPage() {
 
   return (
     <div style={{ padding: "0 4px" }}>
+      {/* 記録される / 記録されないもの */}
+      <Section title="記録されるもの / 記録されないもの">
+        <div style={{ background: "#f4f8ff", borderRadius: 8, padding: "10px 14px", fontSize: 11, lineHeight: 1.9, color: "#555" }}>
+          <div><strong style={{ color: "#4a90d9" }}>記録する</strong>: 起動・クリック・発話ログ / Observation Timeline / ユーザーメモ</div>
+          <div><strong style={{ color: "#e07060" }}>記録しない</strong>: 音声transcript本文 / テキスト入力本文 / ファイル名 / ウィンドウタイトル本文</div>
+          <div><strong style={{ color: "#888" }}>揮発のみ</strong>: Interaction Trace / voice debug / autonomous speech debug</div>
+        </div>
+      </Section>
+
       {/* 説明 */}
       <p style={{ fontSize: 13, color: "#666", marginBottom: 16, lineHeight: 1.7 }}>
         無明の記憶はこのPC内にのみ保存されます。外部には送信されません。<br />
@@ -400,6 +413,33 @@ export function MemoryPage() {
       {/* 今日の活動サマリー */}
       <Section title="今日の様子">
         <DailySummaryPanel daily={data.daily} />
+      </Section>
+
+      {/* 記憶モード */}
+      <Section title="記憶モード">
+        <div style={{ background: "#f4f0ff", borderRadius: 8, padding: "10px 14px", fontSize: 12, lineHeight: 1.8 }}>
+          {[
+            { v: "ephemeral" as MemoryMode,             label: "一時のみ",                  note: "起動中の揮発ストアだけ。再起動で消える" },
+            { v: "timeline" as MemoryMode,              label: "タイムライン",               note: "ObservationEventを保存。発話ログも記録" },
+            { v: "timeline_summary" as MemoryMode,      label: "タイムライン＋要約（推奨）", note: "タイムラインを保存し、今日の様子サマリーを生成" },
+            { v: "ask_before_long_term" as MemoryMode,  label: "長期記憶は確認してから",     note: "意味のある記憶を候補に出す。承認したものだけ保存" },
+          ].map((opt) => (
+            <div key={opt.v} onClick={() => updateSettings({ memoryMode: opt.v })} style={{
+              display: "flex", alignItems: "flex-start", gap: 10,
+              padding: "6px 0", borderBottom: "1px solid #ede8ff", cursor: "pointer",
+            }}>
+              <div style={{
+                width: 14, height: 14, borderRadius: "50%", border: "2px solid #a890f0",
+                background: settings.memoryMode === opt.v ? "#a890f0" : "transparent",
+                flexShrink: 0, marginTop: 2,
+              }} />
+              <div>
+                <div style={{ fontSize: 12, fontWeight: settings.memoryMode === opt.v ? 600 : 400 }}>{opt.label}</div>
+                <div style={{ fontSize: 11, color: "#999" }}>{opt.note}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </Section>
 
       {/* 保存期間 */}
@@ -501,6 +541,51 @@ export function MemoryPage() {
             )}
           </div>
         )}
+      </Section>
+
+      {/* 長期記憶候補 */}
+      <Section title="長期記憶候補">
+        <div style={{ background: "#f7fff8", borderRadius: 8, padding: "10px 14px", fontSize: 12, lineHeight: 1.8 }}>
+          <p style={{ color: "#666", margin: "0 0 8px" }}>
+            「覚えておいてほしいこと」を手動で記録できます。raw transcriptやファイル名は自動的には入りません。
+          </p>
+          <div style={{ display: "flex", gap: 6 }}>
+            <input
+              type="text"
+              value={noteInput}
+              placeholder="例: 音楽制作が好き"
+              onChange={(e) => { setNoteInput(e.target.value); setNoteSaved(false); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && noteInput.trim()) {
+                  saveMemoryNote(noteInput.trim());
+                  setNoteInput("");
+                  setNoteSaved(true);
+                  setTimeout(() => setNoteSaved(false), 3000);
+                  refresh();
+                }
+              }}
+              style={{ flex: 1, padding: "5px 8px", fontSize: 12, border: "1px solid #c8e0c8", borderRadius: 5 }}
+            />
+            <button
+              onClick={() => {
+                if (!noteInput.trim()) return;
+                saveMemoryNote(noteInput.trim());
+                setNoteInput("");
+                setNoteSaved(true);
+                setTimeout(() => setNoteSaved(false), 3000);
+                refresh();
+              }}
+              disabled={!noteInput.trim()}
+              style={{ fontSize: 12, padding: "5px 12px", border: "1px solid #b0d4b8", borderRadius: 5, background: "white", color: "#2f7b4f", cursor: "pointer" }}
+            >
+              保存
+            </button>
+          </div>
+          {noteSaved && <div style={{ fontSize: 11, color: "#4caf7d", marginTop: 4 }}>記憶に保存しました</div>}
+          <div style={{ fontSize: 11, color: "#999", marginTop: 6 }}>
+            保存されたメモは上の「記録ログ」の「メモ」フィルタで確認できます。Memory exportにも含まれます。
+          </div>
+        </div>
       </Section>
 
       {/* 削除コントロール */}

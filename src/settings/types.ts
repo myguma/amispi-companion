@@ -11,6 +11,7 @@ export type STTEngine = "mock" | "whisperCli";
 export type WhisperLanguage = "ja" | "auto" | "en" | "pt" | "es" | "ko" | "zh" | "fr" | "de" | "custom";
 export type SleepSpeechIntervalPreset = "veryRare" | "rare" | "off";
 export type ObservationLevel = "minimal" | "balanced" | "watchful" | "custom";
+export type MemoryMode = "ephemeral" | "timeline" | "timeline_summary" | "ask_before_long_term";
 
 export type CompanionSettings = {
   quietMode: boolean;
@@ -67,6 +68,7 @@ export type CompanionSettings = {
   sleepSpeechIntervalPreset: SleepSpeechIntervalPreset;
   filenameSignalsEnabled: boolean;
   observationLevel: ObservationLevel;
+  memoryMode: MemoryMode;
 
   // 将来フェーズ用
   mediaAwarenessEnabled: boolean;

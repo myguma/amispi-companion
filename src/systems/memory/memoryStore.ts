@@ -226,6 +226,14 @@ export function clearEvents(): void {
 }
 
 /**
+ * ユーザーが手動で記録したメモをメモリに保存する
+ * memoryMode が ask_before_long_term の場合に承認済みメモとして使用する
+ */
+export function saveMemoryNote(text: string): void {
+  logEvent("note_saved", { text: text.trim().slice(0, 200) });
+}
+
+/**
  * 特定タイプのイベントのみ削除する
  */
 export function clearEventsByType(type: MemoryEventType): void {

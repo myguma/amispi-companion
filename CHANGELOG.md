@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.0.8] — 2026-05-14
+
+### Added (Memory Modes and Long-term Memory Boundary)
+
+- **Memory Mode設定**:
+  - `memoryMode: "ephemeral" | "timeline" | "timeline_summary" | "ask_before_long_term"` 追加（default: timeline_summary）
+  - MemoryPageに「記憶モード」セレクターを追加
+  - 各モードの意味をUI上で説明
+- **記録されるもの / 記録されないものの明示化**:
+  - MemoryPageに3層メモリ構造の説明を追加
+  - 記録する: 起動・クリック・発話ログ / Observation Timeline / ユーザーメモ
+  - 記録しない: transcript本文 / テキスト入力 / ファイル名 / ウィンドウタイトル本文
+  - 揮発のみ: Interaction Trace / voice debug / autonomous speech debug
+- **長期記憶候補 (User-approved)**:
+  - MemoryPageに「覚えておいてほしいこと」入力フォームを追加
+  - 入力したメモは `note_saved` event として保存
+  - Memory exportに含まれる
+  - raw transcriptや自動検出ファイル名は入らない
+  - `saveMemoryNote()` を memoryStore に追加
+
+### Maintained
+
+- compact 200x280 / click-through / hit test
+- transcript / text input / raw filename の自動保存なし
+- v1.0.7 の全機能
+
 ## [1.0.7] — 2026-05-14
 
 ### Added (Observation Timeline and Observation Center)
