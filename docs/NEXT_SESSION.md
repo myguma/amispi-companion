@@ -29,7 +29,9 @@
 ✅ cargo test filename_samples_are_explicit_and_limited → passed
 ✅ cargo test observation::tests → 3 passed (v1.5.0)
 ✅ git diff --check → clean
-🔲 v1.5.0 Release workflow → push後に確認必要
+✅ v1.5.0 Release workflow → success (run 25889278221)
+✅ Windows Installer artifact → amispi-companion_1.5.0_x64-setup.exe
+✅ Updater artifact → latest.json
 ```
 
 ---
@@ -71,7 +73,7 @@
 | v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
 | v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
 | v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
-| v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | 🔲 release前 / automated QA中 |
+| v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | ✅ automated QA passed / field QA pending |
 
 ## v1.5.0 実装詳細
 

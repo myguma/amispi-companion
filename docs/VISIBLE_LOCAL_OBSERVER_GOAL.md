@@ -203,6 +203,8 @@ v1.5.0 の到達点:
 - MemoryEvent / Observation Timeline / Memory exportには保存しない
 - OpenAI payload previewでは可視件数と別許可状態を表示するが、raw filenameは送信しない
 - Debug / Diagnostics / Transparencyで現在見えているsamplesと境界を確認可能
+- Release workflow success 済み
+- Windows installer / signature / latest.json artifact 確認済み
 
 ## 直近の次の一手
 
