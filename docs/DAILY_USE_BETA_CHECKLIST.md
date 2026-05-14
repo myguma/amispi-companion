@@ -1,6 +1,6 @@
 # v1.6.0 Daily-use Beta Checklist
 
-**最終更新: 2026-05-15 (v1.5.3)**
+**最終更新: 2026-05-15 (v1.6.0 field QA preflight)**
 
 このチェックリストは、v1.6.0 Daily-use Beta を release してよいかを判断するための実機QA runbookである。
 v1.5.2時点では、このチェックリストは準備完了を示すだけで、実機QA通過を意味しない。
@@ -27,14 +27,14 @@ npm run qa:preflight
 
 | 項目 | 状態 | 確認方法 |
 |---|---|---|
-| read-only preflight | pending | `npm run qa:preflight` が failures 0 |
-| branch | pending | `git branch --show-current` が `main` |
-| working tree | pending | `git status --short --branch` が clean |
-| version files | pending | `package.json` / `Cargo.toml` / `tauri.conf.json` が同一version |
-| latest tag | pending | `git tag --sort=-creatordate | head -1` |
-| release workflow | pending | `gh run list --limit 5` で対象tagのRelease workflow success |
-| release assets | pending | GitHub Releaseにinstaller / `.sig` / `latest.json` がある |
-| known issues | pending | `docs/KNOWN_ISSUES.md` のcritical項目を確認 |
+| read-only preflight | passed | 2026-05-15: `npm run qa:preflight` が failures 0 / warnings 0 |
+| branch | passed | `main` |
+| working tree | passed | clean |
+| version files | passed | `package.json` / `Cargo.toml` / `tauri.conf.json` が `1.5.4` で一致 |
+| latest tag | passed | `v1.5.4` |
+| release workflow | passed | `v1.5.4` Release workflow success |
+| release assets | passed | installer / `.sig` / `latest.json` を確認 |
+| known issues | passed | v1.5.4 field QA pending と 1-week residency QA pending を維持 |
 
 ## Automated Checks
 

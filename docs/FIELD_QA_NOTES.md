@@ -37,8 +37,49 @@
 > v1.5.2 では古いv0.2.0 daily-use beta checklistをv1.6.0向けrunbookへ刷新。実機QA自体は未実施。
 > v1.5.3 では v1.6.0 field QA開始前のread-only preflight scriptを追加。実機QA自体は未実施。
 > v1.5.4 では preflightのGitHub照会をretry/JSON確認へ変更。実機QA自体は未実施。
+> 2026-05-15 に v1.6.0 Daily-use Beta field QA開始前preflightを実行し、failures 0 / warnings 0 を確認。7日間常駐QA自体は未実施。
 
-**更新: 2026-05-15 (v1.5.4)**
+**更新: 2026-05-15 (v1.6.0 field QA preflight)**
+
+---
+
+## v1.6.0 Daily-use Beta field QA
+
+### Day 0 / Preflight
+
+- 日付: 2026-05-15
+- 実行時間: preflightのみ
+- 起動経路: 未実施
+- AI provider構成: 未実施
+- 主要作業: `npm run qa:preflight` をnetwork access runで実行
+- crash / freeze: 未実施
+- updater / installer: GitHub Release上のinstaller / `.sig` / `latest.json` asset存在のみ確認。実インストール・更新経路は未実施
+- memory export/import: 未実施
+- observation / diagnostics: 未実施
+- filename samples: 未実施
+- 気になった発話: 未実施
+- critical issue: preflight上はなし
+- 次の対応: Day 1として2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認する
+
+**preflight結果:**
+- branch: `main`
+- working tree: clean
+- main / origin/main: match
+- version files: `1.5.4` で一致
+- latest tag: `v1.5.4`
+- release workflow: `v1.5.4` success
+- release assets: `amispi-companion_1.5.4_x64-setup.exe` / `.sig` / `latest.json`
+- known issues: v1.5.4 field QA pending と 1-week residency QA pending を維持
+- summary: failures 0 / warnings 0
+
+**未通過のまま残す項目:**
+- 7日間常駐QA
+- installer / updater 実機経路
+- OpenAIなし / OpenAIあり / Ollama fallback / RuleProvider fallback
+- Memory v2 edit/delete/export/import
+- Observation / Diagnostics visibility
+- filename samples 明示ON/OFFと非保存/非送信境界
+- UI comfort / speech quality / critical issueなし
 
 ---
 

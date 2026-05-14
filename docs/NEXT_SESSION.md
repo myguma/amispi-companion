@@ -11,7 +11,7 @@
 ## 現在のステータス
 
 **バージョン:** v1.5.4
-**フェーズ:** Visible Local Observer Companion — Daily-use Beta preflight robustness
+**フェーズ:** Visible Local Observer Companion — v1.6.0 Daily-use Beta field QA started
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -34,6 +34,7 @@
 ✅ v1.5.4 Release workflow → success (run 25891609978)
 ✅ Windows Installer artifact → amispi-companion_1.5.4_x64-setup.exe
 ✅ Updater artifact → latest.json
+✅ v1.6.0 field QA preflight → failures 0 / warnings 0 (2026-05-15)
 ```
 
 ---
@@ -171,8 +172,8 @@
 
 ## 次に着手する候補
 
-- v1.5.x hotfix: v1.5.0〜v1.5.4 field QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
-- 問題がなければ v1.6.0 Daily-use Beta field QAを開始する
+- v1.6.0 Daily-use Beta Day 1: 2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認し、`docs/FIELD_QA_NOTES.md` に記録する
+- v1.5.x hotfix: Day 1以降のfield QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 
 ## v1.4.0 実装詳細
 
