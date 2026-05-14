@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.5)**
+**最終更新: 2026-05-14 (v1.1.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.5
-**フェーズ:** Prompt contamination and autonomous speech pacing hotfix
-**全体進捗:** 約 97〜98%
+**バージョン:** v1.1.0
+**フェーズ:** Safe Visible Local Observer Companion — ObservationSignal層・Watchful Mode・診断ページ
+**全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,14 +24,14 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.4)
-✅ cargo build  → Finished dev profile (v1.0.4)
-✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
+✅ npm run build → ✓ built (v1.1.0)
+✅ cargo build  → Finished dev profile (v1.1.0)
+✅ GitHub Actions / Windows Installer → v1.0.6〜v1.0.8 success / v1.1.0 in progress at session end
 ```
 
 ---
 
-## 完了済みフェーズ
+## 完了済みフェーズ (v1.0.5まで)
 
 | Phase / Milestone | 内容 | 状態 |
 |---|---|---|
@@ -41,965 +41,239 @@
 | Milestone A 第2段階 | RuleProvider文脈強化・autonomous speech精度向上・発話制御UI | ✅ v0.1.32 |
 | Milestone B 第1段階 | Memory Viewer UI・記憶削除機能・memoryStore拡張 | ✅ v0.1.33 |
 | Milestone B 第2段階 | Character State Expression・状態別CSSアニメーション・VoiceUIState統合 | ✅ v0.1.34 |
-| Field QA Fixes Round 1 | Ollamaキャッシュバグ修正・classify_app拡充・当たり判定改善・デバッグUI | ✅ v0.1.35 |
-| Field QA Root Cause Fixes | Ollama CORS根本修正(Rust経由HTTP)・ActiveAppDebug・SPEECH_VISIBLE hit test | ✅ v0.1.36 |
-| Companion Intelligence & Window Arch | AI-first自律発話・PromptBuilder/QualityFilter強化・window resize・3秒遅延キャプチャ | ✅ v0.1.37 |
-| Hotfix: Settings/Clipping/AI | TabErrorBoundary・DPI対応resize_companion・PromptBuilder時刻偏重修正・直近発話context | ✅ v0.1.38 |
-| Hotfix: Character/Hit Area/Foreground Debug | 240px layout・楕円hit target・serde camelCase/raw JSON debug | ✅ v0.1.39 |
-| Hotfix: Character/ContextMenu | 280px layout・sizeScale/window bounds同期・work area clamp・ContextMenu上方向clamp | ✅ v0.1.40 |
-| Hotfix: Character Rendering Anchor | Character実描画サイズをsizeScaleに同期・visual bottom anchor明確化 | ✅ v0.1.41 |
-| Hotfix: Speech Resize Bottom Anchor | rootをviewport基準化・character-stage absolute bottom anchor・resize拡大順序修正 | ✅ v0.1.42 |
-| Hotfix: Speech Bubble Relative Anchor | speech bubbleをwindow top基準からキャラ頭上基準へ変更 | ✅ v0.1.43 |
-| Hotfix: Settings Updater / Debug Mode / Hit Test QA | 設定画面更新導線・UpdateBadge hit test・debug overlay追加 | ✅ v0.1.44 |
-| Diagnostic: Sprite Render Debug Instrumentation | Character内部のimg/currentSrc/natural size/alpha bbox/CSS animation診断追加 | ✅ v0.1.45 |
-| Hotfix: Sprite Render Surface Fix | sprite実表示をbackground surfaceへ変更し、透明WebView expanded時の描画欠け対策 | ✅ v0.1.46 |
-| Hotfix: Always Expanded Transparent Window | speech表示/非表示でwindow heightを変えず、常時expanded height + 明示speech hit testへ変更 | ✅ v0.1.47 |
-| Hotfix: Compact Speech Layout | v0.1.47の常時410pxを撤回し、speech時も常時compact 280px内に収める | ✅ v0.1.48 |
-| First-run Onboarding | ローカルファースト・AI設定・自律発話・デバッグ方針を初回設定で案内 | ✅ v0.1.49 |
-| Memory Retention Policy | ローカル記憶の保存期間設定・起動時cleanup・手動整理UI | ✅ v0.1.50 |
-| DailySummary Context Reactions | 今日のクリック/発話/起動回数を短いRuleProvider反応へ安全に反映 | ✅ v0.1.51 |
-| Reaction Quality QA | 固定文短縮・fallback重複回避・QualityFilter追加強化 | ✅ v0.1.52 |
-| Quiet / Focus / DND Hardening | quiet/focus/DND時の自律発話抑制経路を整理 | ✅ v0.1.53 |
-| Memory Export / Data Control Polish | MemoryEvent JSON export・件数/期間/タイプ表示・docs更新 | ✅ v0.1.54 |
-| Release Polish | Node.js 24 opt-in・Update/Ollama失敗案内・Known Issues作成 | ✅ v0.1.55 |
-| Daily-use Beta | v0.1.x安定化をdocs/checklist/known issuesとして整理 | ✅ v0.2.0 |
-| Minimal Emotion Sprite Set | emotion prop・safe sprite fallback・DebugOverlay emo表示 | ✅ v0.2.1 |
-| Expressiveness QA | operational emotionが表示stateを過剰に上書きしないよう調整 | ✅ v0.2.2 |
-| Voice Implementation Plan | Whisper Push-to-Talk MVPの範囲・privacy・QA項目を固定 | ✅ v0.2.3 |
-| Whisper Push-to-Talk MVP | Rust commandでローカルWhisper CLIへ接続 | ✅ v0.3.0 / field QA pending |
-| Voice QA Hardening | Whisper未設定/録音失敗/STT失敗時の短い案内と復帰経路を整理 | ✅ v0.3.1 / field QA pending |
-| Release Candidate | docs / Known Issues / QA checklist / release notes draft整理 | ✅ v1.0.0-rc.1 / field QA pending |
-| Stable | v1.0.0 stable notes / Known Issues / hotfix policy整理 | ✅ v1.0.0 / field QA not performed |
-| v2 Roadmap Draft | docs/V2_ROADMAP_DRAFT.md にv2候補と非目標を整理 | ✅ docs only |
-| Field QA Hotfix | UpdateBadge右下配置・FFmpegによるWhisper用WAV変換 | ✅ v1.0.1 / voice STT field QA pending |
-| Voice transcript debug | VoicePage transcript preview・voice prompt/fallback/filter修正 | ✅ v1.0.2 / voice conversation field QA pending |
-| Voice interaction priority | voice後click抑制・speech priority・blank transcript rejection・観測質問fallback | ✅ v1.0.3 / voice conversation field QA pending |
-| Interaction coherence | voice session isolation・interaction trace・settings consistency・text input・speech interval model | ✅ v1.0.4 / field QA pending |
+| Field QA Fixes Round 1〜Root Cause | CORS根本修正・window resize・hit test | ✅ v0.1.35〜v0.1.36 |
+| Companion Intelligence & Window Arch | AI-first自律発話・PromptBuilder/QualityFilter強化・3秒遅延キャプチャ | ✅ v0.1.37 |
+| Hotfix rounds | CharacterLayout・ContextMenu・HitTest・SpeechBubble・Onboarding・MemoryRetention | ✅ v0.1.38〜v0.1.54 |
+| Release Polish | Node.js 24 opt-in・Update/Ollama案内・Known Issues | ✅ v0.1.55 |
+| Daily-use Beta | docs/checklist/known issues整理 | ✅ v0.2.0 |
+| Minimal Emotion Sprite Set | emotion prop・safe sprite fallback | ✅ v0.2.1〜v0.2.2 |
+| Whisper Push-to-Talk MVP | Rust commandでローカルWhisper CLIへ接続 | ✅ v0.3.0〜v0.3.1 |
+| Release Candidate / Stable | docs整理、field QA pending | ✅ v1.0.0-rc.1 / v1.0.0 |
+| Hotfix v1.0.1〜v1.0.5 | UpdateBadge・FFmpeg・transcript preview・voice interaction・settings consistency・prompt汚染修正 | ✅ v1.0.1〜v1.0.5 |
 
 ---
 
-## v1.0.4 hotfix summary
+## v1.0.6〜v1.1.0 完了済み (今セッション実装)
 
-- voice入力ごとに `voiceSessionId` を発行し、古いSTT/AI/fallback結果を破棄
-- VoicePage debugに sessionId / stale dropped count / normalized transcript / intent を追加
-- VoicePage / DebugPageに直近のinteraction traceを追加
-- `画面見えてる？` / `今何を見てる？` 系はLLM丸投げではなくローカル観測routerで先に答える
-- `autonomousMovementEnabled=false` が `useWander` に反映されるよう修正
-- 自律発話はinterval preset中心へ移行し、旧max/hourは安全上限扱いに弱めた
-- VoicePageに一時テキスト送信欄を追加
-- 自発発話時の短いcryを追加
-- UpdateBadgeをキャラ足元中央寄りへ移動し、Rust hit testも同期
-- transcript / text input / trace / 音声ファイルは永続保存しない
-- Remote LLMは実装していない
+| バージョン | 内容 | 状態 |
+|---|---|---|
+| v1.0.6 | Whisper言語指定(-l ja)、sleep発話、filename-derived signals | ✅ field QA pending |
+| v1.0.7 | Observation Timeline、Observation Center (observationPage) | ✅ field QA pending |
+| v1.0.8 | Memory Mode、長期記憶候補、記録層の明示化 | ✅ field QA pending |
+| v1.1.0 | ObservationSignal層、Watchful Mode、診断ページ | ✅ field QA pending |
 
 ---
 
-## v1.0.3 hotfix summary
+## v1.1.0 実装詳細
 
-- v1.0.2 field QAでWhisperが聞こえていることを確認
-- voice long press release後に通常clickが発火し、voice返答をclick返答が上書きする問題を修正
-- voice recording/STT/AI応答中と応答直後はclickを抑制し、抑制clickは `character_clicked` として記録しない
-- `triggerSpeak` に source / priority / lockMs を追加し、voice返答をmanual click / drag / autonomousより優先
-- `[BLANK_AUDIO]` / `[NO_SPEECH]` / `[MUSIC]` / 記号のみ / ノイズを no_speech 扱いにする
-- voice fallbackに「今何を見てる？」「画面見えてる？」向けの短い観測範囲応答を追加
-- 末尾「ん」や壊れた句読点をvoice post-process / QualityFilterで抑制
-- Remote LLMは実装していない。v2以降の明示opt-in検討メモだけdocsへ残す
-- compact `200x280` window / hit test / click-through / ContextMenu / UpdateBadge / Onboarding / Memory / Update / Debug / Transparency / Ollama / Active Appは維持
+### A: ObservationSignal層
 
----
+`src/systems/observation/observationSignals.ts` (NEW)
 
-## v1.0.2 hotfix summary
+- `ObservationSignalKind`: `downloads_pile` / `installer_pile` / `archive_pile` / `audio_work` / `image_pile` / `daw_active` / `music_playing` / `video_playing` / `long_idle` / `user_returned` / `code_work` / `settings_open` / `fullscreen` / `gaming`
+- `ObservationSignal`: `{ kind, strength (0–1), summary }`
+- `buildObservationSignals(snapshot)`: ObservationSnapshotからシグナルを導出
+- `topSignal(signals)`: 最強シグナルを返す
+- 生スナップショットをそのままUIや反応エンジンに渡さず、シグナル層を挟む設計
 
-- VoicePageに直近の音声認識結果を追加
-- transcript previewは最大80文字の一時表示のみ。MemoryEvent / localStorage / exportへ保存しない
-- DebugMode ON時にMIME、extension、FFmpeg/Whisper結果、stderr preview、temp cleanup、AI sourceを表示
-- voice trigger時のPromptBuilderへ「音声内容に直接返答する」追加ルールを入れた
-- transcriptありAI失敗時はclick fallbackを使わず、voice専用fallbackで内容を少し反映
-- QualityFilterで英字混入、`继续观察`、assistant的表現、voice generic返答を拒否
-- compact `200x280` window / UpdateBadge / click-through / ContextMenu / character layout は維持
+### B: Watchful Mode プリセット
 
----
+`src/settings/pages/BehaviorPage.tsx`
 
-## v1.0.1 hotfix summary
+- 3つのクイックプリセットボタンを追加:
+  - **Watchful Mode (観察モード)**: observationLevel=watchful + autonomousSpeechEnabled=true + focusMode=false
+  - **バランス**: observationLevel=balanced (default)
+  - **静かに**: observationLevel=minimal + quietMode=true
 
-- v1.0.0 field QAで起動 / compact character layout / settings / onboarding / memory / update / debug / transparency / right click / click-through / voice failure recovery は概ねOK
-- UpdateBadgeがspeech bubbleと被る問題を避けるため、companion右下の小さなpillへ移動
-- Rust hit testも右下badge矩形へ同期し、UpdateBadge表示中だけinteractiveにする
-- WebView録音Blobをwhisper-cliへ直接渡さず、FFmpegで16kHz mono PCM WAVへ変換してから渡す
-- `ffmpegExecutablePath` をVoice設定に追加
-- Voice実STT成功は v1.0.1 field QA pending
-- compact `200x280` window / speech時window resize禁止 / click-through / ContextMenu / character layout は維持
+### C: 診断ページ
 
----
+`src/settings/pages/DiagnosticsPage.tsx` (NEW)
 
-## v2 Roadmap Draft
+- `CheckRow` コンポーネント: ✓(green) / ✗(red) で状態表示
+- チェック項目:
+  - Voice/STT: voiceInputEnabled・whisperExecutablePath設定済み・whisperModelPath設定済み
+  - Observation: Ollamaベースurl設定・activeApp観測有効
+  - Memory: memoryMode設定値表示
+  - AutonomousSpeech: autonomousSpeechEnabled・intervalPreset表示
+- `src/settings/SettingsApp.tsx` に「診断」タブを追加
 
-- `docs/V2_ROADMAP_DRAFT.md` を追加
-- plugin architecture / richer personality profiles / optional local model management / advanced memory export-import / multi-character / appearance customization / advanced debugging toolsを候補として整理
-- v2でも cloud AI / cloud STT / always-on mic / screen capture / auto file operations / web search / keyboard-clipboard-browser-history monitoring は非目標として維持
-- 実装には進んでいない
+### D: Field QA pending
+
+- ObservationSignal層が実観測から正しいシグナルを生成するか
+- Watchful Modeプリセットが設定を一括変更するか
+- 診断ページが実情を正しく反映するか
+- コンパクト200x280 / hit test / click-through の回帰がないか
 
 ---
 
-## v1.0.0 実装詳細
+## v1.0.8 実装詳細
 
-### A: Stable tag
+### A: Memory Mode
 
-- 新機能追加なし
-- `docs/V1_STABLE_RELEASE_NOTES.md` を追加
-- v1.0.0 stable後の実機QAで起動 / compact character layout / settings / onboarding / memory / update / debug / transparency / right click / click-through は通過
-- v1.0.1+ hotfix方針を記録
-- compact `200x280` window / hit test / character layout / Voice / Ollama / Active App は変更なし
+`src/settings/types.ts` に `MemoryMode` 追加:
+- `ephemeral`: 記憶なし（セッションのみ）
+- `timeline`: タイムライン記録のみ
+- `timeline_summary`: タイムライン + 要約（デフォルト）
+- `ask_before_long_term`: 長期保存前に確認
 
-### B: Field QA remaining
+### B: 長期記憶候補メモ
 
-- 長時間常駐
-- 実インストール環境のupdate
-- v1.0.1のFFmpeg変換後のWhisper実STT
-- マイク権限差分 / 音声デバイス差分 / 一時ファイル削除の継続確認
-
----
-
-## v1.0.0-rc.1 実装詳細
-
-### A: Release Candidate整理
-
-- 新機能追加なし
-- `docs/V1_RELEASE_CANDIDATE_CHECKLIST.md` を追加
-- `docs/V1_RELEASE_NOTES_DRAFT.md` を追加
-- Known Issues / roadmap / progress / handoffをRC基準へ更新
-- compact `200x280` window / hit test / character layout / Voice / Ollama / Active App は変更なし
-
-### B: Field QA pending
-
-- v1.0.0-rc.1自体のWindows実機QA
-- 長時間常駐
-- 実インストール環境のupdate
-- Whisper binary/model/path/MIME type/マイク権限/一時ファイル削除
-- Ollama未起動 / model missing案内
-
----
-
-## v0.3.1 実装詳細
-
-### A: Voice QA Hardening
-
-- `voiceRecordingError()` で録音失敗時に `voiceError` へ入り、短い固定文で状況を返す
-- Whisper未設定 / STT timeout / no speech / その他失敗時に、AI応答へ進まず `voiceReady` / `voiceOff` へ復帰する
-- Whisper CLI設定UIに、一時音声ファイル、ローカル実行、録音形式互換性の注意を追記
-- compact `200x280` window / hit test / character layout / Ollama prompt は変更なし
-
-### B: Field QA pending
-
-- Windows実機でMediaRecorder出力がWhisper CLIに読めるか
-- Whisper binary / model pathが環境ごとに動くか
-- マイク権限拒否 / timeout / executable失敗時の短い案内表示
-- 一時音声ファイルが残らないか
-- long press / drag / click干渉
-
----
-
-## v0.3.0 実装詳細
-
-### A: Whisper Push-to-Talk MVP
-
-- `transcribe_with_whisper` Tauri commandを追加
-- WebViewの録音Blobをbytesへ変換しRustへ渡す
-- Rust側で一時音声ファイルを作成
-- Whisper CLIを `std::process::Command` でshellなし実行
-- transcript txtファイルまたはstdoutから文字起こしを読む
-- timeout時はprocess killを試みる
-- 成功/失敗に関係なく一時ディレクトリ削除を試みる
-- `WhisperCliSTTAdapter` が既存 `requestVoiceResponse` 経路へ transcript を戻す
-
-### B: Field QA pending
-
-- Windows実機でMediaRecorder出力がWhisper CLIに読めるか
-- Whisper binary / model pathが環境ごとに動くか
-- マイク権限拒否 / timeout / executable失敗時の復帰
-- 一時音声ファイルが残らないか
-- long press / drag / click干渉
-
----
-
-## v0.2.3 実装詳細
-
-### A: Voice Implementation Plan
-
-- Whisper実接続前に docs/VOICE_INTERACTION.md を現状へ更新
-- v0.3.0で実装する範囲を Push-to-Talk / local Whisper CLI / transcript返却 / 一時ファイル削除に限定
-- wake word、常時マイク監視、クラウドSTT、音声保存、TTS、音声ファイル操作コマンドは非目標として固定
-- STT失敗時UIとfield QA pendingを整理
-- docs/SAFETY_AND_PRIVACY_BOUNDARIES.md とPRODUCT_COMPLETION_ROADMAPを更新
-
-### B: 次の実装候補
-
-- v0.3.0 Whisper Push-to-Talk MVP
-- Whisper binary/model未設定でも壊れない
-- 一時音声ファイルを必ず削除する
-- 実機確認なしで進む場合は field QA pending として明記
-
----
-
-## v0.2.2 実装詳細
-
-### A: Expressiveness QA
-
-- `happy` / `shy` / `concerned` だけを追加表情sprite候補として扱う
-- `aware` / `idle` / `speaking` など既存state相当のemotionは、描画stateを上書きしない
-- drag中は表情より `touched` stateを優先
-- DebugOverlayに raw emotion `emo=` と visual override `vis=` を分けて表示
-- window size / hit test / character-stage / compact speech layout は変更なし
-
-### B: Field QA pending
-
-- `vis=` が想定通り追加表情の時だけ表示されるか
-- speaking / touched / drag中に表示が過剰に切り替わらないか
-- 専用emotion画像なしでも既存sprite fallbackが自然か
-- compact 200x280 character layout / hit test / click-through の回帰がないか
-
----
-
-## v0.2.1 実装詳細
-
-### A: Minimal Emotion Sprite Set
-
-- `CompanionEmotion` に `happy` を追加
-- `Character` に `emotion` prop を追加
-- `emotionToSpriteState()` で happy / shy / concerned を既存spriteへ安全fallback
-- sprite探索順を `emotion.png → fallback state.png → current state.png → idle.png` にした
-- `useCompanionState` が AI/RuleProvider output の `emotion` を保持し、`App` 経由で Character に渡す
-- DebugOverlayに `emo=` を表示
-- docs/EMOTION_SPRITE_SET.md を追加
-
-### B: Field QA pending
-
-- 専用emotion画像がなくても表示が消えないか
-- RuleProvider / mock の emotion が既存spriteへ自然に反映されるか
-- speaking / touched / drag中に表示が崩れないか
-- compact 200x280 character layout / hit test / click-through の回帰がないか
-
----
-
-## v0.2.0 実装詳細
-
-### A: Daily-use Beta Docs Consolidation
-
-- 新機能追加なし
-- `docs/DAILY_USE_BETA_CHECKLIST.md` を追加
-- `docs/KNOWN_ISSUES.md` と合わせ、automated checks と field QA pending を分離
-- compact `200x280` fixed window / speech時window resize不採用を設計制約として再確認
-- v0.1.48〜v0.1.50で実機QA通過済みの土台を維持
-
-### B: Field QA pending
-
-- v0.2.0自体の実機QAは未実施
-- v0.1.51以降の文脈反応 / reaction quality / quiet-focus-DND / memory export / release polish は実機確認が必要
-- updater実機更新、Ollama未起動表示、長時間常駐は引き続きKnown Issuesで管理
-
----
-
-## v0.1.55 実装詳細
-
-### A: Release Polish
-
-- Release workflowに `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` を追加し、Node.js 20 deprecation noticeに先回り
-- UpdatePageの失敗表示に、ネットワーク / GitHub Releases / 署名設定を確認する案内を追加
-- AIPageのOllama接続失敗表示に、Ollama起動 / Base URL / model pull確認の案内を追加
-- docs/KNOWN_ISSUES.md を追加し、daily-use beta前の実機依存リスクを整理
-
-### B: Field QA pending
-
-- v0.1.55 Release workflowでNode.js 20 deprecation annotationが消えるか
-- 設定画面UpdatePageの実機更新 / 失敗表示
-- Ollama未起動・model missing時の表示
-- compact 200x280 character layout / click-through / UpdateBadge / Debug / Transparency の回帰
-
----
-
-## v0.1.54 実装詳細
-
-### A: Memory Export / Data Control Polish
-
-- `buildMemoryExportPayload(appVersion, retentionDays)` を追加
-- export JSON に `schemaVersion: 1`、アプリバージョン、書き出し日時、保存期間、件数、タイプ別件数、期間、MemoryEvent本体を含める
-- MemoryPageに「エクスポート」セクションを追加
-- export前に件数・期間・タイプ別件数を表示
-- 「JSONを書き出す」でブラウザ/Windows WebViewのローカル保存としてJSONを出力
-- importは未実装。外部送信・クラウド同期・RAG登録はしない
-
-### B: Field QA pending
-
-- 空イベント / 通常イベントありの両方でJSON exportできるか
-- 保存期間cleanup後のexport対象が期待通りか
-- 発話ログのみ削除 / 全削除 / フィルタ表示が壊れていないか
-- Onboarding / Update / Debug / Transparency / compact character layout の回帰がないか
-
----
-
-## v0.1.53 実装詳細
-
-### A: Quiet / Focus / DND Hardening
-
-- `SpeechPolicy` で quietMode 中の非手動発話を抑制
-- focusMode 中は idle / observation 由来の自律発話を抑制
-- `selectReaction` で focusMode 中に `avoidDuringFocus` reaction を選ばないようにした
-- observation AI-first経路が quiet / DND をすり抜けないようにした
-- idle自律発話で SpeechPolicy が拒否したあと fallback が喋る経路を修正
-- DND中のクリック / voice はOllama呼び出しを避け、短い固定反応へ寄せた
-- Settings / Onboarding のモード説明を実挙動に合わせた
-
-### B: Field QA pending
-
-- quietMode中に自律発話・観測反応が止まるか
-- focusMode中に自律発話頻度が十分下がるか
-- DND中にクリック / voice long press 以外で喋らないか
-- click-through / compact `200x280` character layout / Update / Debug / Transparency の回帰がないか
-
----
-
-## v0.1.52 実装詳細
-
-### A: Reaction Quality QA
-
-- RuleProviderの記憶文脈候補をactivity別候補の後ろへ回し、「今日」言及の頻度を抑制
-- 固定文を短くし、複数文や助言寄り表現を減らした
-- dialogue fallbackに直近4件の簡易重複回避を追加
-- `QualityFilter` に `してください` / `しましょう` / `頑張` / 測定表示系の拒否を追加
-- `RESPONSE_QUALITY_GUIDE.md` を現行方針へ更新
-
-### B: Self-reviewで直したもの
-
-- `RuleProvider` に残っていた「急がなくてよさそう」系の助言文を観察文へ変更
-- MemorySummary / DailySummary の「今日は何度か無明に触れた」を「何度か呼ばれている」へ変更
-- キャラクター名をコード内の文脈サマリーに追加しない方向へ寄せた
-
-### C: Field QA pending
-
-- クリック反応が自然か
-- 自律発話がうるさすぎないか
-- Ollama fallback時に破綻しないか
-- QualityFilterが強すぎてsource: ollamaを不必要に落としていないか
-
----
-
-## v0.1.51 実装詳細
-
-### A: DailySummary / RuleProvider 活用強化
-
-- `CompanionMemorySummary` に `todaySpeechCount` を追加
-- RuleProvider の手動反応に、今日のクリック回数 / 起動回数を短く反映
-- 例:
-  - 「今日は、よく呼ばれるね」
-  - 「また来たね」
-  - 「今日は何度か会ってるね」
-- observation / idle の固定文を短くし、管理・助言っぽい表現を減らした
-- 直近発話と同じ固定文を避ける候補選択へ調整
-
-### B: 自律発話を控えめにする条件
-
-- 今日すでに発話が多い場合、idle / observation の自律反応を抑制
-- manual click / voice / wake 反応は殺さない
-- retentionで古いイベントが消えていても、保存済み MemoryEvent の範囲で安全に再計算する
-
-### C: Field QA pending
-
-- 文脈反応が監視感・管理感を出していないか
-- 同じ発話が続きにくいか
-- 自律発話が控えめになっているか
-- Ollama source / fallback挙動が壊れていないか
-
-### D: 触っていないもの
-
-- compact `200x280` speech layout
-- character rendering / hit test geometry
-- PromptBuilder / QualityFilter / Ollama provider の大改造
-- Onboarding / Update / Debug / Transparency / MemoryPage UI
-
----
-
-## v0.1.50 実装詳細
-
-### A: Memory Retention Policy
-
-- `CompanionSettings` に `memoryRetentionDays` を追加
-- デフォルトは `30` 日
-- 選択肢
-  - 7日
-  - 30日
-  - 90日
-  - 無期限 (`0`)
-- 対象は MemoryEvent 全タイプ
-- 500件の件数上限は従来通り維持
-- timestamp が不正な既存イベントは互換性のため残す
-
-### B: cleanup実装
-
-- `memoryStore.ts` に `countExpiredEvents()` / `pruneExpiredEvents()` を追加
-- 起動時に `pruneExpiredEvents(settings.memoryRetentionDays)` を1回実行
-- cleanup後に `app_start` を記録する
-- DailySummary は保存済み MemoryEvent から再計算される
+`src/systems/memory/memoryStore.ts` に `saveMemoryNote(text: string)` 追加
 
 ### C: MemoryPage UI
 
-- 保存期間セクションを追加
-- 削除対象件数プレビューを追加
-- 「今すぐ整理」で手動cleanupできる
-- cleanup後に stats / event list / DailySummary を再読み込み
-- 発話ログのみ削除、すべて削除、フィルタ表示は維持
-
-### D: 維持したもの
-
-- v0.1.48 compact `200x280` speech layout
-- v0.1.49 First-run Onboarding
-- UpdatePage / DebugPage / TransparencyPage
-- ContextMenu / click-through / drag / voice long press / Active App / Ollama
+- `src/settings/pages/MemoryPage.tsx` に Memory Mode セレクタを追加
+- 3層記憶構造の説明（運用記憶 / 会話揮発 / ユーザー承認長期）
+- 長期記憶ノート入力フォーム
 
 ---
 
-## v0.1.49 実装詳細
+## v1.0.7 実装詳細
 
-### A: v0.1.48 実機確認結果
+### A: Observation Timeline Store
 
-- idle / speech / drag / speech中drag のすべてでキャラ下半分が消えない
-- debug overlay上で wh/client/vh は `200x280` 固定
-- stage / wrapper / surface / img / alpha は viewport 内
-- compact speech layout は採用
-- 410px expanded window、dynamic resize `280→410`、always expanded `410px` は不採用
-- 今後、companion window は compact `200x280` 固定を設計制約として扱う
+`src/systems/observation/observationTimelineStore.ts` (NEW)
 
-### B: First-run Onboarding
+- `ObservationEventType`: active_app_changed / idle_started / user_returned / media_started / media_stopped / folder_signal_changed / companion_reacted / setting_changed / sleep_entered / update_available
+- `ObservationEvent`: `{ id, timestamp, type, summary, source, signalKind?, strength? }`
+- localStorage key: `amispi_observation_timeline`
+- 最大200件、保存期間はretentionDays設定に従い起動時pruneObservationTimeline
 
-- `CompanionSettings` に `onboardingCompleted` / `onboardingVersion` を追加
-- 初回起動時に設定ウィンドウを開く
-- 設定画面に「はじめに」タブを追加
-- Onboarding構成
-  - Welcome
-  - Privacy / Local-first
-  - AI Engine
-  - Behavior
-  - Window / Controls
-  - Finish
-- 完了またはスキップで `onboardingCompleted=true` / `onboardingVersion=1`
-- 完了後も設定画面から再表示可能
-- 実機QAで初回表示、完了後の非再表示、設定画面からの再表示を確認済み
-- Ollama / 自律発話 / privacy 説明、既存設定、Update、Active App、voice long press の回帰なし
+### B: Observation Center UI
 
-### C: 注意
+`src/settings/pages/ObservationPage.tsx` (NEW)
 
-- v0.1.48で安定した character/window/hit test layout は変更していない
-- DebugMode / UpdatePage / TransparencyPage / Active App / Ollama は維持
+- observationLevel セレクタ（minimal / balanced / watchful / custom）
+- 現在の観測状態表示（activeApp, idle, media）
+- 直近タイムラインイベント一覧
+
+### C: App.tsx 統合
+
+- `prevSnapshotRef` でスナップショット変化を検出
+- app categoryが変わったとき → `active_app_changed` イベント追加
+- idle 5分超 → `idle_started` イベント
+- media start/stop → `media_started` / `media_stopped`
+- folder signal変化 → `folder_signal_changed`
+- 起動時に `pruneObservationTimeline(retentionDays)` を実行
 
 ---
 
-## v0.1.48 実装詳細
+## v1.0.6 実装詳細
 
-### A: v0.1.47 実機結果
+### A: Whisper言語指定
 
-- 常時expanded `200x410` では idle / speech / drag / speech中drag の全状態でキャラ下半分が消えた
-- debug上は `stage` / `wrapper` / `surface` / `img` / `alphaRect` が viewport 内で、`OVER` は出ていない
-- 410px高の transparent companion window 下部領域にspriteを置く設計が現在の実機環境では危険と判断
+- `src-tauri/src/lib.rs`: `transcribe_with_whisper` に `language_code: String` 追加
+  - `lang != "auto"` かつ非空のとき `-l <lang>` をwhisper引数に追加
+- `src/systems/voice/WhisperCliSTTAdapter.ts`: `languageCode` フィールドを追加
+- `src/systems/voice/STTAdapterManager.ts`: `whisperLanguage === "custom"` の場合は `whisperCustomLanguage` を使用
+- `src/settings/pages/VoicePage.tsx`: WHISPER_LANGUAGE_OPTIONS 10言語（ja/auto/en/pt/es/ko/zh/fr/de/custom）
 
-### B: compact固定へ戻す
+### B: English transcript rejection
 
-- `src-tauri/tauri.conf.json`: companion初期heightを `280` に戻した
-- `src-tauri/src/lib.rs`: `resize_companion` の target height を常に `CHAR_WINDOW_H_LOGICAL` に固定
-- `src/App.tsx`: expected `windowH` を `COMPANION_COMPACT_H` に戻した
-- speech表示時も `410px` へ広げず、dynamic resizeもしない
+`src/systems/voice/normalizeTranscript.ts`
 
-### C: compact内speech layout
+- `whisperLanguage === "ja"` のとき、日本語文字なし＋ASCII onlyの場合 `english_when_ja_expected` で reject
 
-- speech bubble は character-stage 頭上基準のまま
-- `src/styles/index.css`: compact window内に収めるため bubble 最大高さを制限し、本文を最大3行で省略
-- 長文応答は完全表示よりキャラ正常描画を優先する
+### C: Sleep発話
 
-### D: 維持したもの
+`src/hooks/useCompanionState.ts`
 
-- `SPEECH_VISIBLE: AtomicBool` による明示hit test状態
-- v0.1.47 の DebugOverlay / ContextMenu 重なり修正
-- v0.1.46 の background render surface / sprite debug
-- 設定画面アップデート / UpdateBadge hit test / DebugMode
-- ContextMenu / click-through / drag / voice long press / Active App / Ollama
+- `"sleep_autonomous"` をSpeechSourceに追加（priority 15）
+- `SLEEP_SPEECH_LINES`: `["……", "少し寝てた", "まだ、ここにいる", "小さく起きた", "静かだね", "夢を見てた"]`
+- `sleepSpeechDelayRangeMs`: rare→8-15min / veryRare→15-30min / off→null
+- `scheduleSleepSpeech` useCallback と useEffect
+- sleep state解除で次のスケジュールはクリア
 
----
+### D: Filename-derived signals (Rust)
 
-## v0.1.47 実装詳細
+`src-tauri/src/observation/mod.rs`
 
-### A: v0.1.46 debug結果
-
-- background render surfaceでも speech expanded時のキャラ下半分消失は残った
-- debug上は `stage` / `wrapper` / `surface` / `img` / `alphaRect` がすべて viewport 内で、`OVER` は出ていない
-- 消える境界が旧compact height `280px` 付近に見えるため、280→410 dynamic resize後のtransparent WebView / GPU compositor内部clipを疑う
-
-### B: always expanded window化
-
-- `src-tauri/src/lib.rs`
-  - `resize_companion` は speech表示状態に関係なく常に `CHAR_WINDOW_H_LOGICAL + BUBBLE_WINDOW_H_LOGICAL` を target height にする
-  - speech表示/非表示でwindow heightを変えず、sizeScale変更時のみbounds同期する設計へ変更
-- `src-tauri/tauri.conf.json`
-  - companion初期heightを `410` に変更
-- `src/App.tsx`
-  - debug expected `windowH` を常時expanded heightに変更
-  - root `100vw/100vh`、character-stage bottom anchor、speech bubble頭上基準は維持
-
-### C: hit test状態の明示化
-
-- `SPEECH_VISIBLE: AtomicBool` を追加
-- `resize_companion(speechVisible, sizeScale)` で表示状態をRustへ同期
-- hit testはwindow heightからspeech表示を推測せず、`SPEECH_VISIBLE` を参照
-- 常時410pxでも speech=false時はbubble hitを無効化し、上部透明領域click-throughを維持
-
-### D: DebugOverlayとContextMenu
-
-- `DebugOverlay` に `suspended` propを追加
-- ContextMenu表示中はDebugOverlayを一時停止し、右クリックメニューがdebug文字列に隠れないようにした
-
-### E: 触っていないもの
-
-- sprite画像 / canvas描画 / speechSafetyLift / work area clamp大幅変更
-- Ollama / Active App / PromptBuilder / QualityFilter / Transparency UI
+- `FolderSummary` に 7フィールド追加: `filename_signals` / `installer_pile_likely` / `archive_pile_likely` / `audio_export_likely` / `image_export_likely` / `daw_project_likely` / `code_project_likely` / `temp_download_likely`
+- `build_filename_signals(names_lower)` ヘルパー
+- ファイル名200件上限でcollect → シグナルのみ返す（生ファイル名は返さない）
 
 ---
 
-## v0.1.46 実装詳細
+## 設定型まとめ (v1.0.6+)
 
-### A: v0.1.45 debug結果
+```ts
+// src/settings/types.ts に追加済み
+export type WhisperLanguage = "ja" | "auto" | "en" | "pt" | "es" | "ko" | "zh" | "fr" | "de" | "custom";
+export type SleepSpeechIntervalPreset = "veryRare" | "rare" | "off";
+export type ObservationLevel = "minimal" | "balanced" | "watchful" | "custom";
+export type MemoryMode = "ephemeral" | "timeline" | "timeline_summary" | "ask_before_long_term";
 
-- speech表示時も `stage` / `wrapper` / `img` / `alpha` は viewport 内だった
-- `speaking.png` 固有ではなく、speech中dragの `touched.png` でも視覚的に下半分が消えた
-- compact `200x280` では speech=true でも見切れず、expanded transparent WebView状態の描画/合成問題が本命になった
-
-### B: sprite render surface
-
-- `Character.tsx`
-  - 実表示を `<img>` から `div.character-sprite-surface` の `background-image` に変更
-  - `<img>` は preload / fallback / debug 用に透明状態で保持
-  - state変更時に preload URL index をリセット
-- `index.css`
-  - `character-wrapper` / `character-anim` / sprite surface に `overflow: visible`、`isolation: isolate`、`backface-visibility` を追加
-- `DebugOverlay.tsx`
-  - `renderMode=background`
-  - `surface` rect
-  - img / alpha debug は維持
-
-### C: 触っていないもの
-
-- window height、speech lift、work area clamp
-- Ollama / Active App / ContextMenu / PromptBuilder / QualityFilter
-- speech bubble頭上基準、UpdateBadge hit test、設定画面アップデート
+// CompanionSettings に追加済みフィールド
+whisperLanguage: WhisperLanguage;          // default: "ja"
+whisperCustomLanguage: string;             // default: ""
+sleepSpeechEnabled: boolean;               // default: true
+sleepSpeechIntervalPreset: SleepSpeechIntervalPreset; // default: "veryRare"
+filenameSignalsEnabled: boolean;           // default: true
+observationLevel: ObservationLevel;        // default: "balanced"
+memoryMode: MemoryMode;                    // default: "timeline_summary"
+```
 
 ---
 
-## v0.1.45 実装詳細
+## Field QA pending (v1.0.6〜v1.1.0)
 
-### A: v0.1.44 実機debug結果
-
-- speech表示時も `stage` / `wrapper` は viewport 内に収まっていた
-- idle: viewport `200x280`、stage/wrapper bottom `256`
-- speech: viewport `200x410`、stage/wrapper bottom `386`
-- bottom余白は約24pxあり、window / viewport / work area clamp は直接原因ではなさそう
-
-### B: Character内部debug
-
-- `src/components/Character.tsx`
-  - sprite `<img>` に `character-sprite-img` class と `data-sprite-url` を追加
-- `src/components/DebugOverlay.tsx`
-  - `effectiveState`
-  - current sprite URL
-  - img rect
-  - img naturalWidth / naturalHeight / complete
-  - CSS animationName / animationDuration
-  - CSS transform / transformOrigin
-  - objectFit / objectPosition
-  - canvasで測った alpha bbox
-  - alpha bbox の画面上rect
-  - img / alpha の viewport超過 `OVER`
-
-### C: 注意
-
-- v0.1.45 は診断版
-- window height増加、speech lift、見た目の大きな補正は入れていない
-- 次回QAで `speaking.png` / `nat=160x160` / `alphaRect` / `char-speak` を確認し、修正方針を決める
+| 機能 | 確認内容 |
+|---|---|
+| Whisper -l ja | 言語引数が正しく渡るか / auto時は引数なしか |
+| English rejection | ja設定でASCII-onlyが正しくrejectされるか |
+| Sleep発話 | sleep状態中のみ低頻度murmurが出るか / wake後は止まるか |
+| Filename signals | downloadsフォルダ等で正しいシグナルが得られるか |
+| Observation Timeline | アプリ切替・idle・media変化でイベントが積まれるか |
+| Observation Center UI | observationLevelセレクタが設定を変更するか |
+| Memory Mode セレクタ | 設定が保存・反映されるか |
+| ObservationSignal層 | buildObservationSignalsが実観測から正しい結果を返すか |
+| Watchful Modeプリセット | 設定一括変更が機能するか |
+| 診断ページ | 各チェック項目が実情を反映するか |
+| コンパクトレイアウト | 200x280 / hit test / click-through 回帰なし |
 
 ---
 
-## v0.1.44 実装詳細
-
-### A: 設定画面からの更新導線
-
-- `src/settings/pages/UpdatePage.tsx` を追加
-- `SettingsApp.tsx` に「アップデート」タブを追加
-- `get_app_version` / `check_for_updates` / `install_update` を直接呼び、companion上のUpdateBadgeが押せない場合でも更新できるようにした
-
-### B: UpdateBadge hit test
-
-- `src-tauri/src/lib.rs` に `UPDATE_BADGE_VISIBLE` と `set_update_badge_visible(visible)` を追加
-- `App.tsx` から `updateAvailable !== null || installing` をRustへ通知
-- UpdateBadge表示中だけ、character上基準のbadge矩形をinteractiveに追加
-- 非表示時はhit areaを作らず、上部透明領域click-throughを維持
-
-### C: Debug mode
-
-- `debugModeEnabled` を設定へ追加。デフォルトOFF
-- `DebugPage.tsx` を追加し、ユーザーが実機QAでON/OFF可能にした
-- `DebugOverlay.tsx` を拡張
-  - viewport / character-stage / character-wrapper / speech-layer / update-badge / hit-target rect
-  - `wrapper.bottom` / `stage.bottom` のviewport超過表示
-  - updater state
-  - last AI source (`ollama` / `fallback` / `mock` / `rule` / `none`)
-- overlayは `pointer-events: none`
-
-### D: speech表示時の見切れ
-
-- v0.1.43実機確認で、speech表示時にキャラ下半分がまだ見切れることが判明
-- 原因はまだ未確定
-- v0.1.44では window height増加や暫定speech liftは入れず、debug overlayで原因を確認できる状態にした
-- 次回QAでは `wrapper` / `stage` がviewportを超えているか、speech true時だけviewport heightが想定とずれるかを確認する
-
----
-
-## v0.1.37 実装詳細
-
-### A: Ollama default URL → `http://127.0.0.1:11434`
-
-- `src/settings/defaults.ts`: `ollamaBaseUrl` を `http://127.0.0.1:11434` に変更
-- `src/companion/ai/OllamaProvider.ts`: `DEFAULT_BASE_URL` を同様に変更
-- 実機確認で `localhost` → timeout、`127.0.0.1` → 成功が判明したため
-
-### B: PromptBuilder / QualityFilter 強化
-
-- `src/systems/ai/PromptBuilder.ts`:
-  - 理想20〜60文字・最大80文字を明示
-  - 英語・ローマ字・英単語を一切禁止を明示
-  - "continued" / 壊れた句読点 / 途中切れの禁止を追加
-  - 良い例・悪い例をシステムプロンプトに追記
-  - ユーザーメッセージ末尾に「日本語一文のみで返答」を追加
-- `src/systems/ai/QualityFilter.ts`:
-  - `too_long` → truncate (ok:true) から reject (ok:false, reason:"too_long") に変更
-  - `continued` / 英単語4文字超 (`[A-Za-z]{4,}`) / `。。` / `...` / 途中切れ の禁止パターンを追加
-- `OllamaProvider.ts` / `lib.rs`: temperature 0.7 → 0.5
-
-### C: AI-first 自律発話
-
-- `src/hooks/useCompanionState.ts`:
-  - startup greeting: greetTimer を async に変更、AI-first → fallback on failure
-  - scheduleIdleSpeech: setTimeout callback を async に変更、AI-first → fallback
-- `src/companion/reactions/useObservationReactions.ts`:
-  - `tryAIOrFire()` ヘルパーを追加 (AI → fire() fallback)
-  - mediaWatching / gamingLikely / longIdle / activity 遷移 を AI-first に変更
-  - fullscreen / downloads-pile / desktop-pile は固定テキスト維持
-
-### D: Active App デバッグ強化
-
-- `src-tauri/src/observation/mod.rs`:
-  - `ActiveAppDebugInfo` に `hwnd_raw: u64` / `last_error_before: u32` を追加
-  - `SetLastError(0)` を各 Win32 API 呼び出し前に追加
-- `src/settings/pages/TransparencyPage.tsx`:
-  - `ActiveAppDebugInfo` 型に `hwndRaw: number` / `lastErrorBefore: number` を追加
-  - 「3秒後にキャプチャ」ボタンを追加 (カウントダウン表示付き)
-  - HWND raw 値・pre-call LastError 値を表示
-
-### E: ウィンドウリサイズ方式 (当たり判定根本修正)
-
-- `src-tauri/tauri.conf.json`: height 300 → 180
-- `src-tauri/src/lib.rs`:
-  - `resize_companion(speechVisible: bool)` コマンドを追加
-  - 吹き出し非表示: 200×180、表示中: 200×310 に動的リサイズ
-  - キャラクター底辺の画面座標を固定 (char_bottom = pos.y + size.height)
-  - `set_speech_visible` / `SPEECH_VISIBLE AtomicBool` を削除
-  - hit test スレッドを簡素化 (常にウィンドウ全体を判定)
-- `src/App.tsx`:
-  - `set_speech_visible` → `resize_companion` に変更
-  - `windowH` を hasSpeech に応じて 180 or 310 に切り替え
-  - ドラッグ終了時に `hasSpeechRef` で補正した charY を save_window_position に渡す
-
----
-
-## v0.1.38 実装詳細
-
-### A: 設定画面の白画面クラッシュ修正
-
-- `src/settings/SettingsApp.tsx`: `TabErrorBoundary` クラスコンポーネントを追加
-- `src/settings/pages/TransparencyPage.tsx`: `ActiveAppDebugPanel` を防御的に書き直し
-  - `useRef` ベースの `fetchingRef` / `intervalRef` で二重fetch防止・クリーンアップ
-  - `fmtHwnd()` で hwndRaw が null/undefined/0 の場合も安全に表示
-
-### B: キャラクタークリッピング修正 (DPI対応)
-
-- `src-tauri/tauri.conf.json`: height 180 → 220 (論理ピクセル)
-- `src-tauri/src/lib.rs`: `CHAR_WINDOW_H_LOGICAL = 220.0` / `BUBBLE_WINDOW_H_LOGICAL = 130.0`
-  - `window.scale_factor()` で DPI スケールを取得し、論理→物理ピクセル変換
-- `src/App.tsx`: `CHAR_H` 180 → 220、`hasSpeechRef` 補正を削除 (ドラッグ位置保存の簡素化)
-
-### C: AI 返答単調化・時刻偏重の修正
-
-- `src/systems/ai/PromptBuilder.ts`:
-  - `triggerHint()` 関数追加 (trigger 別ヒント、時刻言及不要を click 時に明示)
-  - 時刻帯を後方へ移動・「参考」ラベルに変更
-  - 直近3件の `speech_shown` 発話を「繰り返し厳禁」として context に追加
-  - click 良い例を追加: 「ここにいる」「うん、聞こえてる」「少しだけ起きた」等
-  - 「時刻帯に毎回言及しない」をシステムプロンプトに明記
-- `src/systems/ai/QualityFilter.ts`:
-  - `TRUNCATED_PATTERN` を `[はがをへ]$` に緩和 (「にでも」等の自然な終止を許容)
-
----
-
-## v0.1.39 実装詳細
-
-### A: キャラクター layout / clipping 修正
-
-- `src-tauri/tauri.conf.json`: companion height 220 → 240
-- `src-tauri/src/lib.rs`: `CHAR_WINDOW_H_LOGICAL = 240.0`、expanded は 370px
-- `src/App.tsx`: window/layout 定数を 200×240 / +130 に統一
-- 160px sprite、状態アニメーション、voice dot、bottom padding 16px を compact window 内に収める
-- drag 保存座標は v0.1.38 と同じく window 上端を保存。bottom anchor resize に任せる
-
-### B: PNG透明余白クリック判定の現実的改善
-
-- `src/App.tsx`: `character-stage` 内で Character 描画レイヤーと `character-hit-target` を分離
-- `src/components/Character.tsx`: sprite wrapper は `pointer-events: none`
-- `src/styles/index.css`: キャラ本体に近い楕円 hit target を追加
-- `src-tauri/src/lib.rs`: Windows hit test を「ウィンドウ全体」から「吹き出し矩形 + キャラ楕円」に変更
-- 完全な透明ピクセル単位 hit test は未実装。必要なら将来 alpha mask を Rust 側で扱う
-
-### C: Active App Raw Foreground Debug 改善
-
-- `src-tauri/src/observation/mod.rs`: Serialize struct に `#[serde(rename_all = "camelCase")]` を追加
-- `src/settings/pages/TransparencyPage.tsx`: debug結果を snake_case / camelCase 両対応で normalize
-- `hwndRaw` 未受信と `GetForegroundWindow=0` を区別
-  - 未受信: `フィールド未受信`
-  - 0: `NULL(0)`
-- raw JSON preview と console log を追加
-- 3秒後キャプチャの説明を「対象ウィンドウをクリックしてアクティブ化」に明確化
-
-### D: 維持したもの
-
-- SettingsApp / TabErrorBoundary / TransparencyPage defensive rendering
-- Ollama source: ollama、`http://127.0.0.1:11434` default
-- PromptBuilder / QualityFilter の返答品質改善
-- RuleProvider fallback / MemoryViewer / Transparency UI / Update通知固定文
-
----
-
-## v0.1.40 実装詳細
-
-### A: キャラめり込み/見切れの根本対策
-
-- `src/constants/companionLayout.ts` を追加し、TS側の window/layout 定数を一元化
-  - compact: `200×280`
-  - expanded: `200×410`
-  - bottom padding: `24px`
-- `src/App.tsx`:
-  - `settings.sizeScale` を `normalizeCompanionScale()` で `0.75〜1.5` に clamp
-  - `resize_companion` に `sizeScale` を渡す
-- `src-tauri/src/lib.rs`:
-  - `CHAR_WINDOW_H_LOGICAL = 280.0`
-  - `resize_companion(speechVisible, sizeScale)` で width/height を DPI scale と sizeScale の両方に合わせる
-  - resize後の top-left を monitor work area 内へ clamp
-- 保存済み window position と drag終了時の position 保存も work area 内へ clamp
-  - 旧バージョンの小さい window で保存された top-left をそのまま復元して、下端が画面外に沈む問題を防ぐ
-- `useWander.ts` は現在の `window.outerWidth/outerHeight` で画面内移動範囲を計算
-
-### B: ContextMenu見切れ修正
-
-- `src/components/ContextMenu.tsx`:
-  - 固定 `300px` 想定を削除
-  - 実際の companion window width/height を受け取り、menu bottom が window 内に収まるよう clamp
-  - 下部右クリック時は上方向に開く
-  - `終了` を `アプリ終了` に変更
-- `src-tauri/src/lib.rs`:
-  - `CONTEXT_MENU_VISIBLE` と `set_context_menu_visible(visible)` を追加
-  - ContextMenu 表示中だけ hit test を window 全体 interactive にし、メニュー項目クリックが楕円hit target外で背面へ抜けないようにした
-  - メニューを閉じたら通常の「吹き出し + キャラ楕円」hit test に戻る
-
-### C: 維持したもの
-
-- v0.1.39 で解決した Active App取得 / Bitwig `daw` 認識 / raw JSON debug
-- SettingsApp の白画面防止
-- Ollama `source: ollama`、`http://127.0.0.1:11434` default、PromptBuilder / QualityFilter
-- 上部透明領域クリック改善と PNG透明余白クリック改善
-
----
-
-## v0.1.41 実装詳細
-
-### A: Character rendering anchor 修正
-
-- `src/constants/companionLayout.ts`:
-  - `CHARACTER_SPRITE_W/H = 160` を明示
-- `src/App.tsx`:
-  - `settings.sizeScale` 済みの `characterW/characterH` を `Character` に渡す
-  - `character-stage` と実際の sprite / fallback 描画サイズを一致させた
-- `src/components/Character.tsx`:
-  - wrapper / sprite img / fallback が `width/height` props を使うよう変更
-- `src/styles/index.css`:
-  - `character-wrapper` / `character-anim` の `transform-origin: center bottom`
-  - sprite img を wrapper サイズに対して `width: 100%; height: 100%; display: block`
-
-### B: 原因
-
-- v0.1.40 では App 側の window / stage は `sizeScale` に合わせて縮尺していた
-- しかし `Character.tsx` は `DEFAULT_CHARACTER_CONFIG` の 160×160 固定で描画していた
-- `sizeScale < 1` では stage/window より sprite が大きくなり、Tauri window 外へ出た下端が `overflow: hidden` で切れる可能性があった
-- Rust hit test は `160×160 * sizeScale * DPI` 前提だったため、React実描画と hit test bbox の整合も崩れていた
-
-### C: 維持したもの
-
-- ContextMenu は変更なし。v0.1.40 の clamp / `アプリ終了` / context menu中全域interactive を維持
-- Active App / Transparency UI / Ollama / PromptBuilder / QualityFilter は変更なし
-- drag保存座標と `resize_companion` bottom anchor は変更なし
-- 上部透明領域 click-through と PNG透明余白クリック改善は維持
-
----
-
-## v0.1.42 実装詳細
-
-### A: speech表示時の沈み込み修正
-
-- 実機確認で「通常表示では切れないが、吹き出し表示時に必ず下へ沈む」ことが判明
-- v0.1.41 の Character実描画 sizeScale 同期は正しい補修だったが、speech dynamic resize の競合までは解消していなかった
-- `src/App.tsx`:
-  - rootを予測 `windowH` 固定ではなく `100vw / 100vh` の実WebView viewport基準へ変更
-  - `character-stage` を flex-end 配置から absolute bottom anchor へ変更
-  - `bottom: bottomPad` で、吹き出し表示/非表示に関係なくキャラvisual bottomを固定
-- `src-tauri/src/lib.rs`:
-  - `resize_companion` の拡大時は `set_position → set_size`
-  - 縮小時は `set_size → set_position`
-  - compact→expanded の一瞬だけ window bottom が下へ伸びる挙動を避ける
-
-### B: drag中speech resize対策
-
-- drag reaction は drag開始時ではなく drag終了後160msに遅延
-- OSネイティブdrag中に speech が出て window resize が走る競合を避ける
-- drag保存座標は従来通り window top-left のまま
-
-### C: debug
-
-- React側: DEV限定で viewport / computed layout / `character-stage` / `character-wrapper` bbox を console log
-- Rust側: debug build限定で resize前後の outer/inner position/size、target size、bottom anchor計算を stderr log
-- 通常UIにdebug枠や表示は残していない
-
-### D: 維持したもの
-
-- ContextMenu / hit test / Active App / Transparency UI / Ollama / PromptBuilder / QualityFilter は大きく触らず維持
-- v0.1.41 の Character実描画 sizeScale 同期も維持
-
----
-
-## v0.1.43 実装詳細
-
-### A: speech bubble relative anchor 修正
-
-- v0.1.42 実機確認で、キャラ位置は維持されているが吹き出しがwindow上端に出すぎることが判明
-- 原因は、キャラが bottom anchor になった一方、speech bubble / TinyWhisper が `top: 10` のwindow top anchorのままだったこと
-- `src/constants/companionLayout.ts`:
-  - `SPEECH_BUBBLE_GAP = 8`
-  - `SPEECH_BUBBLE_HIT_H = 96`
-- `src/App.tsx`:
-  - speech layerを `top: 10` から `bottom: bottomPad + characterH + gap` へ変更
-  - DEV debugに speech layer bbox を追加
-- `src-tauri/src/lib.rs`:
-  - bubble hit areaをwindow上端基準から `char_top - gap` 基準へ変更
-  - ContextMenu中のみ全域interactive、通常時は吹き出し + キャラ楕円の設計を維持
-
-### B: 維持したもの
-
-- v0.1.42 の root `100vw / 100vh`
-- `character-stage` absolute bottom anchor
-- `resize_companion` 拡大時 `set_position → set_size`
-- drag reaction 遅延
-- v0.1.41 の Character実描画 sizeScale 同期
-- ContextMenu / Active App / Ollama / Transparency UI
-
----
-
-## 次のフェーズ候補 (v0.2.x)
-
-### 優先候補 A: Expressiveness QA ← **推奨**
-
-**目的:** Emotion Sprite追加後の表情・反応品質を整える。
-
-**実装すべき内容:**
-1. 表情切替がうるさすぎないように確認
-2. fallbackが自然か確認
-3. speaking / touched / drag 中の表示が壊れないか確認
-4. 表情と発話emotionの対応を整理
-5. docs更新
-
-### 優先候補 B: Emotion Sprite Set
-
-**目的:** CompanionEmotion (shy/concerned/happy) の専用スプライト。
-
-**実装すべき内容:**
-1. `public/characters/default/` に shy.png / concerned.png を追加
-2. `emotionToSpriteState()` マッピングを更新
-3. CryEngine sound との連動
-
-### 優先候補 C: v0.1.55 残QA修正
-
-**目的:** release polish / memory export / quiet-focus-DND 実機QAで出た問題を優先修正する。
-
-**確認すべき内容:**
-1. v0.1.55 Release workflow annotationがどう変わったか
-2. UpdatePageの失敗表示が分かりやすいか
-3. Ollama未起動時の案内が分かりやすいか
-4. JSON export / quiet/focus/DNDが実機で自然か
-5. MemoryPage / Onboarding / Update / Debug / Transparencyの主要回帰がないか
-
----
-
-## 今やらないこと
-
-- Whisper実接続 (Phase 6b-real-2)
-- Screen Capture / OCR
-- TTS
-- 長期RAG・ベクトルDB
-- 大規模UI刷新
-- クラウドAI追加
-- クラウドSTT
-
----
+## 絶対禁止事項（次セッションも維持すること）
+
+- ChatGPT API / OpenAI API / Remote LLM実装
+- Cloud STT / 常時マイク録音 / wake word
+- 常時スクリーン録画 / 常時スクリーンショット / OCR / TTS
+- shell実行 / 自動ファイル操作 / ファイル移動 / ファイル削除
+- メール送信 / 外部API操作 / ブラウザ操作
+- 長期ベクトルDB / ファイル本文の自動読み取り
+- 画面内容を外部送信する機能
+- transcript / text input / raw filename / window title の無制限な長期保存
+- ユーザーに見えない隠れた監視
 
 ## 壊してはいけないもの
 
 ```
-✅ onCharacterClick → requestAIResponse → AI(none/mock/ollama/rule) → triggerSpeak
-✅ fireReaction → fallback when AI unavailable
-✅ SpeechPolicy (DND/quiet/focus/fullscreen 抑制)
-✅ useObservationReactions (activity遷移発火・deepFocus/gaming/watchingVideo抑制)
-✅ scheduleIdleSpeech の activity-aware 抑制
-✅ overClicked / returnAfterBreak / returnAfterLongBreak reactions
-✅ CryEngine (sleep/wake/touch sounds)
-✅ ウィンドウ位置の保存・復元 (window上端保存 + bottom anchor resize)
-✅ MediaContext (Spotify等のバックグラウンド検出)
-✅ Transparency UI (ActivityInsight・reasons・記憶・発話制御パネル・10秒自動更新)
-✅ Memory Viewer UI (MemoryPage) - 削除後も表示が壊れない
-✅ Character State Expression - thinking/speaking/sleep/waking CSS アニメーション
-✅ VoiceUIState dot インジケーター (Character 内部)
-✅ OllamaProvider: invoke("ollama_list_models") / invoke("ollama_chat") で Rust 経由 HTTP (CORS 回避)
-✅ LastAIResultDebug: AIPage でデバッグ情報が表示される
-✅ classify_app: self/communication カテゴリを含む拡充済みマッピング
-✅ resize_companion: 吹き出し on/off でウィンドウ 200×280 ↔ 200×410 動的リサイズ
-✅ hit test スレッド: 通常時は吹き出し矩形 + キャラ楕円、ContextMenu中のみ全域有効化
-✅ 3秒遅延キャプチャ: TransparencyPage でボタンを押してから3秒後に get_active_app_debug
-✅ hwnd_raw / last_error_before: ActiveAppDebugInfo に追加済み
-✅ AI-first startup greeting / idle speech / activity transitions
-✅ QualityFilter: too_long → reject (truncate しない)
-✅ QualityFilter: continued / 英単語4文字超 / 壊れた句読点 / [はがをへ]$ 途中切れ を拒否
-✅ PromptBuilder: trigger別ヒント・時刻帯を後方・直近発話context・click良い例追加
-✅ PromptBuilder: 理想20〜60文字・最大80文字・英語禁止・例文追加
-✅ ollamaBaseUrl default: http://127.0.0.1:11434
-✅ get_active_app_debug: フォアグラウンドプロセス取得の段階別デバッグ情報
-✅ ActiveAppDebugPanel: TransparencyPage でデバッグパネルを表示 (防御的・useRef対応)
-✅ TabErrorBoundary: SettingsApp の各タブを ErrorBoundary で保護
-✅ resize_companion: scale_factor() + sizeScale で DPI/ユーザーscale 対応
-✅ tauri.conf.json: 初期ウィンドウ高さ 280px (論理ピクセル)
-✅ cargo build が通ること
-✅ npm run build が通ること
-✅ Voice Input 基盤 (voiceInputEnabled=false では録音しない)
-✅ Mock STT が動くこと
-✅ buildMemorySummary([]) / buildDailySummary([]) が安全に動くこと
+✅ compact 200x280 window / speech時window resize禁止 / character layout / hit test geometry
+✅ click-through / ContextMenu / speech bubble位置 / drag / voice long press
+✅ text message input / UpdateBadge / Onboarding / Memory Retention / Memory Export / Update Page
+✅ Debug / Transparency / Ollama接続 / Active App取得 / FFmpeg/Whisper変換 / 一時音声ファイル削除
+✅ Interaction Trace / VoicePage transcript preview / Autonomous speech interval preset / Safety cap ON/OFF
+✅ v1.0.5 prompt contamination fix / Observation Timeline / Observation Center / Memory Mode
+✅ ObservationSignal層 / Watchful Mode / DiagnosticsPage (v1.1.0)
+✅ npm run build が通ること / cargo build が通ること
 ```
+
+---
+
+## 次のフェーズ候補
+
+### A: Field QA (推奨)
+v1.0.6〜v1.1.0の実機QA。特にWhisper言語指定・sleep発話・observation timelineの動作確認。
+
+### B: v1.2.0 候補
+- ObservationSignal → 発話反応への統合（useObservationReactionsでtopSignalを使う）
+- 診断ページの拡充（Ollama接続確認・Whisper疎通確認ボタン）
+- MemoryMode別の実際の保存制御実装（現在は型とUIのみ）
+
+### C: 今やらないこと
+- Screen Capture / OCR / TTS
+- 長期RAG / ベクトルDB / クラウドAI追加
+- 大規模UI刷新
 
 ---
 
@@ -1007,14 +281,13 @@
 
 ```
 1. docs/NEXT_SESSION.md を読む (このファイル)
-2. docs/PROGRESS_TRACKER.md で現在地を確認
-3. docs/PRODUCT_COMPLETION_ROADMAP.md で方針確認
-4. docs/RESPONSE_QUALITY_GUIDE.md で発話品質基準確認
-5. npm run build → 通ることを確認
-6. cargo build  → 通ることを確認
-7. まず v0.1.40 実機確認。問題なければ First-run Onboarding へ進む
-8. npm run build / cargo build → 通ることを確認
-9. docs/PROGRESS_TRACKER.md 更新 (進捗数値)
-10. docs/NEXT_SESSION.md 更新 (このファイル)
-11. git add / commit / bump / push
+2. docs/KNOWN_ISSUES.md で field QA pending 状況を確認
+3. docs/SETTINGS_BEHAVIOR_MATRIX.md で設定とランタイムの対応を確認
+4. npm run build → 通ることを確認
+5. cargo build  → 通ることを確認
+6. 実装作業 or field QA
+7. npm run build / cargo build → 通ることを確認
+8. docs/KNOWN_ISSUES.md 更新 (QA通過項目を passed へ)
+9. docs/NEXT_SESSION.md 更新 (このファイル)
+10. git add / commit / bump / push / tag
 ```
