@@ -6,6 +6,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useSettings } from "../store";
 import type { PermissionSettings } from "../../privacy/permissions";
 import type { ObservationSnapshot } from "../../observation/types";
+import { appCategoryLabel, applyCustomAppClassifications } from "../../observation/appClassification";
 import { inferActivity } from "../../companion/activity/inferActivity";
 import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
 import { buildDailySummary } from "../../companion/memory/dailySummary";
@@ -23,6 +24,8 @@ type ActiveAppDebugInfo = {
   processName: string;
   processPathLen: number;
   category: string;
+  classificationReason: string;
+  classificationSource: string;
   errorStage: string;
   errorCode: number;
   lastErrorBefore: number;
@@ -92,17 +95,6 @@ function ReasonTag({ text }: { text: string }) {
   );
 }
 
-function categoryLabel(cat: string): string {
-  const MAP: Record<string, string> = {
-    ide: "IDE/エディタ", daw: "DAW/音楽制作", browser: "ブラウザ",
-    media: "メディア", game: "ゲーム", office: "オフィス",
-    terminal: "ターミナル", communication: "チャット/通話",
-    system: "システム", self: "自アプリ (設定画面)",
-    unknown: "不明",
-  };
-  return MAP[cat] ?? cat;
-}
-
 function unknownReason(snap: ObservationSnapshot): string | null {
   if (!snap.activeApp) return "前面アプリ名を取得できませんでした (権限不足の可能性)";
   if (snap.activeApp.category === "self") return "設定画面・コンパニオン自身が前面です";
@@ -152,6 +144,8 @@ function normalizeDebugInfo(raw: RawActiveAppDebugInfo): ActiveAppDebugInfo {
     processName: pickString(raw, "processName", "process_name"),
     processPathLen: pickNumber(raw, "processPathLen", "process_path_len") ?? 0,
     category: pickString(raw, "category", "category") || "unknown",
+    classificationReason: pickString(raw, "classificationReason", "classification_reason"),
+    classificationSource: pickString(raw, "classificationSource", "classification_source"),
     errorStage: pickString(raw, "errorStage", "error_stage") || "missing_field",
     errorCode: pickNumber(raw, "errorCode", "error_code") ?? 0,
     lastErrorBefore: pickNumber(raw, "lastErrorBefore", "last_error_before") ?? 0,
@@ -234,7 +228,8 @@ function ActiveAppDebugPanel() {
             <div style={{ color: "#e08030" }}>pre-call LastError: {info.lastErrorBefore}</div>
           )}
           {info.processName && <div>processName: <strong>{info.processName}</strong></div>}
-          {info.queryNameOk && <div>category: <strong>{info.category}</strong></div>}
+          {info.queryNameOk && <div>category: <strong>{appCategoryLabel(info.category)}</strong></div>}
+          {info.queryNameOk && <div>classification: {info.classificationReason || "-"} / source: {info.classificationSource || "-"}</div>}
           {info.isSelfApp && (
             <div style={{ color: "#e08030", marginTop: 4 }}>
               ⚠ 設定画面自身が前面です。他のアプリを前面にして再取得してください。
@@ -315,7 +310,7 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
         <span style={{ color: "#aaa" }}>({Math.round(insight.confidence * 100)}%)</span>
       </div>
       <div style={{ color: "#666" }}>
-        アプリ種別: <strong>{snap.activeApp ? categoryLabel(snap.activeApp.category) : "不明"}</strong>
+        アプリ種別: <strong>{snap.activeApp ? appCategoryLabel(snap.activeApp.category) : "不明"}</strong>
         {snap.activeApp && (
           <span style={{ color: "#aaa", fontSize: 11, marginLeft: 6 }}>
             ({snap.activeApp.processName})
@@ -323,6 +318,11 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
         )}
         {snap.fullscreenLikely && <span style={{ marginLeft: 8, color: "#c040a0" }}>全画面中</span>}
       </div>
+      {snap.activeApp && (
+        <div style={{ color: "#888", fontSize: 11 }}>
+          分類理由: {snap.activeApp.classificationReason ?? "-"} / source: {snap.activeApp.classificationSource ?? "-"}
+        </div>
+      )}
       {reason && (
         <div style={{ color: "#e08030", fontSize: 11, marginTop: 2 }}>⚠ {reason}</div>
       )}
@@ -490,7 +490,7 @@ export function TransparencyPage() {
   const fetchSnap = async () => {
     if (!isTauri) return;
     try {
-      const s = await invoke<ObservationSnapshot>("get_observation_snapshot", {
+      const raw = await invoke<ObservationSnapshot>("get_observation_snapshot", {
         perms: {
           level: p.level,
           window_title_enabled: p.windowTitleEnabled,
@@ -499,7 +499,7 @@ export function TransparencyPage() {
           cloud_allowed: p.cloudAllowed,
         },
       });
-      setSnap(s);
+      setSnap(applyCustomAppClassifications(raw, settings.customAppClassifications));
       setLastFetch(new Date().toLocaleTimeString("ja-JP"));
     } catch { /* サイレント */ }
   };

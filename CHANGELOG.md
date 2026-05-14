@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.0] — 2026-05-15
+
+### Added
+
+- AppCategory を `music` / `chat` / `file_manager` / `installer` / `ai_chat` / `ai_assistant` / `ai_search` まで拡張
+- Rust 側の app classification table を拡充し、ChatGPT / Claude / Perplexity / Copilot / Cursor / Windsurf / Zed / Obsidian / Logseq / Figma / Photoshop / Illustrator / Blender / Bandizip / Bitwig / Ableton / Reaper などを分類
+- `classificationReason` / `classificationSource` を active app snapshot と active app debug に追加
+- current observation snapshot store を追加し、Debug / Diagnostics / Observation Page で現在の process/category/reason を表示
+- `customAppClassifications: Record<string, AppCategory>` を追加し、Observation Page で process名単位のユーザー定義分類を保存・削除可能にした
+
+### Fixed / Improved
+
+- unknown app は process名と `no_rule_match:<process>` reason で追跡可能
+- user custom classification はローカル設定のみで適用し、raw window title / filename / file content は保存しない
+- classification table の Rust unit test を追加
+
+---
+
 ## [1.2.0] — 2026-05-15
 
 ### Added

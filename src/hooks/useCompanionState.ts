@@ -623,6 +623,7 @@ export function useCompanionState(
       observationSummary: ctx.activityInsight.summary,
       activeAppCategory: ctx.observation.activeApp?.category,
       activeProcessName: ctx.observation.activeApp?.processName,
+      classificationReason: ctx.observation.activeApp?.classificationReason,
       settingsSnapshot: settingsSnapshot(),
     });
 
@@ -690,6 +691,7 @@ export function useCompanionState(
         observationSummary: ctx.activityInsight.summary,
         activeAppCategory: ctx.observation.activeApp?.category,
         activeProcessName: ctx.observation.activeApp?.processName,
+        classificationReason: ctx.observation.activeApp?.classificationReason,
         selectedResponse: previewTraceText(text),
         responseSource: routed ? "local_router" : aiDebug.source,
         fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,
@@ -843,6 +845,7 @@ export function useCompanionState(
       observationSummary: ctx.activityInsight.summary,
       activeAppCategory: ctx.observation.activeApp?.category,
       activeProcessName: ctx.observation.activeApp?.processName,
+      classificationReason: ctx.observation.activeApp?.classificationReason,
       settingsSnapshot: settingsSnapshot(),
     });
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
@@ -906,6 +909,7 @@ export function useCompanionState(
         observationSummary: ctx.activityInsight.summary,
         activeAppCategory: ctx.observation.activeApp?.category,
         activeProcessName: ctx.observation.activeApp?.processName,
+        classificationReason: ctx.observation.activeApp?.classificationReason,
         selectedResponse: previewTraceText(text),
         responseSource: routed ? "local_router" : aiDebug.source,
         fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,
@@ -937,6 +941,7 @@ export function useCompanionState(
       observationSummary: ctx.activityInsight.summary,
       activeAppCategory: ctx.observation.activeApp?.category,
       activeProcessName: ctx.observation.activeApp?.processName,
+      classificationReason: ctx.observation.activeApp?.classificationReason,
       settingsSnapshot: settingsSnapshot(),
     });
 
@@ -982,6 +987,7 @@ export function useCompanionState(
       observationSummary: ctx.activityInsight.summary,
       activeAppCategory: ctx.observation.activeApp?.category,
       activeProcessName: ctx.observation.activeApp?.processName,
+      classificationReason: ctx.observation.activeApp?.classificationReason,
       selectedResponse: previewTraceText(response),
       responseSource: routed ? "local_router" : aiDebug.source,
       fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,

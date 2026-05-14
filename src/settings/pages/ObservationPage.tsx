@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { useSettings } from "../store";
 import { getObservationTimeline, subscribeObservationTimeline, clearObservationTimeline } from "../../systems/observation/observationTimelineStore";
 import type { ObservationEvent } from "../../systems/observation/observationTimelineStore";
+import { getCurrentSnapshot, subscribeCurrentSnapshot } from "../../systems/observation/currentSnapshotStore";
+import type { AppCategory, ObservationSnapshot } from "../../observation/types";
+import { APP_CATEGORY_OPTIONS, appCategoryLabel, normalizeProcessName } from "../../observation/appClassification";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -63,8 +66,12 @@ function typeLabel(t: ObservationEvent["type"]): string {
 export function ObservationPage() {
   const [s, update] = useSettings();
   const [timeline, setTimeline] = useState<ObservationEvent[]>(getObservationTimeline());
+  const [snapshot, setSnapshot] = useState<ObservationSnapshot>(getCurrentSnapshot);
+  const [manualProcess, setManualProcess] = useState("");
+  const [manualCategory, setManualCategory] = useState<AppCategory>("unknown");
 
   useEffect(() => subscribeObservationTimeline(() => setTimeline([...getObservationTimeline()])), []);
+  useEffect(() => subscribeCurrentSnapshot(() => setSnapshot({ ...getCurrentSnapshot() })), []);
 
   const observationLevel: ObservationLevel = s.observationLevel ?? "balanced";
   const updateLevel = (level: ObservationLevel) => {
@@ -83,6 +90,22 @@ export function ObservationPage() {
   };
 
   const recentEvents = timeline.slice(-30).reverse();
+  const activeProcess = snapshot.activeApp?.processName ? normalizeProcessName(snapshot.activeApp.processName) : "";
+  const currentCustom = s.customAppClassifications ?? {};
+  const customEntries = Object.entries(currentCustom).sort(([a], [b]) => a.localeCompare(b));
+
+  const saveClassification = (processName: string, category: AppCategory) => {
+    const key = normalizeProcessName(processName);
+    if (!key) return;
+    update({ customAppClassifications: { ...currentCustom, [key]: category } });
+  };
+
+  const deleteClassification = (processName: string) => {
+    const key = normalizeProcessName(processName);
+    const next = { ...currentCustom };
+    delete next[key];
+    update({ customAppClassifications: next });
+  };
 
   return (
     <div>
@@ -107,6 +130,8 @@ export function ObservationPage() {
       <SectionHead title="現在見ているもの" />
       <div style={{ fontSize: 12, color: "#555", lineHeight: 2, padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
         <div>アプリ種別: <strong>ON</strong></div>
+        <div>現在の前面アプリ: <strong>{snapshot.activeApp ? `${snapshot.activeApp.processName} / ${appCategoryLabel(snapshot.activeApp.category)}` : "未取得"}</strong></div>
+        <div>分類理由: <strong>{snapshot.activeApp?.classificationReason ?? "-"}</strong></div>
         <div>アイドル時間: <strong>ON</strong></div>
         <div>フォルダメタデータ: <strong>{s.permissions.folderMetadataEnabled ? "ON" : "OFF"}</strong></div>
         <div>Filename signals: <strong>{s.filenameSignalsEnabled ? "ON" : "OFF"}</strong></div>
@@ -127,6 +152,64 @@ export function ObservationPage() {
           />
         </div>
       )}
+
+      <SectionHead title="ユーザー定義アプリ分類" />
+      <div style={{ fontSize: 12, color: "#555", lineHeight: 1.8, padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ fontSize: 11, color: "#999", marginBottom: 6 }}>
+          process名だけを保存します。ウィンドウタイトル・ファイル名・入力内容は保存しません。
+        </div>
+        {activeProcess && (
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+            <span style={{ color: "#777" }}>{activeProcess}</span>
+            <select
+              value={currentCustom[activeProcess] ?? snapshot.activeApp?.category ?? "unknown"}
+              onChange={(e) => saveClassification(activeProcess, e.target.value as AppCategory)}
+              style={{ fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4 }}
+            >
+              {APP_CATEGORY_OPTIONS.map((cat) => <option key={cat} value={cat}>{appCategoryLabel(cat)}</option>)}
+            </select>
+            {currentCustom[activeProcess] && (
+              <button onClick={() => deleteClassification(activeProcess)} style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #ddd", borderRadius: 4, background: "white", color: "#888" }}>
+                削除
+              </button>
+            )}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+          <input
+            value={manualProcess}
+            onChange={(e) => setManualProcess(e.target.value)}
+            placeholder="example.exe"
+            style={{ fontSize: 12, padding: "4px 6px", border: "1px solid #ddd", borderRadius: 4, minWidth: 130 }}
+          />
+          <select
+            value={manualCategory}
+            onChange={(e) => setManualCategory(e.target.value as AppCategory)}
+            style={{ fontSize: 12, padding: "4px 6px", border: "1px solid #ddd", borderRadius: 4 }}
+          >
+            {APP_CATEGORY_OPTIONS.map((cat) => <option key={cat} value={cat}>{appCategoryLabel(cat)}</option>)}
+          </select>
+          <button
+            onClick={() => {
+              saveClassification(manualProcess, manualCategory);
+              setManualProcess("");
+            }}
+            style={{ fontSize: 11, padding: "4px 10px", border: "1px solid #ddd", borderRadius: 4, background: "white", color: "#666" }}
+          >
+            保存
+          </button>
+        </div>
+        {customEntries.length === 0 ? (
+          <div style={{ color: "#bbb", fontSize: 11 }}>保存済みのユーザー定義分類はありません</div>
+        ) : customEntries.map(([processName, category]) => (
+          <div key={processName} style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "3px 0", borderTop: "1px dashed #eee" }}>
+            <span>{processName} → <strong>{appCategoryLabel(category)}</strong></span>
+            <button onClick={() => deleteClassification(processName)} style={{ fontSize: 11, border: "none", background: "transparent", color: "#c06060", cursor: "pointer" }}>
+              削除
+            </button>
+          </div>
+        ))}
+      </div>
 
       <SectionHead title="最近検知したこと" />
       <div style={{ fontSize: 11, color: "#666", lineHeight: 1.7, padding: "4px 0" }}>

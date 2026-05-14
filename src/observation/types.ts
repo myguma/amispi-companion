@@ -2,20 +2,28 @@
 // Rust バックエンドから受け取る構造。生データは Rust 側でフィルタ済み。
 
 export type AppCategory =
+  | "browser"
+  | "terminal"
   | "ide"
   | "daw"
-  | "browser"
+  | "music"
   | "media"
   | "game"
-  | "office"
-  | "terminal"
-  | "communication"
-  | "system"
+  | "chat"
   | "design"        // デザインツール (Figma / Photoshop等)
-  | "notes"         // ノート / メモアプリ (Obsidian等)
+  | "file_manager"
   | "archive_tool"  // アーカイブマネージャー (7-Zip / WinRAR等)
+  | "installer"
   | "document"      // PDFビューア / ドキュメントビューア
-  | "self"      // 自アプリ (設定画面・コンパニオン本体)
+  | "notes"         // ノート / メモアプリ (Obsidian等)
+  | "system"
+  | "self"          // 自アプリ (設定画面・コンパニオン本体)
+  | "ai_chat"
+  | "ai_assistant"
+  | "ai_search"
+  // legacy categories kept for old snapshots / exports
+  | "office"
+  | "communication"
   | "unknown";
 
 export type FolderSummary = {
@@ -53,6 +61,8 @@ export type ObservationSnapshot = {
   activeApp?: {
     processName: string;
     category: AppCategory;
+    classificationReason?: string;
+    classificationSource?: "built_in" | "custom" | "unknown" | "system";
   };
   activeWindow?: {
     titleRedacted: string | null;
@@ -95,6 +105,7 @@ export function deriveActivity(snap: ObservationSnapshot): ActivityKind {
     if (cat === "media") return "mediaWatching";
     return "fullscreen";
   }
+  if (cat === "music") return "active";
   if (idleMs > 5 * 60 * 1000) return "idle";
   return "active";
 }

@@ -1,6 +1,7 @@
 // 設定型定義
 
 import type { PermissionSettings } from "../privacy/permissions";
+import type { AppCategory } from "../observation/types";
 
 export type MovementFrequency = "low" | "normal" | "high";
 export type SpeechFrequency = "rare" | "low" | "normal";
@@ -77,6 +78,7 @@ export type CompanionSettings = {
   filenameSignalsEnabled: boolean;
   observationLevel: ObservationLevel;
   memoryMode: MemoryMode;
+  customAppClassifications: Record<string, AppCategory>;
 
   // 将来フェーズ用
   mediaAwarenessEnabled: boolean;

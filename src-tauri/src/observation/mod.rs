@@ -21,6 +21,8 @@ pub struct IdleInfo {
 pub struct ActiveAppInfo {
     pub process_name: String,
     pub category: String,
+    pub classification_reason: String,
+    pub classification_source: String,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -82,6 +84,8 @@ pub struct ActiveAppDebugInfo {
     pub process_name: String,
     pub process_path_len: usize,
     pub category: String,
+    pub classification_reason: String,
+    pub classification_source: String,
     pub error_stage: String,
     pub error_code: u32,
     pub last_error_before: u32, // API 呼び出し前の GetLastError 値
@@ -122,6 +126,123 @@ pub struct ObservationSnapshot {
     pub system: Option<SystemInfo>,
     pub media: Option<MediaContext>,
     pub privacy: PrivacyMeta,
+}
+
+#[allow(dead_code)]
+fn classify_app(name: &str) -> (String, String, String) {
+    let name = name.to_lowercase();
+
+    let exact = |items: &[&str]| items.iter().any(|item| *item == name);
+    let contains = |items: &[&str]| items.iter().any(|item| name.contains(item));
+    let result = |category: &str, reason: String| {
+        (category.to_string(), reason, "built_in".to_string())
+    };
+
+    if contains(&["msedgewebview2"]) || exact(&["amispi-companion.exe", "amispi-companion"]) {
+        return result("self", format!("self_app:{}", name));
+    }
+
+    if exact(&["chatgpt.exe", "chatgpt"]) {
+        return result("ai_chat", format!("exact:{}", name));
+    }
+    if exact(&["claude.exe", "claude"]) {
+        return result("ai_assistant", format!("exact:{}", name));
+    }
+    if contains(&["perplexity"]) {
+        return result("ai_search", format!("contains:{}", name));
+    }
+    if exact(&["copilot.exe", "githubcopilot.exe"]) || contains(&["copilot"]) {
+        return result("ai_assistant", format!("ai_assistant:{}", name));
+    }
+
+    if exact(&[
+        "code.exe", "cursor.exe", "windsurf.exe", "zed.exe", "idea64.exe", "devenv.exe",
+        "rider64.exe", "clion64.exe", "pycharm64.exe", "webstorm64.exe", "phpstorm64.exe",
+        "notepad++.exe", "sublime_text.exe",
+    ]) {
+        return result("ide", format!("exact:{}", name));
+    }
+
+    if exact(&[
+        "chrome.exe", "firefox.exe", "msedge.exe", "brave.exe", "vivaldi.exe",
+        "opera.exe", "arc.exe", "librewolf.exe",
+    ]) {
+        return result("browser", format!("exact:{}", name));
+    }
+
+    if exact(&["spotify.exe", "musicbee.exe", "foobar2000.exe", "aimp.exe", "tidal.exe", "itunes.exe", "applemusic.exe", "winamp.exe", "mediamonkey.exe"]) {
+        return result("music", format!("exact:{}", name));
+    }
+
+    if exact(&["vlc.exe", "mpc-hc.exe", "mpc-be.exe", "mpv.exe", "wmplayer.exe", "potplayermini64.exe", "potplayer.exe", "kmplayer.exe"]) {
+        return result("media", format!("exact:{}", name));
+    }
+
+    if name.ends_with("game") || exact(&["steam.exe", "epicgameslauncher.exe", "gog galaxy.exe", "playnite.desktop.exe"]) {
+        return result("game", format!("game_rule:{}", name));
+    }
+
+    if exact(&[
+        "ableton live.exe", "fl64.exe", "fl.exe", "bitwig.exe", "bitwig studio.exe",
+        "reaper.exe", "reaper64.exe", "logic.exe", "studioone.exe", "cubase.exe",
+        "cubase12.exe",
+    ]) {
+        return result("daw", format!("exact:{}", name));
+    }
+
+    if exact(&[
+        "discord.exe", "slack.exe", "teams.exe", "zoom.exe", "skype.exe",
+        "msteams.exe", "element.exe", "signal.exe",
+    ]) {
+        return result("chat", format!("exact:{}", name));
+    }
+
+    if exact(&["explorer.exe", "totalcmd.exe", "freecommander.exe"]) {
+        return result("file_manager", format!("exact:{}", name));
+    }
+
+    if exact(&[
+        "figma.exe", "photoshop.exe", "illustrator.exe", "indesign.exe", "xd.exe",
+        "canva.exe", "inkscape.exe", "gimp.exe", "blender.exe",
+        "affinity publisher.exe", "affinity designer.exe", "affinity photo.exe",
+        "affpub.exe", "affdes.exe", "affphoto.exe", "sketch.exe", "penpot.exe", "lunacy.exe",
+    ]) {
+        return result("design", format!("exact:{}", name));
+    }
+
+    if exact(&[
+        "obsidian.exe", "logseq.exe", "joplin.exe", "standardnotes.exe", "zettlr.exe",
+        "marktext.exe", "typora.exe", "notable.exe", "evernote.exe", "notesnook.exe",
+        "notion.exe", "onenote.exe",
+    ]) {
+        return result("notes", format!("exact:{}", name));
+    }
+
+    if exact(&[
+        "winword.exe", "excel.exe", "powerpnt.exe", "soffice.exe", "keynote.exe",
+        "sumatrapdf.exe", "acrord32.exe", "acrobat.exe", "foxitreader.exe", "evince.exe",
+        "okular.exe", "calibre.exe", "kindle.exe", "drawboard pdf.exe",
+    ]) {
+        return result("document", format!("exact:{}", name));
+    }
+
+    if exact(&["7zfm.exe", "7z.exe", "winrar.exe", "bandizip.exe", "peazip.exe", "izarc.exe"]) {
+        return result("archive_tool", format!("exact:{}", name));
+    }
+
+    if contains(&["setup", "installer", "install"]) || exact(&["msiexec.exe"]) {
+        return result("installer", format!("installer_rule:{}", name));
+    }
+
+    if exact(&["cmd.exe", "powershell.exe", "pwsh.exe", "wt.exe", "windowsterminal.exe", "alacritty.exe", "hyper.exe", "mintty.exe"]) {
+        return result("terminal", format!("exact:{}", name));
+    }
+
+    if exact(&["taskmgr.exe", "control.exe", "regedit.exe", "mmc.exe"]) {
+        return result("system", format!("exact:{}", name));
+    }
+
+    ("unknown".to_string(), format!("no_rule_match:{}", name), "unknown".to_string())
 }
 
 // ──────────────────────────────────────────
@@ -195,7 +316,7 @@ mod windows_impl {
         }
     }
 
-    pub fn get_active_app() -> Option<(String, String)> {
+    pub fn get_active_app() -> Option<(String, String, String, String)> {
         unsafe {
             let hwnd = GetForegroundWindow();
             if hwnd.is_null() { return None; }
@@ -221,8 +342,8 @@ mod windows_impl {
                 .to_string_lossy()
                 .to_lowercase();
 
-            let category = classify_app(&process_name);
-            Some((process_name, category))
+            let (category, classification_reason, classification_source) = super::classify_app(&process_name);
+            Some((process_name, category, classification_reason, classification_source))
         }
     }
 
@@ -287,6 +408,8 @@ mod windows_impl {
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
+                    classification_reason: "hwnd_null".to_string(),
+                    classification_source: "system".to_string(),
                     error_stage: "hwnd_null".to_string(),
                     error_code: code, last_error_before: err_before,
                     is_self_app: false,
@@ -305,6 +428,8 @@ mod windows_impl {
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
+                    classification_reason: "pid_zero".to_string(),
+                    classification_source: "system".to_string(),
                     error_stage: "pid_zero".to_string(),
                     error_code: code, last_error_before: err_before,
                     is_self_app: false,
@@ -322,6 +447,8 @@ mod windows_impl {
                     open_process_ok: false, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
+                    classification_reason: "open_process_failed".to_string(),
+                    classification_source: "system".to_string(),
                     error_stage: "open_process_failed".to_string(),
                     error_code: code, last_error_before: err_before,
                     is_self_app: false,
@@ -343,6 +470,8 @@ mod windows_impl {
                     open_process_ok: true, query_name_ok: false,
                     process_name: String::new(), process_path_len: 0,
                     category: "unknown".to_string(),
+                    classification_reason: "query_name_failed".to_string(),
+                    classification_source: "system".to_string(),
                     error_stage: "query_name_failed".to_string(),
                     error_code: code, last_error_before: err_before,
                     is_self_app: false,
@@ -357,7 +486,7 @@ mod windows_impl {
                 .to_string_lossy()
                 .to_lowercase();
 
-            let category = classify_app(&process_name);
+            let (category, classification_reason, classification_source) = super::classify_app(&process_name);
             let is_self = category == "self";
 
             ActiveAppDebugInfo {
@@ -368,6 +497,8 @@ mod windows_impl {
                 process_name,
                 process_path_len: path_len,
                 category,
+                classification_reason,
+                classification_source,
                 error_stage: "ok".to_string(),
                 error_code: 0, last_error_before: err_before,
                 is_self_app: is_self,
@@ -375,101 +506,6 @@ mod windows_impl {
         }
     }
 
-    fn classify_app(name: &str) -> String {
-        // 自アプリ (Tauri WebView / アプリ本体) — 設定画面が前面になる場合
-        if name.contains("msedgewebview2") || name == "amispi-companion.exe" || name == "amispi-companion" {
-            return "self".to_string();
-        }
-
-        // IDE / エディタ
-        if ["code.exe", "cursor.exe", "idea64.exe", "devenv.exe", "rider64.exe",
-            "clion64.exe", "pycharm64.exe", "webstorm64.exe", "phpstorm64.exe",
-            "notepad++.exe", "sublime_text.exe"].contains(&name) {
-            return "ide".to_string();
-        }
-
-        // ブラウザ
-        if ["chrome.exe", "firefox.exe", "msedge.exe", "brave.exe", "vivaldi.exe",
-            "opera.exe", "arc.exe", "librewolf.exe"].contains(&name) {
-            return "browser".to_string();
-        }
-
-        // メディアプレイヤー / 音楽 / 動画
-        if ["vlc.exe", "mpc-hc.exe", "mpc-be.exe", "mpv.exe", "wmplayer.exe",
-            "potplayermini64.exe", "potplayer.exe", "kmplayer.exe",
-            "spotify.exe", "musicbee.exe", "foobar2000.exe", "aimp.exe",
-            "tidal.exe", "itunes.exe", "applemusic.exe", "winamp.exe",
-            "mediamonkey.exe"].contains(&name) {
-            return "media".to_string();
-        }
-
-        // ゲーム
-        if name.ends_with("game") || ["steam.exe", "epicgameslauncher.exe", "gog galaxy.exe",
-            "playnite.desktop.exe"].contains(&name) {
-            return "game".to_string();
-        }
-
-        // DAW / 音楽制作
-        if ["ableton live.exe", "fl64.exe", "fl.exe", "bitwig.exe",
-            "bitwig studio.exe", "reaper.exe", "reaper64.exe", "logic.exe",
-            "studioone.exe", "cubase.exe", "cubase12.exe"].contains(&name) {
-            return "daw".to_string();
-        }
-
-        // オフィス
-        if ["winword.exe", "excel.exe", "powerpnt.exe", "soffice.exe",
-            "keynote.exe", "onenote.exe", "notion.exe"].contains(&name) {
-            return "office".to_string();
-        }
-
-        // ターミナル
-        if ["cmd.exe", "powershell.exe", "pwsh.exe", "wt.exe", "windowsterminal.exe",
-            "alacritty.exe", "hyper.exe", "mintty.exe"].contains(&name) {
-            return "terminal".to_string();
-        }
-
-        // コミュニケーション
-        if ["discord.exe", "slack.exe", "teams.exe", "zoom.exe", "skype.exe",
-            "msteams.exe", "element.exe", "signal.exe"].contains(&name) {
-            return "communication".to_string();
-        }
-
-        // システム / ファイル管理
-        if ["explorer.exe", "totalcmd.exe", "freecommander.exe"].contains(&name) {
-            return "system".to_string();
-        }
-
-        // デザインツール (Figma / Photoshop / Illustrator 等)
-        if ["figma.exe", "photoshop.exe", "illustrator.exe", "indesign.exe",
-            "xd.exe", "canva.exe", "inkscape.exe", "gimp.exe",
-            "affinity publisher.exe", "affinity designer.exe", "affinity photo.exe",
-            "affpub.exe", "affdes.exe", "affphoto.exe",
-            "sketch.exe", "penpot.exe", "lunacy.exe"].contains(&name) {
-            return "design".to_string();
-        }
-
-        // ノート / メモアプリ (Obsidian / Notion は office に入っているので Obsidian 等を追加)
-        if ["obsidian.exe", "logseq.exe", "joplin.exe", "standardnotes.exe",
-            "zettlr.exe", "marktext.exe", "typora.exe", "notable.exe",
-            "evernote.exe", "notesnook.exe"].contains(&name) {
-            return "notes".to_string();
-        }
-
-        // ドキュメントビューア (PDF / 電子書籍等)
-        if ["sumatrapdf.exe", "acrord32.exe", "acrobat.exe", "foxitreader.exe",
-            "evince.exe", "okular.exe", "calibre.exe", "kindle.exe",
-            "drawboard pdf.exe"].contains(&name) {
-            return "document".to_string();
-        }
-
-        // アーカイブツール (7-Zip / WinRAR / Bandizip 等)
-        if ["7zfm.exe", "7z.exe", "winrar.exe", "bandizip.exe",
-            "peazip.exe", "izarc.exe"].contains(&name) {
-            return "archive_tool".to_string();
-        }
-
-        "unknown".to_string()
-    }
 }
 
 // ──────────────────────────────────────────
@@ -627,9 +663,11 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
     let active_app = if perms.level >= 1 {
         #[cfg(target_os = "windows")]
         {
-            windows_impl::get_active_app().map(|(name, cat)| ActiveAppInfo {
+            windows_impl::get_active_app().map(|(name, cat, reason, source)| ActiveAppInfo {
                 process_name: name,
                 category: cat,
+                classification_reason: reason,
+                classification_source: source,
             })
         }
         #[cfg(not(target_os = "windows"))]
@@ -709,10 +747,61 @@ pub fn get_active_app_debug_info() -> ActiveAppDebugInfo {
             open_process_ok: false, query_name_ok: false,
             process_name: String::new(), process_path_len: 0,
             category: "unknown".to_string(),
+            classification_reason: "unsupported_platform".to_string(),
+            classification_source: "system".to_string(),
             error_stage: "unsupported_platform".to_string(),
             error_code: 0, last_error_before: 0,
             is_self_app: false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::classify_app;
+
+    #[test]
+    fn app_classification_table_covers_v1_3_targets() {
+        let cases = [
+            ("chatgpt.exe", "ai_chat"),
+            ("claude.exe", "ai_assistant"),
+            ("perplexity.exe", "ai_search"),
+            ("cursor.exe", "ide"),
+            ("windsurf.exe", "ide"),
+            ("zed.exe", "ide"),
+            ("obsidian.exe", "notes"),
+            ("logseq.exe", "notes"),
+            ("figma.exe", "design"),
+            ("photoshop.exe", "design"),
+            ("illustrator.exe", "design"),
+            ("blender.exe", "design"),
+            ("7zfm.exe", "archive_tool"),
+            ("winrar.exe", "archive_tool"),
+            ("bandizip.exe", "archive_tool"),
+            ("bitwig.exe", "daw"),
+            ("ableton live.exe", "daw"),
+            ("reaper.exe", "daw"),
+            ("code.exe", "ide"),
+            ("wt.exe", "terminal"),
+            ("chrome.exe", "browser"),
+            ("discord.exe", "chat"),
+            ("sumatrapdf.exe", "document"),
+        ];
+
+        for (process, expected) in cases {
+            let (category, reason, source) = classify_app(process);
+            assert_eq!(category, expected, "{process}");
+            assert!(!reason.is_empty(), "{process}");
+            assert_eq!(source, "built_in", "{process}");
+        }
+    }
+
+    #[test]
+    fn unknown_process_returns_reason() {
+        let (category, reason, source) = classify_app("unknown-tool.exe");
+        assert_eq!(category, "unknown");
+        assert_eq!(source, "unknown");
+        assert!(reason.contains("no_rule_match"));
     }
 }
 
@@ -739,6 +828,13 @@ fn detect_media(active_category: &str, fullscreen: bool) -> MediaContext {
             audio_likely_active: true,
             media_kind: "music".into(),
             source_category: "daw".into(),
+        };
+    }
+    if active_category == "music" {
+        return MediaContext {
+            audio_likely_active: true,
+            media_kind: "music".into(),
+            source_category: "music_app".into(),
         };
     }
     if active_category == "media" {

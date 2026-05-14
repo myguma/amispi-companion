@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.2.0 まで進んでいる。
+現在 v1.3.0 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -172,12 +172,21 @@ v1.2.0 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.3.0 の到達点:
+
+- AppCategory を AI / chat / file_manager / installer / music 系まで拡張
+- classificationReason / classificationSource を active app snapshot と debug に追加
+- unknown app を process名と分類未登録 reason 付きで確認可能
+- ユーザー定義分類 `customAppClassifications: Record<string, AppCategory>` を追加
+- Observation Page から process名単位の分類保存・削除が可能
+- raw window title / raw filename / file content は custom classification に保存しない
+
 ## 直近の次の一手
 
-まず v1.2.0 実機QA 結果を踏まえる。
+まず v1.3.0 実機QA 結果を踏まえる。
 
-問題があれば v1.2.x hotfix として最小修正する。
-問題がなければ v1.3.0 App Classification へ進む。
+問題があれば v1.3.x hotfix として最小修正する。
+問題がなければ v1.4.0 Memory v2 へ進む。
 
 v1.1.4 QA観点:
 

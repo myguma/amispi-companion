@@ -113,6 +113,10 @@ export function inferActivity(snapshot: ObservationSnapshot): ActivityInsight {
     return { kind: "listeningMusic", confidence: 0.75, reasons: ["category=media", "windowed"], summary: "音楽を流している" };
   }
 
+  if (cat === "music") {
+    return { kind: "listeningMusic", confidence: 0.8, reasons: ["category=music"], summary: "音楽を流している" };
+  }
+
   // ── ブラウザ ──────────────────────────────────────────────────
   if (cat === "browser") {
     if (fs) {
@@ -172,16 +176,16 @@ export function inferActivity(snapshot: ObservationSnapshot): ActivityInsight {
   }
 
   // ── アーカイブツール ──────────────────────────────────────────
-  if (cat === "archive_tool") {
-    return { kind: "idle", confidence: 0.5, reasons: ["category=archive_tool"], summary: "ファイルを整理している" };
+  if (cat === "archive_tool" || cat === "file_manager" || cat === "installer") {
+    return { kind: "idle", confidence: 0.55, reasons: [`category=${cat}`], summary: "ファイルまわりを触っている" };
   }
 
   // ── コミュニケーションアプリ ──────────────────────────────────
-  if (cat === "communication") {
+  if (cat === "chat" || cat === "communication" || cat === "ai_chat" || cat === "ai_assistant" || cat === "ai_search") {
     if (inputActive) {
-      return { kind: "browsing", confidence: 0.55, reasons: ["category=communication", "input_active"], summary: "チャット・連絡中" };
+      return { kind: "browsing", confidence: 0.6, reasons: [`category=${cat}`, "input_active"], summary: cat.startsWith("ai_") ? "AIとやりとりしている" : "チャット・連絡中" };
     }
-    return { kind: "breakLikely", confidence: 0.5, reasons: ["category=communication"], summary: "チャットアプリを開いている" };
+    return { kind: "breakLikely", confidence: 0.5, reasons: [`category=${cat}`], summary: cat.startsWith("ai_") ? "AI画面を開いている" : "チャットアプリを開いている" };
   }
 
   // ── 自アプリ (設定画面等) ──────────────────────────────────────

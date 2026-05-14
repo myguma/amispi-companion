@@ -5,6 +5,9 @@ import { getMemoryStats } from "../../systems/memory/memoryStore";
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
 import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
 import type { ObservationSignal } from "../../systems/observation/observationSignals";
+import { getCurrentSnapshot, subscribeCurrentSnapshot } from "../../systems/observation/currentSnapshotStore";
+import type { ObservationSnapshot } from "../../observation/types";
+import { appCategoryLabel } from "../../observation/appClassification";
 import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../systems/debug/autonomousSpeechDebugStore";
 import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
 import { getAIRuntimeTraceSnapshot, subscribeAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
@@ -57,11 +60,17 @@ export function DiagnosticsPage() {
   const memStats = getMemoryStats();
   const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
   const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
+  const [snapshot, setSnapshot] = useState<ObservationSnapshot>(getCurrentSnapshot);
   const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug);
   const [aiRuntime, setAiRuntime] = useState<AIRuntimeTraceSnapshot>(getAIRuntimeTraceSnapshot);
 
   useEffect(() => {
     const unsub = subscribeCurrentSignals(() => setSignals([...getCurrentSignals()]));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    const unsub = subscribeCurrentSnapshot(() => setSnapshot({ ...getCurrentSnapshot() }));
     return unsub;
   }, []);
 
@@ -119,6 +128,10 @@ export function DiagnosticsPage() {
 
       <SectionHead title="観察 (Observation)" />
       <InfoRow label="観察レベル" value={s.observationLevel} />
+      <InfoRow label="activeProcess" value={snapshot.activeApp?.processName ?? "-"} />
+      <InfoRow label="appCategory" value={snapshot.activeApp ? appCategoryLabel(snapshot.activeApp.category) : "-"} />
+      <InfoRow label="classificationReason" value={snapshot.activeApp?.classificationReason ?? "-"} />
+      <InfoRow label="classificationSource" value={snapshot.activeApp?.classificationSource ?? "-"} />
       <InfoRow label="フォルダメタデータ" value={s.permissions.folderMetadataEnabled ? "ON" : "OFF"} />
       <InfoRow label="Filename signals" value={s.filenameSignalsEnabled ? "ON" : "OFF"} />
       <InfoRow label="Observation Timeline" value={`${timelineCount}件記録済み`} />

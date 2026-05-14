@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.2.0)**
+**最終更新: 2026-05-15 (v1.3.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.2.0
-**フェーズ:** Visible Local Observer Companion — ReactionIntent system / 発話人格改善
+**バージョン:** v1.3.0
+**フェーズ:** Visible Local Observer Companion — App Classification / custom classification
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,12 +24,12 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.2.0)
-✅ cargo build  → Finished dev profile (v1.2.0)
+✅ npm run build → ✓ built (v1.3.0)
+✅ cargo build  → Finished dev profile (v1.3.0)
+✅ cargo test app_classification → passed
 ✅ git diff --check → clean
 ✅ GitHub Actions / Windows Installer → v1.2.0 success (run 25876320136)
-✅ Windows Installer artifact → `amispi-companion_1.2.0_x64-setup.exe`
-✅ Updater artifact → `latest.json`
+🔲 v1.3.0 Release workflow → push後に確認必要
 ```
 
 ---
@@ -56,7 +56,7 @@
 
 ---
 
-## v1.0.6〜v1.2.0 完了済み
+## v1.0.6〜v1.3.0 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -69,6 +69,33 @@
 | v1.1.3 | AI runtime trace・OpenAI test・provider/model badge・speech_shown AI metadata | ✅ field QA pending |
 | v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル | ✅ field QA pending |
 | v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
+| v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
+
+## v1.3.0 実装詳細
+
+### 変更内容
+
+- `AppCategory` に `music` / `chat` / `file_manager` / `installer` / `ai_chat` / `ai_assistant` / `ai_search` を追加
+- Rust `classify_app()` を拡張し、ChatGPT / Claude / Perplexity / Copilot / Cursor / Windsurf / Zed / Obsidian / Logseq / Figma / Photoshop / Illustrator / Blender / 7-Zip / WinRAR / Bandizip / Bitwig / Ableton / Reaper / VSCode / terminal / browser / chat / document を分類
+- `classificationReason` / `classificationSource` を active app snapshot と active app debug に追加
+- `currentSnapshotStore` を追加し、Debug / Diagnostics / Observation Page で current process/category/reason を確認可能
+- `customAppClassifications: Record<string, AppCategory>` を追加
+- Observation Page に process名単位のユーザー定義分類UIを追加。保存されるのは process名と category のみ
+- classification table の Rust unit test を追加
+
+### Field QA で確認すべき項目 (v1.3.0)
+
+- unknown app が Debug / Diagnostics / Transparency で process名と `no_rule_match:<process>` reason 付きで見えるか
+- Cursor / Windsurf / Zed / Obsidian / Figma / Blender / Bitwig / Ableton / Reaper などが想定カテゴリになるか
+- ChatGPT / Claude / Perplexity / Copilot が `ai_chat` / `ai_assistant` / `ai_search` 系で見えるか
+- Observation Page で現在の process をユーザー定義分類に変更でき、次回 snapshot で category が上書きされるか
+- custom classification が保存・削除できるか
+- raw window title / raw filename / file content が custom classification に保存されていないか
+
+## 次に着手する候補
+
+- v1.3.x hotfix: v1.3.0 field QA で分類漏れ・UI保存不具合・reason欠落が出た場合の最小修正
+- 問題がなければ v1.4.0 Memory v2 へ進む
 
 ## v1.2.0 実装詳細
 
@@ -91,11 +118,6 @@
 - 30分常駐しても `静かだね` / `作業中？` / `ここにいる` / `呼んだ？` / `ん` / `...` が短時間連発しないか
 - observation reaction fallback の発話でも `reactionIntent` と `reaction_fallback` が残るか
 - voice/text の local_router 応答でも `reactionIntent` が `speech_shown` に残るか
-
-## 次に着手する候補
-
-- v1.2.x hotfix: v1.2.0 field QA で intent trace 欠落・低品質文・過長文が出た場合の最小修正
-- 問題がなければ v1.3.0 App Classification へ進む
 
 ## v1.1.4 Auth / Billing Notes
 

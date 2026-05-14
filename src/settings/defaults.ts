@@ -61,6 +61,7 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   filenameSignalsEnabled: true,
   observationLevel: "balanced",
   memoryMode: "timeline_summary",
+  customAppClassifications: {},
 
   mediaAwarenessEnabled: false,
   screenUnderstandingEnabled: false,

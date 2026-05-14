@@ -37,6 +37,8 @@ import { EMPTY_SNAPSHOT } from "./observation/types";
 import { addObservationEvent, pruneObservationTimeline } from "./systems/observation/observationTimelineStore";
 import { buildObservationSignals } from "./systems/observation/observationSignals";
 import { setCurrentSignals } from "./systems/observation/currentSignalStore";
+import { setCurrentSnapshot } from "./systems/observation/currentSnapshotStore";
+import { applyCustomAppClassifications } from "./observation/appClassification";
 import { useVoiceRecorder } from "./systems/voice/useVoiceRecorder";
 import { subscribeTextMessages } from "./systems/conversation/textMessageBus";
 import "./styles/index.css";
@@ -226,7 +228,7 @@ export default function App() {
 
     const poll = async () => {
       try {
-        const snap = await invoke<ObservationSnapshot>("get_observation_snapshot", {
+        const rawSnap = await invoke<ObservationSnapshot>("get_observation_snapshot", {
           perms: {
             level: settings.permissions.level,
             window_title_enabled: settings.permissions.windowTitleEnabled,
@@ -235,7 +237,9 @@ export default function App() {
             cloud_allowed: settings.permissions.cloudAllowed,
           },
         });
+        const snap = applyCustomAppClassifications(rawSnap, settings.customAppClassifications);
         setSnapshot(snap);
+        setCurrentSnapshot(snap);
         setCurrentSignals(buildObservationSignals(snap));
 
         // スナップショット変化からObservationイベントを生成
@@ -287,7 +291,7 @@ export default function App() {
     void poll();
     const timer = setInterval(poll, OBSERVE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [settings.permissions]);
+  }, [settings.permissions, settings.customAppClassifications]);
 
   // 更新通知
   useEffect(() => {

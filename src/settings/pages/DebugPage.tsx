@@ -8,6 +8,9 @@ import { getAutonomousSpeechDebug, subscribeAutonomousSpeechDebug } from "../../
 import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousSpeechDebugStore";
 import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
 import type { ObservationSignal } from "../../systems/observation/observationSignals";
+import { getCurrentSnapshot, subscribeCurrentSnapshot } from "../../systems/observation/currentSnapshotStore";
+import type { ObservationSnapshot } from "../../observation/types";
+import { appCategoryLabel } from "../../observation/appClassification";
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
 import { getOpenAIPayloadPreview, subscribeOpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
 import type { OpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
@@ -62,6 +65,7 @@ export function DebugPage() {
   const [traces, setTraces] = useState<InteractionTraceEntry[]>(getInteractionTraces());
   const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug());
   const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
+  const [snapshot, setSnapshot] = useState<ObservationSnapshot>(getCurrentSnapshot);
   const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
   const [openaiPreview, setOpenaiPreview] = useState<OpenAIPayloadPreview | null>(getOpenAIPayloadPreview());
   const [aiRuntime, setAiRuntime] = useState<AIRuntimeTraceSnapshot>(getAIRuntimeTraceSnapshot());
@@ -70,6 +74,7 @@ export function DebugPage() {
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
   useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
   useEffect(() => subscribeCurrentSignals(() => setSignals([...getCurrentSignals()])), []);
+  useEffect(() => subscribeCurrentSnapshot(() => setSnapshot({ ...getCurrentSnapshot() })), []);
   useEffect(() => subscribeOpenAIPayloadPreview(() => setOpenaiPreview(getOpenAIPayloadPreview())), []);
   useEffect(() => subscribeAIRuntimeTrace(() => {
     setAiRuntime({ ...getAIRuntimeTraceSnapshot() });
@@ -134,6 +139,12 @@ export function DebugPage() {
 
       <SectionHead title="現在のObservationSignals" />
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
+        <div style={{ marginBottom: 6 }}>
+          activeApp: {snapshot.activeApp ? `${snapshot.activeApp.processName} / ${appCategoryLabel(snapshot.activeApp.category)}` : "-"}
+        </div>
+        <div style={{ marginBottom: 6, color: "#888" }}>
+          classification: {snapshot.activeApp?.classificationReason ?? "-"} / source: {snapshot.activeApp?.classificationSource ?? "-"}
+        </div>
         {signals.length === 0 ? (
           <div style={{ color: "#bbb" }}>シグナルなし (コンパニオンWindow起動後に表示)</div>
         ) : signals.map((sig) => (
@@ -221,6 +232,7 @@ export function DebugPage() {
             <div>response: {t.selectedResponse ?? "-"}</div>
             <div>fallback: {t.fallbackReason ?? "-"} / dropped: {t.dropped ? "yes" : "no"} / suppressed: {t.suppressed ? "yes" : "no"}</div>
             <div style={{ color: "#999" }}>activity: {t.observationSummary ?? "-"} / app: {t.activeAppCategory ?? "-"} / proc: {t.activeProcessName ?? "-"}</div>
+            <div style={{ color: "#aaa" }}>classification: {t.classificationReason ?? "-"}</div>
           </div>
         ))}
       </div>

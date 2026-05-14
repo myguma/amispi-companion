@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-15 (v1.2.0)**
+**最終更新: 2026-05-15 (v1.3.0)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -30,6 +30,15 @@
 | v1.1.3 | pending | AI runtime trace・OpenAI test・provider/model badge・長文speech bubbleはfield QA pending |
 | v1.1.4 | pending | OpenAI 429分類・fallback表示明確化・speech bubble全文パネルはfield QA pending |
 | v1.2.0 | pending | ReactionIntent trace、低品質fallback削減、30分常駐時の重複抑制はfield QA pending |
+| v1.3.0 | pending | App Classification拡張、classification reason、custom classification UIはfield QA pending |
+
+## v1.3.0 Field QA Watch Points
+
+- Windows実機で foreground process の `classificationReason` / `classificationSource` が Debug / Diagnostics に表示されるか
+- unknown app が process名付きで見え、分類未登録であることが分かるか
+- custom classification が process名 + category だけを保存し、raw window title / filename / file content を保存しないか
+- custom classification の保存・削除後に companion window 側の snapshot へ反映されるか
+- AI系アプリ分類 (`ai_chat` / `ai_assistant` / `ai_search`) が発話やDebugで不自然に扱われないか
 
 ## v1.2.0 Field QA Watch Points
 

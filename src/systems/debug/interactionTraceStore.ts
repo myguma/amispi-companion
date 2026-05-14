@@ -22,6 +22,7 @@ export type InteractionTraceEntry = {
   observationSummary?: string;
   activeAppCategory?: string;
   activeProcessName?: string;
+  classificationReason?: string;
   selectedResponse?: string;
   responseSource?: string;
   fallbackReason?: string;
