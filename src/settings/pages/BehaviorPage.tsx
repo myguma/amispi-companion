@@ -86,17 +86,26 @@ export function BehaviorPage() {
 
       <SectionHead title="音声" />
       <Toggle label="鳴き声あり" checked={s.cryEnabled} onChange={(v) => update({ cryEnabled: v })} />
+      <Toggle label="自発発話の小さな鳴き声" note="TTSではなく、話し始めに短い効果音だけ鳴らします" checked={s.playCryOnAutonomousSpeech} onChange={(v) => update({ playCryOnAutonomousSpeech: v })} />
       <Slider label="音量" min={0} max={1} step={0.05} value={s.volume} onChange={(v) => update({ volume: v })} format={(v) => `${Math.round(v * 100)}%`} />
 
       <SectionHead title="発話" />
       <Toggle label="自律発話あり" note="デフォルト OFF — 有効にすると時々しゃべる" checked={s.autonomousSpeechEnabled} onChange={(v) => update({ autonomousSpeechEnabled: v })} />
       <SSelect
-        label="発話頻度"
-        value={s.speechFrequency}
-        options={[{ v: "rare", label: "まれ (推奨)" }, { v: "low", label: "少なめ" }, { v: "normal", label: "普通" }]}
-        onChange={(v) => update({ speechFrequency: v as "rare" | "low" | "normal" })}
+        label="発話間隔"
+        value={s.autonomousSpeechIntervalPreset}
+        options={[
+          { v: "rare", label: "まれ (5〜8分)" },
+          { v: "calm", label: "控えめ (3〜5分 / 推奨)" },
+          { v: "normal", label: "普通 (2〜4分)" },
+          { v: "lively", label: "多め (1〜2分)" },
+        ]}
+        onChange={(v) => update({
+          autonomousSpeechIntervalPreset: v as "rare" | "calm" | "normal" | "lively",
+          speechFrequency: v === "lively" || v === "normal" ? "normal" : v === "calm" ? "low" : "rare",
+        })}
       />
-      <Slider label="1時間の最大発話回数" min={1} max={10} step={1} value={s.maxAutonomousReactionsPerHour} onChange={(v) => update({ maxAutonomousReactionsPerHour: v })} />
+      <Slider label="旧式の安全上限" min={1} max={10} step={1} value={s.maxAutonomousReactionsPerHour} onChange={(v) => update({ maxAutonomousReactionsPerHour: v })} />
 
       <SectionHead title="移動" />
       <Toggle label="自律移動あり" checked={s.autonomousMovementEnabled} onChange={(v) => update({ autonomousMovementEnabled: v })} />

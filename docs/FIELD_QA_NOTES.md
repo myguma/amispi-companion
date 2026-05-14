@@ -32,8 +32,41 @@
 > v1.0.0 field QAでは基本操作が通過し、v1.0.1でUpdateBadge位置とWhisper WAV変換をhotfix。
 > v1.0.1 field QAではFFmpeg/Whisperの実行エラーは解消したが、transcript確認とvoice返答品質が不足。v1.0.2でdebugとprompt/fallbackを修正。
 > v1.0.2 field QAではWhisperが聞こえていることを確認。残問題はvoice long press後のclick誤発火とvoice返答品質。v1.0.3でpriority/suppress/noise rejectionを修正。
+> v1.0.3 field QAでは、過去transcript由来の返答混入、設定値と動作の不一致、内部理由不可視が残った。v1.0.4でsession isolation / interaction trace / settings consistencyを追加。
 
-**更新: 2026-05-14 (v1.0.3)**
+**更新: 2026-05-14 (v1.0.4)**
+
+---
+
+## v1.0.4 での更新内容
+
+### Interaction coherence hotfix
+
+**v1.0.3 field QAで確認できたこと:**
+- Whisperは聞こえているが、前回transcript由来の返答が次のvoice入力へ混ざることがあった
+- `画面見えてる？` に過去の「青いカエルと七三九」が再登場することがあった
+- 自律移動OFFなのに移動するなど、設定と実動作の不一致があった
+- なぜその発話になったかを追えなかった
+
+**v1.0.4修正:**
+- voice入力ごとに `voiceSessionId` を発行し、古いSTT/AI/fallback結果を破棄
+- VoicePage / DebugPageにinteraction traceを追加
+- `画面見えてる？` / `今何を見てる？` 系はローカル観測routerで先に処理
+- `autonomousMovementEnabled` を `useWander` へ接続し、OFF時はtimer/animationを停止
+- 自律発話はinterval preset中心へ移行し、旧max/hourは安全上限扱いへ弱めた
+- VoicePageに一時テキスト送信欄を追加
+- 自発発話時の短いcryを追加
+- UpdateBadgeをキャラ足元中央寄りへ移動し、hit testを同期
+
+**privacy:**
+- transcript / text input / trace はMemoryEvent / localStorage / Memory exportへ保存しない
+- 音声ファイル・変換WAV・Whisper transcript txtは一時ディレクトリごと削除する方針を維持
+
+**field QA pending:**
+- 連続voice入力で前回内容が混ざらないか
+- 自律移動OFF / 自律発話OFF / 発話間隔presetが実動作へ反映されるか
+- Interaction traceに入力・trigger・source・fallback reason・settings snapshotが出るか
+- Text入力で観測質問に答えられるか
 
 ---
 

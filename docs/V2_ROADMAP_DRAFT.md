@@ -49,6 +49,7 @@ v2 should extend the local-first desktop companion without turning it into a clo
 - Transparency UI must clearly show when cloud routing is active
 - Remote mode must not enable cloud STT, wake word, always-on microphone, or automatic file operations
 - This is a v2+ planning candidate, not a current implementation task
+- v1.0.4 keeps this as documentation only; no ChatGPT/OpenAI/API-key UI or remote provider exists in the app
 
 ### Advanced Memory Export / Import
 

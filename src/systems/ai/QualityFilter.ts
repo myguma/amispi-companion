@@ -67,7 +67,8 @@ export type FilterOptions = {
 };
 
 export function filterGeneratedText(raw: string, options: FilterOptions = {}): FilterResult {
-  const text = options.trigger === "voice" && options.voiceInput?.trim()
+  const isConversationalInput = (options.trigger === "voice" || options.trigger === "text") && options.voiceInput?.trim();
+  const text = isConversationalInput
     ? sanitizeVoiceResponse(raw)
     : raw.trim()
         .replace(/[？！]。/g, (m) => m[0])
@@ -97,7 +98,7 @@ export function filterGeneratedText(raw: string, options: FilterOptions = {}): F
     return { ok: false, reason: "english_word_detected" };
   }
 
-  if (options.trigger === "voice" && options.voiceInput?.trim() && isGenericVoiceLine(text)) {
+  if (isConversationalInput && isGenericVoiceLine(text)) {
     return { ok: false, reason: "voice_generic_response" };
   }
 

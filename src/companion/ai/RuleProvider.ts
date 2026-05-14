@@ -135,11 +135,12 @@ export class RuleProvider implements AIProvider {
     if (
       ctx.trigger === "click" ||
       ctx.trigger === "voice" ||
+      ctx.trigger === "text" ||
       ctx.trigger === "manual" ||
       ctx.trigger === "wake" ||
       ctx.trigger === "return"
     ) {
-      if (ctx.trigger === "voice" && ctx.voiceInput?.trim()) {
+      if ((ctx.trigger === "voice" || ctx.trigger === "text") && ctx.voiceInput?.trim()) {
         return { text: buildVoiceFallback(ctx.voiceInput, ctx), shouldSpeak: true, emotion: "aware" };
       }
 
@@ -167,7 +168,7 @@ export class RuleProvider implements AIProvider {
       if (kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo") {
         return { shouldSpeak: false, reason: "silent_mode" };
       }
-      if (memory.todaySpeechCount >= Math.max(6, sp.maxAutonomousReactionsPerHour * 3)) {
+      if (memory.todaySpeechCount >= 60) {
         return { shouldSpeak: false, reason: "talked_enough_today" };
       }
 

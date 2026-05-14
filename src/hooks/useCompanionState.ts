@@ -28,6 +28,8 @@ import type { STTError } from "../systems/voice/STTAdapter";
 import { buildVoiceFallback, sanitizeVoiceResponse } from "../systems/voice/voiceFallback";
 import { patchLastVoiceDebug, setLastVoiceDebug } from "../systems/voice/voiceDebugStore";
 import { validateVoiceTranscript } from "../systems/voice/normalizeTranscript";
+import { buildObservationQuestionResponse, classifyVoiceIntent } from "../systems/voice/voiceIntent";
+import { addInteractionTrace, previewTraceText } from "../systems/debug/interactionTraceStore";
 
 export type { VoiceUIState };  // 後方互換のため再エクスポート
 
@@ -40,6 +42,7 @@ interface UseCompanionStateReturn {
   triggerDragReaction: () => void;
   requestVoiceResponse: (transcript: string) => Promise<void>;
   requestVoiceFromBlob: (blob: Blob) => Promise<void>;
+  requestTextMessage: (text: string) => Promise<void>;
   voiceListeningStart: () => void;
   voiceRecordingError: (err: string) => void;
   voiceUIState: VoiceUIState;
@@ -72,6 +75,20 @@ const SPEECH_PRIORITY: Record<SpeechSource, number> = {
 };
 
 const POST_VOICE_CLICK_SUPPRESS_MS = 1_500;
+
+function speechDelayRangeMs(settings: ReturnType<typeof getSettings>): [number, number] {
+  const preset = settings.autonomousSpeechIntervalPreset ?? (
+    settings.speechFrequency === "normal" ? "normal" :
+    settings.speechFrequency === "low" ? "calm" : "rare"
+  );
+  switch (preset) {
+    case "lively": return [60_000, 120_000];
+    case "normal": return [120_000, 240_000];
+    case "calm": return [180_000, 300_000];
+    case "rare":
+    default: return [300_000, 480_000];
+  }
+}
 
 function isSpeechOptions(value: CompanionEmotion | null | SpeechOptions | undefined): value is SpeechOptions {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -133,6 +150,9 @@ export function useCompanionState(
   const speechSerialRef = useRef(0);
   const suppressClickUntilRef = useRef(0);
   const voiceUIStateRef = useRef<VoiceUIState>("voiceOff");
+  const voiceSessionCounterRef = useRef(0);
+  const activeVoiceSessionIdRef = useRef(0);
+  const staleVoiceDroppedCountRef = useRef(0);
 
   const stateRef = useRef<CompanionState>("idle");
   useEffect(() => { stateRef.current = state; }, [state]);
@@ -144,6 +164,45 @@ export function useCompanionState(
 
   const suppressVoiceReleaseClick = useCallback((ms = POST_VOICE_CLICK_SUPPRESS_MS) => {
     suppressClickUntilRef.current = Math.max(suppressClickUntilRef.current, Date.now() + ms);
+  }, []);
+
+  const beginVoiceSession = useCallback(() => {
+    const id = voiceSessionCounterRef.current + 1;
+    voiceSessionCounterRef.current = id;
+    activeVoiceSessionIdRef.current = id;
+    return id;
+  }, []);
+
+  const isCurrentVoiceSession = useCallback((id: number) => {
+    const current = id === activeVoiceSessionIdRef.current;
+    if (!current) {
+      staleVoiceDroppedCountRef.current += 1;
+      patchLastVoiceDebug({
+        staleDroppedCount: staleVoiceDroppedCountRef.current,
+        aiFallbackReason: "stale_voice_session_dropped",
+      });
+      addInteractionTrace({
+        trigger: "voice",
+        voiceSessionId: id,
+        dropped: true,
+        fallbackReason: "stale_voice_session",
+        note: `active=${activeVoiceSessionIdRef.current}`,
+      });
+    }
+    return current;
+  }, []);
+
+  const settingsSnapshot = useCallback(() => {
+    const s = getSettings();
+    return {
+      autonomousSpeechEnabled: s.autonomousSpeechEnabled,
+      autonomousMovementEnabled: s.autonomousMovementEnabled,
+      quietMode: s.quietMode,
+      focusMode: s.focusMode,
+      doNotDisturb: s.doNotDisturb,
+      speechFrequency: s.speechFrequency,
+      autonomousSpeechIntervalPreset: s.autonomousSpeechIntervalPreset,
+    };
   }, []);
 
   const clearAllTimers = useCallback(() => {
@@ -204,6 +263,15 @@ export function useCompanionState(
       const priority = resolvedOptions.priority ?? SPEECH_PRIORITY[source];
       const now = Date.now();
       if (now < speechLockUntilRef.current && priority <= speechPriorityRef.current) {
+        addInteractionTrace({
+          trigger: source === "voice" || source === "voice_error" ? "voice" : source === "manual_click" ? "click" : source,
+          source,
+          selectedResponse: previewTraceText(line),
+          speechPriority: priority,
+          dropped: true,
+          fallbackReason: "lower_priority_speech_locked",
+          settingsSnapshot: settingsSnapshot(),
+        });
         return false;
       }
 
@@ -218,7 +286,7 @@ export function useCompanionState(
       setSpriteEmotion(resolvedOptions.emotion ?? null);
       setState("speaking");
       lastSpeechAtRef.current = Date.now();
-      logEvent("speech_shown", { text: line });
+      logEvent("speech_shown", { text: line, source, priority });
 
       if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
       speechTimerRef.current = setTimeout(() => {
@@ -232,7 +300,7 @@ export function useCompanionState(
       }, config.speechBubbleDurationMs);
       return true;
     },
-    [config.speechBubbleDurationMs, resetSleepTimer]
+    [config.speechBubbleDurationMs, resetSleepTimer, settingsSnapshot]
   );
 
   // ──────────────────────────────────────────
@@ -241,7 +309,13 @@ export function useCompanionState(
   // ──────────────────────────────────────────
   const scheduleIdleSpeech = useCallback(() => {
     if (idleSpeechTimerRef.current) clearTimeout(idleSpeechTimerRef.current);
-    const delay = 120_000 + Math.random() * 120_000;
+    if (!autonomousSpeechRef.current) {
+      idleSpeechTimerRef.current = null;
+      return;
+    }
+    const s0 = getSettings();
+    const [minDelay, maxDelay] = speechDelayRangeMs(s0);
+    const delay = minDelay + Math.random() * (maxDelay - minDelay);
     idleSpeechTimerRef.current = setTimeout(async () => {
       if (stateRef.current === "idle" && autonomousSpeechRef.current) {
         const { kind } = inferActivity(snapshotRef.current);
@@ -252,7 +326,7 @@ export function useCompanionState(
           const s      = getSettings();
           const events = getAllEvents();
           const memory = buildMemorySummary(events);
-          if (memory.todaySpeechCount >= Math.max(6, s.maxAutonomousReactionsPerHour * 3)) {
+          if (memory.todaySpeechCount >= 60) {
             scheduleIdleSpeech();
             return;
           }
@@ -274,13 +348,33 @@ export function useCompanionState(
 
           text ??= fireReaction("randomIdle");
           if (text) {
-            triggerSpeak(text, { emotion, source: "autonomous", priority: 20 });
+            const shown = triggerSpeak(text, { emotion, source: "autonomous", priority: 20 });
+            if (shown && s.cryEnabled && s.playCryOnAutonomousSpeech && !s.quietMode && !s.doNotDisturb) {
+              void cryEngine.play({ id: "autonomous_speech", synth: { kind: "murmur", durationMs: 180 } });
+            }
           }
         }
       }
       scheduleIdleSpeech();
     }, delay);
   }, [triggerSpeak, fireReaction]);
+
+  useEffect(() => {
+    if (!autonomousSpeechEnabled) {
+      if (idleSpeechTimerRef.current) {
+        clearTimeout(idleSpeechTimerRef.current);
+        idleSpeechTimerRef.current = null;
+      }
+      return;
+    }
+    scheduleIdleSpeech();
+    return () => {
+      if (idleSpeechTimerRef.current) {
+        clearTimeout(idleSpeechTimerRef.current);
+        idleSpeechTimerRef.current = null;
+      }
+    };
+  }, [autonomousSpeechEnabled, scheduleIdleSpeech]);
 
   // ──────────────────────────────────────────
   // クリック → AI応答 (新フロー: CompanionContext 経由)
@@ -333,9 +427,18 @@ export function useCompanionState(
   // transcript テキストのみをここに渡す。
   // ──────────────────────────────────────────
   const requestVoiceResponse = useCallback(async (transcript: string) => {
+    const sessionId = beginVoiceSession();
     suppressVoiceReleaseClick();
     const validated = validateVoiceTranscript(transcript);
     if (!validated.ok) {
+      patchLastVoiceDebug({
+        voiceSessionId: sessionId,
+        status: "no_speech",
+        transcriptPreview: transcript.trim().slice(0, 80),
+        transcriptLength: transcript.trim().length,
+        normalizedTranscriptPreview: "",
+        staleDroppedCount: staleVoiceDroppedCountRef.current,
+      });
       setVoiceState("voiceReady");
       return;
     }
@@ -346,6 +449,24 @@ export function useCompanionState(
     const s      = getSettings();
     const events = getAllEvents();
     const ctx    = buildCompanionContext("voice", snapshotRef.current, events, s, validated.text);
+    const intent = classifyVoiceIntent(validated.text);
+    patchLastVoiceDebug({
+      voiceSessionId: sessionId,
+      normalizedTranscriptPreview: validated.text.slice(0, 80),
+      intent,
+      staleDroppedCount: staleVoiceDroppedCountRef.current,
+    });
+    addInteractionTrace({
+      trigger: "voice",
+      voiceSessionId: sessionId,
+      rawTranscriptPreview: previewTraceText(transcript),
+      normalizedTranscriptPreview: previewTraceText(validated.text),
+      intent,
+      observationSummary: ctx.activityInsight.summary,
+      activeAppCategory: ctx.observation.activeApp?.category,
+      activeProcessName: ctx.observation.activeApp?.processName,
+      settingsSnapshot: settingsSnapshot(),
+    });
 
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
@@ -354,9 +475,13 @@ export function useCompanionState(
     setVoiceState("voiceResponding");
 
     try {
-      if (policy.allowed && !s.doNotDisturb) {
+      const routed = buildObservationQuestionResponse(intent, ctx);
+      if (routed) {
+        text = sanitizeVoiceResponse(routed);
+      } else if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
+          if (!isCurrentVoiceSession(sessionId)) return;
           if (output.shouldSpeak && output.text) {
             text = output.text;
             emotion = output.emotion ?? null;
@@ -382,21 +507,53 @@ export function useCompanionState(
           responsePreview: text.slice(0, 80),
         });
       }
-      triggerSpeak(text, { emotion, source: "voice", priority: 90, lockMs: 2_200 });
+      if (!isCurrentVoiceSession(sessionId)) return;
+      const shown = triggerSpeak(text, { emotion, source: "voice", priority: 90, lockMs: 2_200 });
+      addInteractionTrace({
+        trigger: "voice",
+        source: aiDebug.source,
+        voiceSessionId: sessionId,
+        normalizedTranscriptPreview: previewTraceText(validated.text),
+        intent,
+        observationSummary: ctx.activityInsight.summary,
+        activeAppCategory: ctx.observation.activeApp?.category,
+        activeProcessName: ctx.observation.activeApp?.processName,
+        selectedResponse: previewTraceText(text),
+        responseSource: routed ? "local_router" : aiDebug.source,
+        fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,
+        speechPriority: 90,
+        dropped: !shown,
+        settingsSnapshot: settingsSnapshot(),
+      });
     } finally {
       suppressVoiceReleaseClick();
       setVoiceState("voiceReady");
     }
-  }, [setVoiceState, suppressVoiceReleaseClick, triggerSpeak]);
+  }, [beginVoiceSession, isCurrentVoiceSession, setVoiceState, settingsSnapshot, suppressVoiceReleaseClick, triggerSpeak]);
 
   // ──────────────────────────────────────────
   // 録音中フラグ (voiceListening)
   // ──────────────────────────────────────────
   const voiceListeningStart = useCallback(() => {
+    const sessionId = beginVoiceSession();
     suppressVoiceReleaseClick(60_000);
-    setLastVoiceDebug({ status: "recording" });
+    setLastVoiceDebug({
+      status: "recording",
+      voiceSessionId: sessionId,
+      transcriptPreview: "",
+      transcriptLength: 0,
+      normalizedTranscriptPreview: "",
+      intent: "unknown",
+      staleDroppedCount: staleVoiceDroppedCountRef.current,
+    });
+    addInteractionTrace({
+      trigger: "voice",
+      voiceSessionId: sessionId,
+      note: "voice_session_start",
+      settingsSnapshot: settingsSnapshot(),
+    });
     setVoiceState("voiceListening");
-  }, [setVoiceState, suppressVoiceReleaseClick]);
+  }, [beginVoiceSession, setVoiceState, settingsSnapshot, suppressVoiceReleaseClick]);
 
   // ──────────────────────────────────────────
   // 録音エラー → voiceError → voiceReady/Off
@@ -419,14 +576,19 @@ export function useCompanionState(
   // 生音声データは transcribe() 内で使い捨て
   // ──────────────────────────────────────────
   const requestVoiceFromBlob = useCallback(async (blob: Blob) => {
+    const sessionId = activeVoiceSessionIdRef.current || beginVoiceSession();
     suppressVoiceReleaseClick(60_000);
     setVoiceState("voiceTranscribing");
     setState("thinking");
     setLastVoiceDebug({
       status: "transcribing",
+      voiceSessionId: sessionId,
       inputMimeType: blob.type || "application/octet-stream",
       transcriptPreview: "",
       transcriptLength: 0,
+      normalizedTranscriptPreview: "",
+      intent: "unknown",
+      staleDroppedCount: staleVoiceDroppedCountRef.current,
     });
 
     const s      = getSettings();
@@ -438,17 +600,26 @@ export function useCompanionState(
       const adapter = getSTTAdapter();
       if (await adapter.isAvailable()) {
         const result = await adapter.transcribe(blob);
+        if (!isCurrentVoiceSession(sessionId)) return;
         if (result.ok) {
           // 200文字で安全に切り詰め
           const validated = validateVoiceTranscript(result.result.text);
           if (validated.ok) {
             transcript = validated.text;
+            patchLastVoiceDebug({
+              voiceSessionId: sessionId,
+              normalizedTranscriptPreview: transcript.slice(0, 80),
+              intent: classifyVoiceIntent(transcript),
+              staleDroppedCount: staleVoiceDroppedCountRef.current,
+            });
           } else {
             sttError = "no_speech";
             patchLastVoiceDebug({
               status: "no_speech",
+              voiceSessionId: sessionId,
               transcriptPreview: result.result.text.trim().slice(0, 80),
               transcriptLength: result.result.text.trim().length,
+              normalizedTranscriptPreview: "",
               stderrPreview: validated.reason,
             });
           }
@@ -467,8 +638,19 @@ export function useCompanionState(
       setVoiceState("voiceError");
       patchLastVoiceDebug({
         status: voiceDebugStatusFromError(sttError),
+        voiceSessionId: sessionId,
       });
-      triggerSpeak(voiceErrorLine(sttError ?? "no_speech"), { emotion: "concerned", source: "voice_error", priority: 100, lockMs: 1_800 });
+      const errorLine = voiceErrorLine(sttError ?? "no_speech");
+      triggerSpeak(errorLine, { emotion: "concerned", source: "voice_error", priority: 100, lockMs: 1_800 });
+      addInteractionTrace({
+        trigger: "voice",
+        voiceSessionId: sessionId,
+        fallbackReason: sttError ?? "no_speech",
+        selectedResponse: errorLine,
+        responseSource: "voice_error",
+        speechPriority: 100,
+        settingsSnapshot: settingsSnapshot(),
+      });
       setTimeout(() => {
         const latest = getSettings();
         setVoiceState(latest.voiceInputEnabled ? "voiceReady" : "voiceOff");
@@ -478,6 +660,19 @@ export function useCompanionState(
     }
 
     const ctx    = buildCompanionContext("voice", snapshotRef.current, events, s, transcript);
+    const intent = classifyVoiceIntent(transcript);
+    patchLastVoiceDebug({ voiceSessionId: sessionId, intent, normalizedTranscriptPreview: transcript.slice(0, 80) });
+    addInteractionTrace({
+      trigger: "voice",
+      voiceSessionId: sessionId,
+      rawTranscriptPreview: previewTraceText(transcript),
+      normalizedTranscriptPreview: previewTraceText(transcript),
+      intent,
+      observationSummary: ctx.activityInsight.summary,
+      activeAppCategory: ctx.observation.activeApp?.category,
+      activeProcessName: ctx.observation.activeApp?.processName,
+      settingsSnapshot: settingsSnapshot(),
+    });
     const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
 
     let text: string | null = null;
@@ -485,9 +680,13 @@ export function useCompanionState(
     setVoiceState("voiceResponding");
 
     try {
-      if (policy.allowed && !s.doNotDisturb) {
+      const routed = buildObservationQuestionResponse(intent, ctx);
+      if (routed) {
+        text = sanitizeVoiceResponse(routed);
+      } else if (policy.allowed && !s.doNotDisturb) {
         try {
           const output = await getNewAIResponse(ctx);
+          if (!isCurrentVoiceSession(sessionId)) return;
           if (output.shouldSpeak && output.text) {
             text = output.text;
             emotion = output.emotion ?? null;
@@ -510,12 +709,85 @@ export function useCompanionState(
           responsePreview: text.slice(0, 80),
         });
       }
-      triggerSpeak(text, { emotion, source: "voice", priority: 90, lockMs: 2_200 });
+      if (!isCurrentVoiceSession(sessionId)) return;
+      const shown = triggerSpeak(text, { emotion, source: "voice", priority: 90, lockMs: 2_200 });
+      addInteractionTrace({
+        trigger: "voice",
+        source: aiDebug.source,
+        voiceSessionId: sessionId,
+        normalizedTranscriptPreview: previewTraceText(transcript),
+        intent,
+        observationSummary: ctx.activityInsight.summary,
+        activeAppCategory: ctx.observation.activeApp?.category,
+        activeProcessName: ctx.observation.activeApp?.processName,
+        selectedResponse: previewTraceText(text),
+        responseSource: routed ? "local_router" : aiDebug.source,
+        fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,
+        speechPriority: 90,
+        dropped: !shown,
+        settingsSnapshot: settingsSnapshot(),
+      });
     } finally {
       suppressVoiceReleaseClick();
       setVoiceState("voiceReady");
     }
-  }, [setVoiceState, suppressVoiceReleaseClick, triggerSpeak]);
+  }, [beginVoiceSession, isCurrentVoiceSession, setVoiceState, settingsSnapshot, suppressVoiceReleaseClick, triggerSpeak]);
+
+  const requestTextMessage = useCallback(async (input: string) => {
+    const textInput = input.trim().slice(0, 200);
+    if (!textInput) return;
+
+    setState("thinking");
+    const s = getSettings();
+    const events = getAllEvents();
+    const ctx = buildCompanionContext("text", snapshotRef.current, events, s, textInput);
+    const intent = classifyVoiceIntent(textInput);
+    const policy = canSpeak("manual", s, snapshotRef.current, lastSpeechAtRef.current, countInLastHour());
+
+    addInteractionTrace({
+      trigger: "text",
+      textInputPreview: previewTraceText(textInput),
+      intent,
+      observationSummary: ctx.activityInsight.summary,
+      activeAppCategory: ctx.observation.activeApp?.category,
+      activeProcessName: ctx.observation.activeApp?.processName,
+      settingsSnapshot: settingsSnapshot(),
+    });
+
+    let response: string | null = null;
+    let emotion: CompanionEmotion | null = null;
+    const routed = buildObservationQuestionResponse(intent, ctx);
+    if (routed) {
+      response = sanitizeVoiceResponse(routed);
+    } else if (policy.allowed && !s.doNotDisturb) {
+      try {
+        const output = await getNewAIResponse(ctx);
+        if (output.shouldSpeak && output.text) {
+          response = sanitizeVoiceResponse(output.text);
+          emotion = output.emotion ?? null;
+        }
+      } catch { /* AI error -> local fallback */ }
+    }
+
+    const aiDebug = getLastAIResult();
+    response ??= buildVoiceFallback(textInput, ctx);
+    const shown = triggerSpeak(response, { emotion, source: "voice", priority: 90, lockMs: 1_800 });
+    addInteractionTrace({
+      trigger: "text",
+      source: aiDebug.source,
+      textInputPreview: previewTraceText(textInput),
+      intent,
+      observationSummary: ctx.activityInsight.summary,
+      activeAppCategory: ctx.observation.activeApp?.category,
+      activeProcessName: ctx.observation.activeApp?.processName,
+      selectedResponse: previewTraceText(response),
+      responseSource: routed ? "local_router" : aiDebug.source,
+      fallbackReason: routed ? "observation_question_router" : aiDebug.fallbackReason,
+      speechPriority: 90,
+      dropped: !shown,
+      settingsSnapshot: settingsSnapshot(),
+    });
+  }, [settingsSnapshot, triggerSpeak]);
 
   // ──────────────────────────────────────────
   // クリック処理
@@ -528,6 +800,12 @@ export function useCompanionState(
       voiceUIStateRef.current === "voiceResponding";
     if (voiceBusy || now < suppressClickUntilRef.current) {
       patchLastVoiceDebug({ aiFallbackReason: "click_suppressed_after_voice" });
+      addInteractionTrace({
+        trigger: "click",
+        suppressed: true,
+        fallbackReason: "click_suppressed_after_voice",
+        settingsSnapshot: settingsSnapshot(),
+      });
       return false;
     }
 
@@ -632,7 +910,6 @@ export function useCompanionState(
     }, 1500);
 
     resetSleepTimer();
-    scheduleIdleSpeech();
 
     return () => {
       clearTimeout(greetTimer);
@@ -643,6 +920,7 @@ export function useCompanionState(
   return {
     state, speechText, spriteEmotion, onCharacterClick, triggerSpeak, triggerDragReaction,
     requestVoiceResponse, requestVoiceFromBlob,
+    requestTextMessage,
     voiceListeningStart, voiceRecordingError,
     voiceUIState,
   };

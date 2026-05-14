@@ -39,13 +39,13 @@ const SPEECH_BUBBLE_GAP_LOGICAL: f64 = 8.0;
 #[cfg(windows)]
 const SPEECH_BUBBLE_HIT_H_LOGICAL: f64 = 96.0;
 #[cfg(windows)]
-const UPDATE_BADGE_RIGHT_LOGICAL: f64 = 8.0;
+const UPDATE_BADGE_RIGHT_LOGICAL: f64 = 62.0;
 #[cfg(windows)]
-const UPDATE_BADGE_BOTTOM_LOGICAL: f64 = 8.0;
+const UPDATE_BADGE_BOTTOM_LOGICAL: f64 = 3.0;
 #[cfg(windows)]
-const UPDATE_BADGE_HIT_W_LOGICAL: f64 = 96.0;
+const UPDATE_BADGE_HIT_W_LOGICAL: f64 = 76.0;
 #[cfg(windows)]
-const UPDATE_BADGE_HIT_H_LOGICAL: f64 = 28.0;
+const UPDATE_BADGE_HIT_H_LOGICAL: f64 = 18.0;
 
 static CONTEXT_MENU_VISIBLE: AtomicBool = AtomicBool::new(false);
 static UPDATE_BADGE_VISIBLE: AtomicBool = AtomicBool::new(false);

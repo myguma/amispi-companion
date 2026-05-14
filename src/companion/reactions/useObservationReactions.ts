@@ -28,7 +28,7 @@ function isValidTransitionFrom(prev: InferredActivity): boolean {
 
 export function useObservationReactions(
   snapshot: ObservationSnapshot,
-  triggerSpeak: (text: string) => void
+  triggerSpeak: (text: string, options?: { source?: "autonomous"; priority?: number }) => boolean
 ): { tinyText: string | null } {
   const prevSnapshotRef = useRef<ObservationSnapshot>(EMPTY_SNAPSHOT);
   const hasInitialized  = useRef(false);
@@ -63,7 +63,7 @@ export function useObservationReactions(
     const currentKind = delta.nextInferredKind;
     const allEvents = getAllEvents();
     const memory = buildMemorySummary(allEvents);
-    const talkedEnoughToday = memory.todaySpeechCount >= Math.max(6, s.maxAutonomousReactionsPerHour * 3);
+    const talkedEnoughToday = memory.todaySpeechCount >= 60;
 
     // 固定テキストによる発火 (AI 失敗時の fallback)
     const fire = (trigger: ReactionTrigger, tags?: string[]): boolean => {
@@ -91,7 +91,7 @@ export function useObservationReactions(
         if (r.displayMode === "tiny") {
           showTiny(r.text, r.durationMs);
         } else if (r.displayMode === "bubble") {
-          triggerSpeak(r.text);
+          triggerSpeak(r.text, { source: "autonomous", priority: 20 });
         }
       }
       return true;
@@ -106,7 +106,7 @@ export function useObservationReactions(
         const ctx    = buildCompanionContext("observation", snapshot, allEvents, s);
         const output = await getNewAIResponse(ctx);
         if (output.shouldSpeak && output.text) {
-          triggerSpeak(output.text);
+          triggerSpeak(output.text, { source: "autonomous", priority: 20 });
           return true;
         }
       } catch { /* AI エラー → fire() へ */ }

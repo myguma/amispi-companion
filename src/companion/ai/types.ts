@@ -16,7 +16,8 @@ export type AITrigger =
   | "wake"
   | "return"
   | "manual"
-  | "voice";
+  | "voice"
+  | "text";
 
 /** 発話生成に必要な統合コンテキスト */
 export type CompanionContext = {

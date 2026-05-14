@@ -1,6 +1,6 @@
 # Voice Interaction — 音声入力設計と STT 候補
 
-**最終更新: 2026-05-14 (v1.0.3)**
+**最終更新: 2026-05-14 (v1.0.4)**
 
 AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 
@@ -24,7 +24,22 @@ AmitySpirit Companion / 無明 の音声入力機能の設計方針。
 | Phase 6a.5 | Context Wiring / AIProvider 整理 | ✅ 完了 (v0.1.29) |
 | Phase 6b-real-1 | 実録音パイプライン + STTAdapter + WhisperCli skeleton | ✅ 完了 (v0.1.30) |
 | Phase 6b-real-2 | WhisperCli Rust sidecar 統合 + FFmpeg WAV 変換 | ✅ v1.0.1 hotfix / field QA pending |
-| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v1.0.3 interaction priority / field QA pending |
+| Phase 6c | UX 強化・フィードバック・DND 整合 | ✅ v1.0.4 session isolation / field QA pending |
+
+---
+
+## v1.0.4 session isolation / trace hotfix
+
+- voice入力ごとに `voiceSessionId` を発行する
+- voice開始時に transcript / normalized transcript / intent / response候補を初期化する
+- STT / AI / fallback完了時にsessionを照合し、古い応答は表示しない
+- VoicePageに sessionId / stale dropped count / normalized transcript / intent を表示する
+- VoicePage / DebugPageにinteraction traceを表示する
+- traceには trigger / source / session / transcript preview / intent / observation summary / response / fallback reason / priority / settings snapshot を含める
+- traceは揮発表示のみ。MemoryEvent / localStorage / Memory exportへ保存しない
+- `画面見えてる？` / `今何を見てる？` 系はローカル観測routerで先に答える
+- VoicePageに簡易テキスト送信欄を追加し、voiceと同じ観測質問routerへ流す
+- テキスト入力本文も永続保存しない
 
 ---
 

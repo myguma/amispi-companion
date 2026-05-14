@@ -20,7 +20,9 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
 
   autonomousSpeechEnabled: false,
   speechFrequency: "rare",
+  autonomousSpeechIntervalPreset: "calm",
   maxAutonomousReactionsPerHour: 2,
+  playCryOnAutonomousSpeech: true,
 
   permissions: DEFAULT_PERMISSIONS,
 

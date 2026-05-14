@@ -35,6 +35,7 @@ import { useObservationReactions } from "./companion/reactions/useObservationRea
 import type { ObservationSnapshot } from "./observation/types";
 import { EMPTY_SNAPSHOT } from "./observation/types";
 import { useVoiceRecorder } from "./systems/voice/useVoiceRecorder";
+import { subscribeTextMessages } from "./systems/conversation/textMessageBus";
 import "./styles/index.css";
 
 const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -49,7 +50,7 @@ export default function App() {
 
   const {
     state, speechText, spriteEmotion, onCharacterClick, triggerSpeak, triggerDragReaction,
-    requestVoiceFromBlob, voiceListeningStart, voiceRecordingError,
+    requestVoiceFromBlob, requestTextMessage, voiceListeningStart, voiceRecordingError,
     voiceUIState,
   } = useCompanionState(
     undefined,
@@ -58,7 +59,12 @@ export default function App() {
     snapshot
   );
   const { onDragStart, isDragging, mouseDownRef } = useDrag();
-  const { facingRight } = useWander(state, mouseDownRef);
+  const { facingRight } = useWander(
+    state,
+    mouseDownRef,
+    settings.autonomousMovementEnabled,
+    settings.movementFrequency
+  );
   const { updateAvailable, installing, installUpdate } = useUpdater();
   const { tinyText } = useObservationReactions(snapshot, triggerSpeak);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -117,6 +123,12 @@ export default function App() {
     const unsub = subscribeLastAIResult(() => setLastAIResult({ ...getLastAIResult() }));
     return unsub;
   }, []);
+
+  useEffect(() => {
+    return subscribeTextMessages((payload) => {
+      void requestTextMessage(payload.text);
+    });
+  }, [requestTextMessage]);
 
   useEffect(() => {
     if (!isTauri || settings.onboardingCompleted || onboardingOpenRequestedRef.current) return;

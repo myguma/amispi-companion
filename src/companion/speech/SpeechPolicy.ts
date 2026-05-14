@@ -50,9 +50,10 @@ export function canSpeak(
     return { allowed: false, reason: "fullscreen" };
   }
 
+  const legacySafetyCap = Math.max(20, settings.maxAutonomousReactionsPerHour * 4);
   if (
     !isManual &&
-    reactionCountInLastHour >= settings.maxAutonomousReactionsPerHour
+    reactionCountInLastHour >= legacySafetyCap
   ) {
     return { allowed: false, reason: "rateLimit" };
   }

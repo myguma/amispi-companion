@@ -19,7 +19,8 @@ export function selectReaction(ctx: SelectCtx): Reaction | null {
   if (policy.quietMode && !isManual) return null;
   if (ctx.isFullscreen && policy.suppressWhenFullscreen && !isManual) return null;
 
-  if (!isManual && countInLastHour() >= policy.maxAutonomousReactionsPerHour) {
+  const legacySafetyCap = Math.max(20, policy.maxAutonomousReactionsPerHour * 4);
+  if (!isManual && countInLastHour() >= legacySafetyCap) {
     return null;
   }
 

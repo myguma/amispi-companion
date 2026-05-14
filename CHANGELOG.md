@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.0.4] — 2026-05-14
+
+### Fixed (Interaction trace, voice session reset, and settings consistency hotfix)
+
+- **Voice session isolation**:
+  - voice入力ごとに `voiceSessionId` を発行
+  - voice開始時に transcript / normalized transcript / intent / response candidate を初期化
+  - STT/AI/fallback完了時にsessionを照合し、古い応答は破棄
+  - VoicePage debugに sessionId / stale dropped count / normalized transcript / intent を表示
+- **Observation question router**:
+  - `画面見えてる？` / `今何を見てる？` / `今のアプリは？` 系をローカルruleで先に処理
+  - 画面全体・OCR・スクリーンキャプチャ・監視をしているとは言わず、現在のアプリ種別や状態の気配だけを短く返す
+- **Interaction trace**:
+  - VoicePage / DebugPageに直近の発話トレースを追加
+  - trigger / source / session / transcript preview / intent / observation summary / response / fallback reason / priority / settings snapshotを揮発表示
+  - traceはMemoryEvent / export / localStorageへ保存しない
+- **Settings consistency**:
+  - `autonomousMovementEnabled=false` で自律移動timerを停止し、設定変更を即時反映
+  - 自律発話は発話間隔preset中心へ調整し、旧max/hourは安全上限扱いに弱めた
+  - DebugPageに現在有効な主要設定値を表示
+- **Conversation input**:
+  - VoicePageに簡易テキスト送信欄を追加
+  - text入力もvoiceと同じ観測質問router/AI/fallbackへ流す
+  - text入力本文は永続保存しない
+- **Autonomous speech sound**:
+  - 自発発話表示時、`cryEnabled` と `playCryOnAutonomousSpeech` がONなら短いcryを鳴らす
+  - quiet / DND中は鳴らさない
+- **UpdateBadge**:
+  - 右下からキャラ足元中央寄りの小さなpillへ移動
+  - Rust hit testを同じ矩形へ同期
+
+### Maintained
+
+- Remote LLM / ChatGPT API / OpenAI APIは実装していない
+- transcript / text input / 音声ファイルは永続保存しない
+- compact `200x280` window / speech時window resize不採用 / character layout / click-through / ContextMenu / drag / voice long press / Update / Onboarding / Memory / Debug / Transparency / Ollama / Active Appは維持
+
+### Field QA
+
+- Voice/Text conversation、settings consistency、Interaction trace、UpdateBadge足元配置は v1.0.4 field QA pending
+
 ## [1.0.3] — 2026-05-14
 
 ### Fixed (Voice interaction priority and conversational response hotfix)

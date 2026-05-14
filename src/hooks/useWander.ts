@@ -7,12 +7,16 @@ import type React from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { CompanionState } from "../types/companion";
 import { COMPANION_COMPACT_H, COMPANION_WINDOW_W } from "../constants/companionLayout";
+import type { MovementFrequency } from "../settings/types";
 
 const WANDER_STATES: readonly CompanionState[] = ["idle", "sleep"];
 
 // 次のワンダー開始まで待機する秒数 (ランダム)
-const MIN_WAIT_MS = 18_000;
-const MAX_WAIT_MS = 50_000;
+const WAIT_BY_FREQUENCY: Record<MovementFrequency, [number, number]> = {
+  low: [45_000, 90_000],
+  normal: [25_000, 55_000],
+  high: [12_000, 32_000],
+};
 
 // 移動アニメーション: 約60fps で physical px / frame
 const FRAME_MS = 16;
@@ -46,9 +50,13 @@ function getCurrentPhysicalPos() {
 
 export function useWander(
   state: CompanionState,
-  mouseDownRef: React.RefObject<boolean>
+  mouseDownRef: React.RefObject<boolean>,
+  enabled = true,
+  frequency: MovementFrequency = "low"
 ): { facingRight: boolean } {
   const stateRef = useRef<CompanionState>(state);
+  const enabledRef = useRef(enabled);
+  const frequencyRef = useRef(frequency);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const curPosRef = useRef(getCurrentPhysicalPos());
@@ -59,6 +67,14 @@ export function useWander(
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  useEffect(() => {
+    frequencyRef.current = frequency;
+  }, [frequency]);
 
   useEffect(() => {
     if (!isTauri) return;
@@ -72,11 +88,20 @@ export function useWander(
 
     const scheduleNext = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      const delay = MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS);
+      if (!enabledRef.current) {
+        timerRef.current = null;
+        return;
+      }
+      const [minWait, maxWait] = WAIT_BY_FREQUENCY[frequencyRef.current] ?? WAIT_BY_FREQUENCY.low;
+      const delay = minWait + Math.random() * (maxWait - minWait);
       timerRef.current = setTimeout(() => startWander(), delay);
     };
 
     const startWander = () => {
+      if (!enabledRef.current) {
+        stopAnim();
+        return;
+      }
       const curState = stateRef.current;
       if (!WANDER_STATES.includes(curState)) {
         scheduleNext();
@@ -93,7 +118,7 @@ export function useWander(
       stopAnim();
       animRef.current = setInterval(async () => {
         // つかまれたら今回の移動をキャンセルし次回に仕切り直す
-        if (mouseDownRef.current) {
+        if (!enabledRef.current || mouseDownRef.current) {
           stopAnim();
           scheduleNext();
           return;
@@ -144,15 +169,19 @@ export function useWander(
       if (timerRef.current) clearTimeout(timerRef.current);
       stopAnim();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mouseDownRef, enabled, frequency]);
 
   // state が移動不可に変わったら即停止
   useEffect(() => {
-    if (!WANDER_STATES.includes(state) && animRef.current) {
+    if ((!enabled || !WANDER_STATES.includes(state)) && animRef.current) {
       clearInterval(animRef.current);
       animRef.current = null;
     }
-  }, [state]);
+    if (!enabled && timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [enabled, state]);
 
   return { facingRight };
 }

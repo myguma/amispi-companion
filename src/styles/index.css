@@ -202,13 +202,17 @@ html,
 }
 
 .update-badge {
-  font-size: 10px;
+  font-size: 9px;
   font-family: system-ui, -apple-system, sans-serif;
-  border-radius: 8px;
-  padding: 2px 8px;
+  border-radius: 7px;
+  padding: 1px 6px;
   border: none;
-  line-height: 1.6;
-  letter-spacing: 0.02em;
+  line-height: 1.4;
+  letter-spacing: 0;
+  max-width: 74px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .update-badge--available {

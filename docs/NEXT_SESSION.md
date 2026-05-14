@@ -4,15 +4,15 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.0.3)**
+**最終更新: 2026-05-14 (v1.0.4)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.0.3
-**フェーズ:** Voice interaction priority and conversational response hotfix
-**全体進捗:** 約 96%
+**バージョン:** v1.0.4
+**フェーズ:** Interaction trace, voice session reset, and settings consistency hotfix
+**全体進捗:** 約 96〜97%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
 **発話品質:** docs/RESPONSE_QUALITY_GUIDE.md 参照
@@ -24,8 +24,8 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.0.3)
-✅ cargo build  → Finished dev profile (v1.0.3)
+✅ npm run build → ✓ built (v1.0.4)
+✅ cargo build  → Finished dev profile (v1.0.4)
 ✅ GitHub Actions / Windows Installer → tag workflowはtag push後に確認
 ```
 
@@ -74,6 +74,23 @@
 | Field QA Hotfix | UpdateBadge右下配置・FFmpegによるWhisper用WAV変換 | ✅ v1.0.1 / voice STT field QA pending |
 | Voice transcript debug | VoicePage transcript preview・voice prompt/fallback/filter修正 | ✅ v1.0.2 / voice conversation field QA pending |
 | Voice interaction priority | voice後click抑制・speech priority・blank transcript rejection・観測質問fallback | ✅ v1.0.3 / voice conversation field QA pending |
+| Interaction coherence | voice session isolation・interaction trace・settings consistency・text input・speech interval model | ✅ v1.0.4 / field QA pending |
+
+---
+
+## v1.0.4 hotfix summary
+
+- voice入力ごとに `voiceSessionId` を発行し、古いSTT/AI/fallback結果を破棄
+- VoicePage debugに sessionId / stale dropped count / normalized transcript / intent を追加
+- VoicePage / DebugPageに直近のinteraction traceを追加
+- `画面見えてる？` / `今何を見てる？` 系はLLM丸投げではなくローカル観測routerで先に答える
+- `autonomousMovementEnabled=false` が `useWander` に反映されるよう修正
+- 自律発話はinterval preset中心へ移行し、旧max/hourは安全上限扱いに弱めた
+- VoicePageに一時テキスト送信欄を追加
+- 自発発話時の短いcryを追加
+- UpdateBadgeをキャラ足元中央寄りへ移動し、Rust hit testも同期
+- transcript / text input / trace / 音声ファイルは永続保存しない
+- Remote LLMは実装していない
 
 ---
 

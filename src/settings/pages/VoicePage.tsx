@@ -6,6 +6,9 @@ import { useSettings } from "../store";
 import type { VoiceInputMode, STTEngine } from "../types";
 import { getLastVoiceDebug, subscribeLastVoiceDebug } from "../../systems/voice/voiceDebugStore";
 import type { LastVoiceDebug } from "../../systems/voice/voiceDebugStore";
+import { sendTextMessage } from "../../systems/conversation/textMessageBus";
+import { getInteractionTraces, subscribeInteractionTrace } from "../../systems/debug/interactionTraceStore";
+import type { InteractionTraceEntry } from "../../systems/debug/interactionTraceStore";
 
 function SectionHead({ title }: { title: string }) {
   return (
@@ -104,8 +107,18 @@ function timeLabel(value: number): string {
 export function VoicePage() {
   const [s, update] = useSettings();
   const [voiceDebug, setVoiceDebug] = useState<LastVoiceDebug>(getLastVoiceDebug());
+  const [textMessage, setTextMessage] = useState("");
+  const [traces, setTraces] = useState<InteractionTraceEntry[]>(getInteractionTraces());
 
   useEffect(() => subscribeLastVoiceDebug(() => setVoiceDebug(getLastVoiceDebug())), []);
+  useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
+
+  const submitTextMessage = () => {
+    const text = textMessage.trim();
+    if (!text) return;
+    sendTextMessage(text);
+    setTextMessage("");
+  };
 
   return (
     <div>
@@ -244,9 +257,13 @@ export function VoicePage() {
 
           <SectionHead title="直近の音声認識結果" />
           <div style={{ fontSize: 12, color: "#666", lineHeight: 1.8, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+            <div><strong>session:</strong> {voiceDebug.voiceSessionId ?? "-"}</div>
             <div><strong>status:</strong> {statusLabel(voiceDebug.status)}</div>
             <div><strong>transcript:</strong> {voiceDebug.transcriptPreview || "なし"}</div>
+            <div><strong>normalized:</strong> {voiceDebug.normalizedTranscriptPreview || "なし"}</div>
+            <div><strong>intent:</strong> {voiceDebug.intent ?? "-"}</div>
             <div><strong>length:</strong> {voiceDebug.transcriptLength ?? 0}</div>
+            <div><strong>stale dropped:</strong> {voiceDebug.staleDroppedCount ?? 0}</div>
             <div><strong>updated:</strong> {timeLabel(voiceDebug.updatedAt)}</div>
             <div style={{ fontSize: 11, color: "#999", marginTop: 4 }}>
               transcriptは確認用の一時表示だけです。記憶・export・localStorageには保存しません。
@@ -269,6 +286,52 @@ export function VoicePage() {
           </div>
         </>
       )}
+
+      <SectionHead title="テキストで話しかける" />
+      <div style={{ padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ fontSize: 11, color: "#777", lineHeight: 1.6, marginBottom: 6 }}>
+          音声と同じ会話経路に一時的に送ります。入力本文は記憶・export・localStorageには保存しません。
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            type="text"
+            value={textMessage}
+            placeholder="例: 今何を見てる？"
+            onChange={(e) => setTextMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitTextMessage();
+            }}
+            style={{ flex: 1, padding: "6px 8px", fontSize: 12, border: "1px solid #ddd", borderRadius: 6 }}
+          />
+          <button
+            onClick={submitTextMessage}
+            disabled={!textMessage.trim()}
+            style={{ fontSize: 12, padding: "6px 12px", border: "1px solid #ddd", borderRadius: 6, background: "white", cursor: textMessage.trim() ? "pointer" : "default" }}
+          >
+            送信
+          </button>
+        </div>
+      </div>
+
+      <SectionHead title="直近の発話トレース" />
+      <div style={{ fontSize: 11, color: "#666", lineHeight: 1.6, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+        {traces.length === 0 ? (
+          <div style={{ color: "#999" }}>まだトレースはありません。</div>
+        ) : traces.slice(-5).reverse().map((t) => (
+          <div key={t.eventId} style={{ padding: "6px 0", borderBottom: "1px dashed #eee" }}>
+            <div><strong>{new Date(t.timestamp).toLocaleTimeString()}</strong> {t.trigger} / {t.responseSource ?? t.source ?? "-"}</div>
+            <div>intent: {t.intent ?? "-"} / priority: {t.speechPriority ?? "-"}</div>
+            <div>input: {t.normalizedTranscriptPreview ?? t.textInputPreview ?? t.rawTranscriptPreview ?? "-"}</div>
+            <div>response: {t.selectedResponse ?? "-"}</div>
+            <div>fallback: {t.fallbackReason ?? "-"} / dropped: {t.dropped ? "yes" : "no"} / suppressed: {t.suppressed ? "yes" : "no"}</div>
+            {s.debugModeEnabled && (
+              <div style={{ color: "#999" }}>
+                session: {t.voiceSessionId ?? "-"} / activity: {t.observationSummary ?? "-"} / app: {t.activeAppCategory ?? "-"} / proc: {t.activeProcessName ?? "-"}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* プライバシーノート */}
       <div style={{

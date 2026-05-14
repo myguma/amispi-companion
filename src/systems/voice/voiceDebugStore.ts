@@ -15,6 +15,10 @@ export type LastVoiceDebugStatus =
 
 export type LastVoiceDebug = {
   status: LastVoiceDebugStatus;
+  voiceSessionId?: number;
+  staleDroppedCount?: number;
+  normalizedTranscriptPreview?: string;
+  intent?: string;
   transcriptPreview?: string;
   transcriptLength?: number;
   inputMimeType?: string;
@@ -36,9 +40,24 @@ const MAX_STDERR = 200;
 
 let lastVoiceDebug: LastVoiceDebug = { status: "idle", updatedAt: 0 };
 const subscribers = new Set<() => void>();
+const channel = typeof BroadcastChannel !== "undefined"
+  ? new BroadcastChannel("amispi_voice_debug")
+  : null;
+
+channel?.addEventListener("message", (event) => {
+  const next = event.data as LastVoiceDebug | undefined;
+  if (!next || typeof next.updatedAt !== "number") return;
+  if (next.updatedAt < lastVoiceDebug.updatedAt) return;
+  lastVoiceDebug = next;
+  notify();
+});
 
 function notify(): void {
   subscribers.forEach((fn) => fn());
+}
+
+function broadcast(): void {
+  channel?.postMessage(lastVoiceDebug);
 }
 
 export function previewText(value: string | null | undefined, max = MAX_PREVIEW): string {
@@ -56,11 +75,13 @@ export function getLastVoiceDebug(): LastVoiceDebug {
 
 export function setLastVoiceDebug(next: Omit<LastVoiceDebug, "updatedAt"> & { updatedAt?: number }): void {
   lastVoiceDebug = { ...next, updatedAt: next.updatedAt ?? Date.now() };
+  broadcast();
   notify();
 }
 
 export function patchLastVoiceDebug(patch: Partial<Omit<LastVoiceDebug, "updatedAt">> & { updatedAt?: number }): void {
   lastVoiceDebug = { ...lastVoiceDebug, ...patch, updatedAt: patch.updatedAt ?? Date.now() };
+  broadcast();
   notify();
 }
 

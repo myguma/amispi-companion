@@ -96,6 +96,8 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
       return "久しぶりに会った。短く自然に挨拶する。";
     case "voice":
       return "ユーザーが声で話しかけてきた。聞き取った内容に直接、短く返す。";
+    case "text":
+      return "ユーザーがテキストで話しかけてきた。入力内容に直接、短く返す。";
     case "manual":
       return "観察したことを静かに述べる。";
   }
@@ -103,7 +105,7 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
 
 export function buildPrompt(ctx: CompanionContext): { system: string; user: string } {
   const { activityInsight, memorySummary, observation, recentEvents, trigger } = ctx;
-  const isVoice = trigger === "voice" && !!ctx.voiceInput?.trim();
+  const isConversationalInput = (trigger === "voice" || trigger === "text") && !!ctx.voiceInput?.trim();
 
   const contextLines: string[] = [];
 
@@ -158,12 +160,12 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
     contextLines.push(memorySummary.shortNaturalSummary.replace(/。$/, ""));
   }
 
-  // 音声入力 (voice trigger の場合のみ追加。80文字で切り詰め)
+  // 音声/テキスト入力 (80文字で切り詰め。永続保存はしない)
   if (ctx.voiceInput) {
     const safe = ctx.voiceInput.trim().slice(0, 80);
-    contextLines.push(`ユーザーの声: ${safe}`);
-    if (isVoice) {
-      contextLines.push("音声返答ルール: 上の声の内容に直接返す。汎用の呼びかけ反応だけで終わらない。声の中の語や数字を最低1つ反映する。");
+    contextLines.push(`${trigger === "text" ? "ユーザーの入力" : "ユーザーの声"}: ${safe}`);
+    if (isConversationalInput) {
+      contextLines.push("会話返答ルール: 上の入力内容に直接返す。汎用の呼びかけ反応だけで終わらない。入力内の語や数字を最低1つ反映する。");
       contextLines.push("観測質問ルール: 画面全体ではなく、今のアプリ種別・入力状態・少しの作業の気配だけ分かる。見えていないものは断定しない。");
       contextLines.push("voice悪い例: ここにいる / うん、聞こえてる / 呼んだ？ / ん");
       contextLines.push("voice良い例: こんにちは、声は届いてる / 青いカエルと七三九、聞こえた / 画面全部じゃなくて、今いる場所の気配だけ見てる");
@@ -181,6 +183,6 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
 
   const userContent = contextLines.join("\n") + "\n\n日本語一文のみで返答してください。";
 
-  const system = isVoice ? `${SYSTEM_PROMPT}\n\n${VOICE_PROMPT_APPEND}` : SYSTEM_PROMPT;
+  const system = isConversationalInput ? `${SYSTEM_PROMPT}\n\n${VOICE_PROMPT_APPEND}` : SYSTEM_PROMPT;
   return { system, user: userContent };
 }
