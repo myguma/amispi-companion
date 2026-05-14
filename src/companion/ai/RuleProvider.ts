@@ -399,6 +399,14 @@ export class RuleProvider implements AIProvider {
 
 function contextualManualPool(memory: CompanionContext["memorySummary"]): string[] {
   const pool: string[] = [];
+  const note = memory.promptMemoryNotes[0];
+  if (note) {
+    if (note.category === "project") pool.push(`${note.text.slice(0, 18)}のこと、少し覚えてる`);
+    else if (note.category === "preference" || note.category === "style_preference") pool.push("前に好きだと言ってたこと、少し覚えてる");
+    else if (note.category === "avoid") pool.push("避けたいこと、少し覚えてる");
+    else pool.push("前に保存したこと、少し覚えてる");
+  }
+
   if (memory.todayClickCount >= 10) {
     pool.push("今日は、よく呼ばれるね", "また呼んだね");
   } else if (memory.todayClickCount >= 4) {
@@ -414,6 +422,9 @@ function contextualManualPool(memory: CompanionContext["memorySummary"]): string
 
 function contextualIdlePool(memory: CompanionContext["memorySummary"]): string[] {
   const pool: string[] = [];
+  if (memory.promptMemoryNotes.length > 0 && memory.todaySpeechCount < 3) {
+    pool.push("覚えておく場所に、少し残ってる");
+  }
   if (memory.sessionCountToday >= 2 && memory.todaySpeechCount < 4) {
     pool.push("また、ここにいるね");
   }

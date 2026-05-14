@@ -7,6 +7,75 @@ import type { MemoryEvent, MemoryEventType } from "../../types/companion";
 const STORAGE_KEY = "amispi_companion_events";
 const MAX_EVENTS = 500;
 
+export type MemoryNoteCategory =
+  | "preference"
+  | "project"
+  | "creative_direction"
+  | "technical_context"
+  | "personal_note"
+  | "avoid"
+  | "style_preference";
+
+export type SavedMemoryNote = {
+  id: string;
+  timestamp: number;
+  updatedAt: number;
+  text: string;
+  category: MemoryNoteCategory;
+  pinned: boolean;
+  includeInPrompt: boolean;
+};
+
+export type MemoryNoteImportResult = {
+  importedCount: number;
+  skippedCount: number;
+};
+
+const MEMORY_NOTE_CATEGORIES: MemoryNoteCategory[] = [
+  "preference",
+  "project",
+  "creative_direction",
+  "technical_context",
+  "personal_note",
+  "avoid",
+  "style_preference",
+];
+
+function normalizeNoteCategory(value: unknown): MemoryNoteCategory {
+  return typeof value === "string" && MEMORY_NOTE_CATEGORIES.includes(value as MemoryNoteCategory)
+    ? value as MemoryNoteCategory
+    : "personal_note";
+}
+
+function normalizeSavedMemoryNote(event: MemoryEvent): SavedMemoryNote | null {
+  if (event.type !== "note_saved") return null;
+  const text = typeof event.data?.text === "string" ? event.data.text.trim() : "";
+  if (!text) return null;
+  const updatedAt = typeof event.data?.updatedAt === "number" && Number.isFinite(event.data.updatedAt)
+    ? event.data.updatedAt
+    : event.timestamp;
+
+  return {
+    id: event.id,
+    timestamp: event.timestamp,
+    updatedAt,
+    text,
+    category: normalizeNoteCategory(event.data?.category),
+    pinned: event.data?.pinned === true,
+    includeInPrompt: event.data?.includeInPrompt !== false,
+  };
+}
+
+function noteToEventData(note: Omit<SavedMemoryNote, "id" | "timestamp">): Record<string, unknown> {
+  return {
+    text: note.text.trim().slice(0, 240),
+    category: note.category,
+    pinned: note.pinned,
+    includeInPrompt: note.includeInPrompt,
+    updatedAt: note.updatedAt,
+  };
+}
+
 /** 簡易ID生成（uuid不要・衝突確率は十分低い） */
 function generateId(): string {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -229,15 +298,127 @@ export function clearEvents(): void {
  * ユーザーが手動で記録したメモをメモリに保存する
  * memoryMode が ask_before_long_term の場合に承認済みメモとして使用する
  */
-export function saveMemoryNote(text: string): void {
-  logEvent("note_saved", { text: text.trim().slice(0, 200) });
+export function saveMemoryNote(
+  text: string,
+  options: Partial<Pick<SavedMemoryNote, "category" | "pinned" | "includeInPrompt">> = {}
+): void {
+  const clean = text.trim().slice(0, 240);
+  if (!clean) return;
+  logEvent("note_saved", {
+    text: clean,
+    category: normalizeNoteCategory(options.category),
+    pinned: options.pinned === true,
+    includeInPrompt: options.includeInPrompt !== false,
+    updatedAt: Date.now(),
+  });
 }
 
 /**
- * 保存済みメモ一覧（note_savedイベント）を新しい順で返す
+ * 保存済みメモ一覧（note_savedイベント）を新しい順で返す。
+ * v1.4.0以前の古いnote_savedは personal_note / prompt対象 / unpinned として扱う。
  */
-export function getSavedMemoryNotes(): MemoryEvent[] {
-  return loadEvents().filter((e) => e.type === "note_saved").reverse();
+export function getSavedMemoryNotes(): SavedMemoryNote[] {
+  return loadEvents()
+    .map(normalizeSavedMemoryNote)
+    .filter((note): note is SavedMemoryNote => note !== null)
+    .sort((a, b) => b.timestamp - a.timestamp);
+}
+
+/**
+ * プロンプト投入対象のユーザー承認済みメモ。
+ * pinnedを優先し、件数を絞ってAIコンテキストが過長にならないようにする。
+ */
+export function getPromptMemoryNotes(limit = 5): SavedMemoryNote[] {
+  return getSavedMemoryNotes()
+    .filter((note) => note.includeInPrompt)
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.updatedAt - a.updatedAt;
+    })
+    .slice(0, limit);
+}
+
+/**
+ * 保存済みメモを編集する。対象がnote_savedでない場合は何もしない。
+ */
+export function updateMemoryNote(
+  id: string,
+  patch: Partial<Pick<SavedMemoryNote, "text" | "category" | "pinned" | "includeInPrompt">>
+): void {
+  const events = loadEvents();
+  let changed = false;
+  const next = events.map((event) => {
+    if (event.id !== id || event.type !== "note_saved") return event;
+    const current = normalizeSavedMemoryNote(event);
+    if (!current) return event;
+    const text = typeof patch.text === "string" ? patch.text.trim().slice(0, 240) : current.text;
+    if (!text) return event;
+    changed = true;
+    return {
+      ...event,
+      data: noteToEventData({
+        text,
+        category: patch.category !== undefined ? normalizeNoteCategory(patch.category) : current.category,
+        pinned: patch.pinned !== undefined ? patch.pinned === true : current.pinned,
+        includeInPrompt: patch.includeInPrompt !== undefined ? patch.includeInPrompt !== false : current.includeInPrompt,
+        updatedAt: Date.now(),
+      }),
+    };
+  });
+  if (changed) saveEvents(next);
+}
+
+/**
+ * Memory export JSONからユーザー承認済みメモだけを取り込む。
+ * 発話ログや観測ログはimportしない。
+ */
+export function importMemoryNotesFromPayload(payload: unknown): MemoryNoteImportResult {
+  const events = (payload as { events?: unknown })?.events;
+  if (!Array.isArray(events)) return { importedCount: 0, skippedCount: 0 };
+
+  let importedCount = 0;
+  let skippedCount = 0;
+  const existing = loadEvents();
+  const knownTexts = new Set(
+    existing
+      .map(normalizeSavedMemoryNote)
+      .filter((note): note is SavedMemoryNote => note !== null)
+      .map((note) => `${note.category}:${note.text}`)
+  );
+
+  for (const raw of events) {
+    const event = raw as MemoryEvent;
+    const note = normalizeSavedMemoryNote(event);
+    if (!note) {
+      skippedCount += 1;
+      continue;
+    }
+    const dedupeKey = `${note.category}:${note.text}`;
+    if (knownTexts.has(dedupeKey)) {
+      skippedCount += 1;
+      continue;
+    }
+    knownTexts.add(dedupeKey);
+    existing.push({
+      id: generateId(),
+      type: "note_saved",
+      timestamp: Date.now(),
+      data: noteToEventData({
+        text: note.text,
+        category: note.category,
+        pinned: note.pinned,
+        includeInPrompt: note.includeInPrompt,
+        updatedAt: Date.now(),
+      }),
+    });
+    importedCount += 1;
+  }
+
+  if (existing.length > MAX_EVENTS) {
+    existing.splice(0, existing.length - MAX_EVENTS);
+  }
+  saveEvents(existing);
+  return { importedCount, skippedCount };
 }
 
 /**

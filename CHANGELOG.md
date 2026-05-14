@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0] — 2026-05-15
+
+### Added
+
+- Memory v2として、ユーザー保存メモに category / pinned / includeInPrompt metadata を追加
+- MemoryPageで保存メモの一覧・編集・削除・固定・カテゴリ変更・発話利用ON/OFFを操作可能にした
+- Memory export JSONからユーザー保存メモだけをimportできる導線を追加
+- Debug / Diagnosticsでprompt投入対象の保存メモ件数と内容プレビューを確認可能にした
+- PromptBuilder / RuleProviderが、明示保存かつincludeInPrompt=trueのメモだけを発話文脈に反映
+
+### Fixed / Improved
+
+- OpenAI payload previewに実際に送った保存メモpreviewを表示
+- OpenAIの「保存メモを送る」がOFFの場合、保存メモをOpenAI promptから除外
+- 古い`note_saved` eventは後方互換として personal_note / unpinned / prompt対象として扱う
+- importは発話ログ・観測ログを取り込まず、ユーザー承認済みメモだけを取り込む
+
+---
+
 ## [1.3.0] — 2026-05-15
 
 ### Added

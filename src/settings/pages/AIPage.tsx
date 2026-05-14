@@ -655,7 +655,7 @@ export function AIPage() {
               onChange={(e) => update({ openaiSendObservationSignals: e.target.checked })}
             />
           </Row>
-          <Row label="保存メモを送る" note="note_savedで保存したメモ (最大5件)">
+          <Row label="保存メモを送る" note="MemoryPageで「発話に使う」がONの保存メモだけ (最大5件)">
             <input
               type="checkbox"
               checked={s.openaiSendMemoryNotes}

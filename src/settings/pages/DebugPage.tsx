@@ -16,6 +16,8 @@ import { getOpenAIPayloadPreview, subscribeOpenAIPayloadPreview } from "../../co
 import type { OpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
 import { getAIRuntimeTraceSnapshot, getAIRuntimeTraces, subscribeAIRuntimeTrace } from "../../systems/debug/aiRuntimeTraceStore";
 import type { AIRuntimeTraceEntry, AIRuntimeTraceSnapshot } from "../../systems/debug/aiRuntimeTraceStore";
+import { getPromptMemoryNotes, getSavedMemoryNotes } from "../../systems/memory/memoryStore";
+import type { SavedMemoryNote } from "../../systems/memory/memoryStore";
 
 function Toggle({
   label, note, checked, onChange,
@@ -70,6 +72,8 @@ export function DebugPage() {
   const [openaiPreview, setOpenaiPreview] = useState<OpenAIPayloadPreview | null>(getOpenAIPayloadPreview());
   const [aiRuntime, setAiRuntime] = useState<AIRuntimeTraceSnapshot>(getAIRuntimeTraceSnapshot());
   const [aiRuntimeTraces, setAiRuntimeTraces] = useState<AIRuntimeTraceEntry[]>(getAIRuntimeTraces());
+  const [promptMemoryNotes, setPromptMemoryNotes] = useState<SavedMemoryNote[]>(getPromptMemoryNotes());
+  const [savedMemoryNoteCount, setSavedMemoryNoteCount] = useState(() => getSavedMemoryNotes().length);
 
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
   useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
@@ -82,6 +86,14 @@ export function DebugPage() {
   }), []);
   useEffect(() => {
     const timer = setInterval(() => setTimelineCount(getObservationTimeline().length), 5000);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const refresh = () => {
+      setPromptMemoryNotes(getPromptMemoryNotes());
+      setSavedMemoryNoteCount(getSavedMemoryNotes().length);
+    };
+    const timer = setInterval(refresh, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -168,6 +180,20 @@ export function DebugPage() {
         ))}
       </div>
 
+      <SectionHead title="Memory Prompt Scope" />
+      <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
+        <div>savedMemoryNotes: {savedMemoryNoteCount}件</div>
+        <div>promptIncludedCandidates: {promptMemoryNotes.length}件</div>
+        <div>openaiSendMemoryNotes: {String(s.openaiSendMemoryNotes)} (OpenAI送信は別許可)</div>
+        {promptMemoryNotes.length === 0 ? (
+          <div style={{ color: "#bbb" }}>プロンプト投入対象の保存メモはありません</div>
+        ) : promptMemoryNotes.map((note) => (
+          <div key={note.id} style={{ color: "#888" }}>
+            {note.pinned ? "pinned / " : ""}{note.category}: {note.text.slice(0, 80)}
+          </div>
+        ))}
+      </div>
+
       <SectionHead title="自律発話スケジューリング状態" />
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fafafa", border: "1px solid #eee", borderRadius: 6, padding: 10 }}>
         <div>enabled: {String(autoDebug.autonomousSpeechEnabled)}</div>
@@ -205,6 +231,9 @@ export function DebugPage() {
                 <div><strong>signalsSent:</strong> {openaiPreview.signalsSent.length === 0 ? "なし" : openaiPreview.signalsSent.join(" / ")}</div>
                 <div><strong>topSignal:</strong> {openaiPreview.topSignalSent ?? "なし"}</div>
                 <div><strong>memoryNotesSent:</strong> {openaiPreview.memorySentCount}件</div>
+                {openaiPreview.memoryNotePreviewsSent.length > 0 && (
+                  <div><strong>memoryNotePreviews:</strong> {openaiPreview.memoryNotePreviewsSent.join(" / ")}</div>
+                )}
                 <div><strong>voiceInput:</strong> {openaiPreview.voiceInputIncluded ? "あり" : "なし"}</div>
                 <div style={{ color: "#4caf7d" }}>
                   rawFilenames: {String(openaiPreview.rawFilenamesSent)} /

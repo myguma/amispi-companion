@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-15 (v1.3.0)**
+**最終更新: 2026-05-15 (v1.4.0)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -31,6 +31,16 @@
 | v1.1.4 | pending | OpenAI 429分類・fallback表示明確化・speech bubble全文パネルはfield QA pending |
 | v1.2.0 | pending | ReactionIntent trace、低品質fallback削減、30分常駐時の重複抑制はfield QA pending |
 | v1.3.0 | pending | App Classification拡張、classification reason、custom classification UIはfield QA pending |
+| v1.4.0 | pending | Memory v2編集・固定・カテゴリ・prompt投入・保存メモimportはfield QA pending |
+
+## v1.4.0 Field QA Watch Points
+
+- 保存メモを追加・編集・削除できるか
+- category / 固定 / 発話に使う の設定が保存後も維持されるか
+- Debug / Diagnosticsでprompt投入対象メモが確認できるか
+- OpenAIの「保存メモを送る」OFF時にOpenAI payload previewのmemoryNotesSentが0件になるか
+- Memory export JSONから保存メモだけをimportし、発話ログ・観測ログを取り込まないか
+- transcript / text input / raw filename が長期記憶メモに自動保存されていないか
 
 ## v1.3.0 Field QA Watch Points
 

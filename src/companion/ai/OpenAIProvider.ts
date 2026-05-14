@@ -7,7 +7,7 @@
 import type { AIProvider, AIProviderOutput, CompanionContext } from "./types";
 import { buildPrompt } from "../../systems/ai/PromptBuilder";
 import { topSignal } from "../../systems/observation/observationSignals";
-import { getSavedMemoryNotes } from "../../systems/memory/memoryStore";
+import { getPromptMemoryNotes } from "../../systems/memory/memoryStore";
 import { filterGeneratedText } from "../../systems/ai/QualityFilter";
 
 /** DebugPage に表示するペイロードプレビュー (センシティブデータを含まない) */
@@ -18,6 +18,7 @@ export type OpenAIPayloadPreview = {
   signalsSent: string[];
   topSignalSent: string | null;
   memorySentCount: number;
+  memoryNotePreviewsSent: string[];
   voiceInputIncluded: boolean;
   rawFilenamesSent: false;
   rawWindowTitleSent: false;
@@ -114,13 +115,21 @@ export class OpenAIProvider implements AIProvider {
       return { shouldSpeak: false, intent: ctx.reactionIntent, reason: "openai_key_empty" };
     }
 
+    const promptCtx: CompanionContext = {
+      ...ctx,
+      signals: this.sendSignals ? ctx.signals : [],
+      memorySummary: this.sendMemoryNotes
+        ? ctx.memorySummary
+        : { ...ctx.memorySummary, promptMemoryNotes: [], promptMemoryNoteCount: 0 },
+    };
+
     // buildPrompt は既にraw dataを含まない安全な形式
-    const { system, user } = buildPrompt(ctx);
+    const { system, user } = buildPrompt(promptCtx);
 
     // signals / memory notes の概要 (デバッグ用; 本体プロンプトには追加済み)
-    const signals = ctx.signals ?? [];
+    const signals = promptCtx.signals ?? [];
     const top = topSignal(signals);
-    const memNotes = this.sendMemoryNotes ? getSavedMemoryNotes().slice(0, 5) : [];
+    const memNotes = this.sendMemoryNotes ? getPromptMemoryNotes(5) : [];
 
     // ─── payload preview を保存 (DebugPage 用) ───────────────────
     setPayloadPreview({
@@ -130,6 +139,7 @@ export class OpenAIProvider implements AIProvider {
       signalsSent: this.sendSignals ? signals.map((s) => s.summary) : [],
       topSignalSent: this.sendSignals && top ? top.summary : null,
       memorySentCount: memNotes.length,
+      memoryNotePreviewsSent: memNotes.map((note) => `${note.category}:${note.text.slice(0, 48)}`),
       voiceInputIncluded: !!ctx.voiceInput?.trim(),
       rawFilenamesSent: false,
       rawWindowTitleSent: false,

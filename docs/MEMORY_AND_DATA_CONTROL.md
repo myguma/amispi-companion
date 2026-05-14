@@ -3,7 +3,7 @@
 > このドキュメントは無明がローカルに保存するデータの種類・保存先・削除方法を説明する。
 > ユーザー向けの透明性のために存在し、エンジニアとユーザーの両方が参照できる。
 
-**最終更新: 2026-05-13 (v0.1.54)**
+**最終更新: 2026-05-15 (v1.4.0)**
 
 ---
 
@@ -23,12 +23,28 @@
 | `character_clicked` | キャラクタータップ | fromState |
 | `speech_shown` | 発話テキスト表示 | text (発話内容) |
 | `state_changed` | 内部状態変化 | from, to |
-| `note_saved` | メモ保存 (将来) | content |
+| `note_saved` | ユーザーが明示保存したメモ | text, category, pinned, includeInPrompt, updatedAt |
 
 - 最大 500件まで保存 (超過時は古いものから削除)
 - 保存期間設定により、古い MemoryEvent を自動整理
 - ローカル `localStorage` のみ
 - 外部送信: なし
+
+### User-approved Memory Notes (v1.4.0)
+
+`note_saved` はユーザーがMemoryPageで明示保存した長期記憶だけを表す。
+transcript本文、text input本文、raw filename、raw window title、file contentは自動で `note_saved` にならない。
+
+| フィールド | 内容 |
+|---|---|
+| `text` | ユーザーが明示保存した短いメモ |
+| `category` | preference / project / creative_direction / technical_context / personal_note / avoid / style_preference |
+| `pinned` | prompt候補で優先するか |
+| `includeInPrompt` | 発話文脈へ入れるか |
+| `updatedAt` | 最終編集時刻 |
+
+PromptBuilderは `includeInPrompt=true` の保存メモだけを最大5件、pinned優先で使う。
+OpenAIへ送るには、さらにAI設定の「保存メモを送る」がONである必要がある。
 
 ### 保存期間ポリシー (v0.1.50)
 
@@ -80,7 +96,10 @@ MemoryEvent から `buildDailySummary()` でオンデマンドに計算する。
 |---|---|
 | 保存期間変更 | 7日 / 30日 / 90日 / 無期限 |
 | 今すぐ整理 | 現在の保存期間に基づいて古い MemoryEvent を削除 |
+| 保存メモの編集 | text / category / pinned / includeInPrompt を編集 |
+| 保存メモの削除 | 指定した `note_saved` だけを削除 |
 | JSONを書き出す | 現在保存されている MemoryEvent をローカルJSONとして保存 |
+| 保存メモだけ読み込む | export JSONから `note_saved` だけをimport |
 | 発話ログのみ削除 | `speech_shown` イベントのみ削除 |
 | すべての記憶を削除 | 全 MemoryEvent を削除 |
 
@@ -104,7 +123,8 @@ export JSON には以下を含める。
 | `range` | 最古 / 最新イベント日時 |
 | `events` | MemoryEvent 本体 |
 
-import は v0.1.54 では実装しない。
+v1.4.0のimportは、export JSON内の `note_saved` だけを新しい保存メモとして取り込む。
+発話ログ・起動ログ・状態変化・観測ログはimportしない。
 保存期間や削除操作で MemoryEvent を削除した後は、export対象にも含まれない。
 
 ---
@@ -118,6 +138,10 @@ src/systems/memory/memoryStore.ts
   └─ getAllEvents()        — 全件取得
   └─ getEventsByType()    — タイプ別取得
   └─ buildMemoryExportPayload() — JSON export用payload生成
+  └─ getSavedMemoryNotes() — 保存メモ一覧
+  └─ getPromptMemoryNotes() — prompt投入対象メモ
+  └─ updateMemoryNote() — 保存メモ編集
+  └─ importMemoryNotesFromPayload() — export JSONから保存メモだけimport
   └─ countExpiredEvents()  — 保存期間を超えたイベント数を集計
   └─ pruneExpiredEvents()  — 保存期間を超えたイベントを削除
   └─ clearEvents()        — 全削除
@@ -154,7 +178,7 @@ MemoryEvent を削除した後も以下は壊れない:
 
 - `tauri-plugin-store` または SQLite への移行
 - per-type retention policy (例: 発話ログは7日で自動削除)
-- JSON import (exportは v0.1.54 で実装済み)
+- full MemoryEvent JSON import (v1.4.0では保存メモのみimport)
 - 日単位での削除
 
 ---

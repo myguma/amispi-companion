@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.3.0)**
+**最終更新: 2026-05-15 (v1.4.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.3.0
-**フェーズ:** Visible Local Observer Companion — App Classification / custom classification
+**バージョン:** v1.4.0
+**フェーズ:** Visible Local Observer Companion — Memory v2
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,13 +24,11 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.3.0)
-✅ cargo build  → Finished dev profile (v1.3.0)
-✅ cargo test app_classification → passed
+✅ npm run build → ✓ built (v1.4.0)
+✅ cargo build  → Finished dev profile (v1.4.0)
+✅ cargo test app_classification → passed (v1.3.0)
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.3.0 success (run 25887788547)
-✅ Windows Installer artifact → `amispi-companion_1.3.0_x64-setup.exe`
-✅ Updater artifact → `latest.json`
+🔲 v1.4.0 Release workflow → push後に確認必要
 ```
 
 ---
@@ -57,7 +55,7 @@
 
 ---
 
-## v1.0.6〜v1.3.0 完了済み
+## v1.0.6〜v1.4.0 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -71,6 +69,32 @@
 | v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル | ✅ field QA pending |
 | v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
 | v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
+| v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | 🔲 release前 / automated QA中 |
+
+## v1.4.0 実装詳細
+
+### 変更内容
+
+- user-approved memory noteに `category` / `pinned` / `includeInPrompt` / `updatedAt` を追加
+- MemoryPageで保存メモを一覧・編集・削除・固定・カテゴリ変更・発話利用ON/OFFできるようにした
+- Memory export JSONから `note_saved` だけをimportする導線を追加。発話ログ・観測ログはimportしない
+- PromptBuilderが `includeInPrompt=true` の保存メモだけを `ユーザー承認済み記憶` としてpromptへ入れる
+- RuleProviderも保存メモの有無・カテゴリを短い発話文脈に反映
+- Debug / Diagnosticsでprompt投入対象メモとOpenAI送信設定を確認可能
+- OpenAIの「保存メモを送る」OFF時は保存メモをOpenAI promptから除外し、payload previewで `memoryNotesSent: 0` を確認可能
+
+### Field QA で確認すべき項目 (v1.4.0)
+
+- 保存メモの追加・編集・削除・固定・カテゴリ変更・発話利用ON/OFFが保持されるか
+- Debug / Diagnosticsでprompt投入対象メモが確認できるか
+- OpenAI送信スコープOFF時に保存メモがOpenAIへ送られないか
+- Memory export/importで保存メモだけが復元され、発話ログや観測ログが増えないか
+- transcript / text input / raw filename が勝手にlong-term memory化されていないか
+
+## 次に着手する候補
+
+- v1.4.x hotfix: v1.4.0 field QAでMemory UI保存・import・prompt表示不具合が出た場合の最小修正
+- 問題がなければ v1.5.0 Optional Filename Samples へ進む
 
 ## v1.3.0 実装詳細
 
@@ -92,11 +116,6 @@
 - Observation Page で現在の process をユーザー定義分類に変更でき、次回 snapshot で category が上書きされるか
 - custom classification が保存・削除できるか
 - raw window title / raw filename / file content が custom classification に保存されていないか
-
-## 次に着手する候補
-
-- v1.3.x hotfix: v1.3.0 field QA で分類漏れ・UI保存不具合・reason欠落が出た場合の最小修正
-- 問題がなければ v1.4.0 Memory v2 へ進む
 
 ## v1.2.0 実装詳細
 

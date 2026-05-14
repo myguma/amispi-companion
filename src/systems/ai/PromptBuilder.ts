@@ -63,6 +63,20 @@ const VOICE_PROMPT_APPEND = `音声入力時の追加ルール:
 - ユーザーの音声内容を長く復唱しない。
 - 末尾に孤立した「ん」を付けない。`;
 
+function memoryCategoryLabel(category: string): string {
+  switch (category) {
+    case "preference": return "好み";
+    case "project": return "プロジェクト";
+    case "creative_direction": return "創作方針";
+    case "technical_context": return "技術文脈";
+    case "avoid": return "避けること";
+    case "style_preference": return "スタイル";
+    case "personal_note":
+    default:
+      return "メモ";
+  }
+}
+
 /** confidence に応じた確信度修飾語を返す */
 function confidenceQualifier(confidence: number): string {
   if (confidence >= 0.85) return "";           // 高確信: 修飾なし
@@ -173,6 +187,14 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
   // 記憶サマリー — voice/text会話時はスキップ（過去発話本文のprompt汚染防止）
   if (!isConversationalInput && memorySummary.shortNaturalSummary) {
     contextLines.push(memorySummary.shortNaturalSummary.replace(/。$/, ""));
+  }
+
+  // ユーザーが明示保存し、prompt投入ONにした記憶だけを使う。
+  if (memorySummary.promptMemoryNotes.length > 0) {
+    const notes = memorySummary.promptMemoryNotes
+      .map((note) => `${note.pinned ? "固定:" : ""}${memoryCategoryLabel(note.category)}:${note.text}`)
+      .join(" / ");
+    contextLines.push(`ユーザー承認済み記憶: ${notes}`);
   }
 
   // 音声/テキスト入力 (80文字で切り詰め。永続保存はしない)

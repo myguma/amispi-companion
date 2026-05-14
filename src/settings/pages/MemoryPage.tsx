@@ -14,10 +14,15 @@ import {
   buildMemoryExportPayload,
   saveMemoryNote,
   getSavedMemoryNotes,
+  getPromptMemoryNotes,
+  updateMemoryNote,
   deleteEventById,
+  importMemoryNotesFromPayload,
   type MemoryStats,
   type MemoryRetentionResult,
   type MemoryExportPayload,
+  type MemoryNoteCategory,
+  type SavedMemoryNote,
 } from "../../systems/memory/memoryStore";
 import { buildDailySummary, type DailySummary } from "../../companion/memory/dailySummary";
 import { useSettings } from "../store";
@@ -101,6 +106,20 @@ const RETENTION_OPTIONS: { value: number; label: string; description: string }[]
   { value: 90, label: "90日", description: "長めに保つ" },
   { value: 0,  label: "無期限", description: "自動削除なし" },
 ];
+
+const MEMORY_NOTE_CATEGORIES: { value: MemoryNoteCategory; label: string }[] = [
+  { value: "preference", label: "好み" },
+  { value: "project", label: "プロジェクト" },
+  { value: "creative_direction", label: "創作方針" },
+  { value: "technical_context", label: "技術文脈" },
+  { value: "personal_note", label: "個人メモ" },
+  { value: "avoid", label: "避けること" },
+  { value: "style_preference", label: "文体・スタイル" },
+];
+
+function memoryNoteCategoryLabel(category: MemoryNoteCategory): string {
+  return MEMORY_NOTE_CATEGORIES.find((item) => item.value === category)?.label ?? category;
+}
 
 // ────────────────────────────────────────────────
 // サブコンポーネント
@@ -308,7 +327,16 @@ export function MemoryPage() {
   const [appVersion, setAppVersion] = useState("dev");
   const [exportStatus, setExportStatus] = useState<string | null>(null);
   const [noteInput, setNoteInput] = useState("");
+  const [noteCategory, setNoteCategory] = useState<MemoryNoteCategory>("personal_note");
+  const [notePinned, setNotePinned] = useState(false);
+  const [noteIncludeInPrompt, setNoteIncludeInPrompt] = useState(true);
   const [noteSaved, setNoteSaved] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editCategory, setEditCategory] = useState<MemoryNoteCategory>("personal_note");
+  const [editPinned, setEditPinned] = useState(false);
+  const [editIncludeInPrompt, setEditIncludeInPrompt] = useState(true);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isTauri) return;
@@ -319,6 +347,7 @@ export function MemoryPage() {
     setData(loadPageData());
     setLastRetentionResult(null);
     setExportStatus(null);
+    setImportStatus(null);
   }, []);
 
   const retentionPreview = countExpiredEvents(settings.memoryRetentionDays);
@@ -381,6 +410,61 @@ export function MemoryPage() {
     downloadJson(payload);
     setExportStatus(`${events.length}件の記録をJSONとして保存しました`);
   }, [appVersion, settings.memoryRetentionDays]);
+
+  const handleSaveNote = useCallback(() => {
+    if (!noteInput.trim()) return;
+    saveMemoryNote(noteInput.trim(), {
+      category: noteCategory,
+      pinned: notePinned,
+      includeInPrompt: noteIncludeInPrompt,
+    });
+    setNoteInput("");
+    setNotePinned(false);
+    setNoteIncludeInPrompt(true);
+    setNoteSaved(true);
+    setTimeout(() => setNoteSaved(false), 3000);
+    refresh();
+  }, [noteCategory, noteIncludeInPrompt, noteInput, notePinned, refresh]);
+
+  const startEditNote = useCallback((note: SavedMemoryNote) => {
+    setEditingNoteId(note.id);
+    setEditText(note.text);
+    setEditCategory(note.category);
+    setEditPinned(note.pinned);
+    setEditIncludeInPrompt(note.includeInPrompt);
+  }, []);
+
+  const cancelEditNote = useCallback(() => {
+    setEditingNoteId(null);
+    setEditText("");
+    setEditCategory("personal_note");
+    setEditPinned(false);
+    setEditIncludeInPrompt(true);
+  }, []);
+
+  const commitEditNote = useCallback(() => {
+    if (!editingNoteId || !editText.trim()) return;
+    updateMemoryNote(editingNoteId, {
+      text: editText.trim(),
+      category: editCategory,
+      pinned: editPinned,
+      includeInPrompt: editIncludeInPrompt,
+    });
+    cancelEditNote();
+    refresh();
+  }, [cancelEditNote, editCategory, editIncludeInPrompt, editPinned, editText, editingNoteId, refresh]);
+
+  const handleImportMemoryNotes = useCallback(async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const result = importMemoryNotesFromPayload(JSON.parse(text));
+      refresh();
+      setImportStatus(`${result.importedCount}件の保存メモを取り込みました / skipped ${result.skippedCount}件`);
+    } catch {
+      setImportStatus("読み込みに失敗しました。Memory export JSONを選んでください。");
+    }
+  }, [refresh]);
 
   // フィルタ適用
   const filteredEvents = filter === "all"
@@ -503,7 +587,7 @@ export function MemoryPage() {
         <div style={{ background: "#f7fff8", borderRadius: 8, padding: "10px 14px", fontSize: 12, lineHeight: 1.8 }}>
           <p style={{ color: "#666", margin: "0 0 10px" }}>
             現在保存されている記録をJSONとしてこのPCに保存します。外部送信は行いません。
-            インポート機能はまだありません。
+            インポートはユーザー保存メモだけを取り込み、発話ログや観測ログは取り込みません。
           </p>
           <ExportSummary events={[...data.allEvents].reverse()} />
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
@@ -522,6 +606,24 @@ export function MemoryPage() {
             {exportStatus && (
               <span style={{ fontSize: 11, color: "#4caf7d" }}>{exportStatus}</span>
             )}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+            <label style={{
+              fontSize: 12, padding: "5px 14px", border: "1px solid #bfe0c8",
+              borderRadius: 6, background: "white", color: "#2f7b4f", cursor: "pointer",
+            }}>
+              保存メモだけ読み込む
+              <input
+                type="file"
+                accept="application/json,.json"
+                onChange={(e) => {
+                  void handleImportMemoryNotes(e.currentTarget.files?.[0] ?? null);
+                  e.currentTarget.value = "";
+                }}
+                style={{ display: "none" }}
+              />
+            </label>
+            {importStatus && <span style={{ fontSize: 11, color: "#888" }}>{importStatus}</span>}
           </div>
         </div>
       </Section>
@@ -551,6 +653,25 @@ export function MemoryPage() {
           <p style={{ color: "#666", margin: "0 0 8px" }}>
             「覚えておいてほしいこと」を手動で記録できます。raw transcriptやファイル名は自動的には入りません。
           </p>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+            <select
+              value={noteCategory}
+              onChange={(e) => setNoteCategory(e.target.value as MemoryNoteCategory)}
+              style={{ padding: "5px 8px", fontSize: 12, border: "1px solid #c8e0c8", borderRadius: 5 }}
+            >
+              {MEMORY_NOTE_CATEGORIES.map((category) => (
+                <option key={category.value} value={category.value}>{category.label}</option>
+              ))}
+            </select>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#666" }}>
+              <input type="checkbox" checked={notePinned} onChange={(e) => setNotePinned(e.target.checked)} />
+              固定
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#666" }}>
+              <input type="checkbox" checked={noteIncludeInPrompt} onChange={(e) => setNoteIncludeInPrompt(e.target.checked)} />
+              発話に使う
+            </label>
+          </div>
           <div style={{ display: "flex", gap: 6 }}>
             <input
               type="text"
@@ -559,24 +680,13 @@ export function MemoryPage() {
               onChange={(e) => { setNoteInput(e.target.value); setNoteSaved(false); }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && noteInput.trim()) {
-                  saveMemoryNote(noteInput.trim());
-                  setNoteInput("");
-                  setNoteSaved(true);
-                  setTimeout(() => setNoteSaved(false), 3000);
-                  refresh();
+                  handleSaveNote();
                 }
               }}
               style={{ flex: 1, padding: "5px 8px", fontSize: 12, border: "1px solid #c8e0c8", borderRadius: 5 }}
             />
             <button
-              onClick={() => {
-                if (!noteInput.trim()) return;
-                saveMemoryNote(noteInput.trim());
-                setNoteInput("");
-                setNoteSaved(true);
-                setTimeout(() => setNoteSaved(false), 3000);
-                refresh();
-              }}
+              onClick={handleSaveNote}
               disabled={!noteInput.trim()}
               style={{ fontSize: 12, padding: "5px 12px", border: "1px solid #b0d4b8", borderRadius: 5, background: "white", color: "#2f7b4f", cursor: "pointer" }}
             >
@@ -585,42 +695,107 @@ export function MemoryPage() {
           </div>
           {noteSaved && <div style={{ fontSize: 11, color: "#4caf7d", marginTop: 4 }}>記憶に保存しました</div>}
           <div style={{ fontSize: 11, color: "#999", marginTop: 6 }}>
-            Memory exportにも含まれます。保存場所: localStorage (ローカルのみ・外部送信なし)
+            Memory exportにも含まれます。OpenAIへ送るにはAI設定の「保存メモを送る」も別途ONが必要です。
           </div>
         </div>
 
         {/* 保存済みメモ一覧 */}
         {(() => {
           const notes = getSavedMemoryNotes();
+          const promptNotes = getPromptMemoryNotes();
           if (notes.length === 0) return (
             <div style={{ fontSize: 11, color: "#bbb", padding: "6px 0 2px" }}>保存済みメモはありません</div>
           );
           return (
             <div style={{ marginTop: 8 }}>
-              <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>保存済み: {notes.length}件</div>
+              <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>
+                保存済み: {notes.length}件 / 発話に使う候補: {promptNotes.length}件
+              </div>
               {notes.map((note) => (
                 <div key={note.id} style={{
                   display: "flex", alignItems: "flex-start", gap: 8,
                   padding: "5px 0", borderBottom: "1px solid #e8f5e9", fontSize: 12,
                 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ color: "#333" }}>{String(note.data?.text ?? "")}</div>
-                    <div style={{ fontSize: 10, color: "#aaa" }}>{new Date(note.timestamp).toLocaleString()}</div>
+                    {editingNoteId === note.id ? (
+                      <div style={{ display: "grid", gap: 6 }}>
+                        <input
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          style={{ padding: "5px 8px", fontSize: 12, border: "1px solid #c8e0c8", borderRadius: 5 }}
+                        />
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                          <select
+                            value={editCategory}
+                            onChange={(e) => setEditCategory(e.target.value as MemoryNoteCategory)}
+                            style={{ padding: "4px 8px", fontSize: 11, border: "1px solid #c8e0c8", borderRadius: 5 }}
+                          >
+                            {MEMORY_NOTE_CATEGORIES.map((category) => (
+                              <option key={category.value} value={category.value}>{category.label}</option>
+                            ))}
+                          </select>
+                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#666" }}>
+                            <input type="checkbox" checked={editPinned} onChange={(e) => setEditPinned(e.target.checked)} />
+                            固定
+                          </label>
+                          <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "#666" }}>
+                            <input type="checkbox" checked={editIncludeInPrompt} onChange={(e) => setEditIncludeInPrompt(e.target.checked)} />
+                            発話に使う
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ color: "#333" }}>{note.text}</div>
+                        <div style={{ fontSize: 10, color: "#aaa" }}>
+                          {memoryNoteCategoryLabel(note.category)}
+                          {note.pinned ? " / 固定" : ""}
+                          {note.includeInPrompt ? " / 発話に使う" : " / 発話に使わない"}
+                          {" / "}{new Date(note.timestamp).toLocaleString()}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <button
-                    onClick={() => {
-                      if (!window.confirm("このメモを削除しますか？")) return;
-                      deleteEventById(note.id);
-                      refresh();
-                    }}
-                    style={{
-                      fontSize: 11, padding: "2px 8px", border: "1px solid #ddd",
-                      borderRadius: 4, background: "white", color: "#c06040", cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                  >
-                    削除
-                  </button>
+                  {editingNoteId === note.id ? (
+                    <>
+                      <button
+                        onClick={commitEditNote}
+                        disabled={!editText.trim()}
+                        style={{ fontSize: 11, padding: "2px 8px", border: "1px solid #b0d4b8", borderRadius: 4, background: "white", color: "#2f7b4f", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        保存
+                      </button>
+                      <button
+                        onClick={cancelEditNote}
+                        style={{ fontSize: 11, padding: "2px 8px", border: "1px solid #ddd", borderRadius: 4, background: "white", color: "#777", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        やめる
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => startEditNote(note)}
+                        style={{ fontSize: 11, padding: "2px 8px", border: "1px solid #ddd", borderRadius: 4, background: "white", color: "#286aa5", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!window.confirm("このメモを削除しますか？")) return;
+                          deleteEventById(note.id);
+                          refresh();
+                        }}
+                        style={{
+                          fontSize: 11, padding: "2px 8px", border: "1px solid #ddd",
+                          borderRadius: 4, background: "white", color: "#c06040", cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                      >
+                        削除
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

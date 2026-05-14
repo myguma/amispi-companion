@@ -3,6 +3,7 @@
 import type { MemoryEvent } from "../../types/companion";
 import { classifyBreak } from "./memorySummary";
 import { buildDailySummary } from "./dailySummary";
+import type { MemoryNoteCategory, SavedMemoryNote } from "../../systems/memory/memoryStore";
 
 export type CompanionMemorySummary = {
   todayClickCount: number;
@@ -10,8 +11,21 @@ export type CompanionMemorySummary = {
   recentSpeechCount: number;
   sessionCountToday: number;
   lastSessionBreak: "none" | "short" | "hours" | "longDay";
+  promptMemoryNotes: Pick<SavedMemoryNote, "text" | "category" | "pinned">[];
+  promptMemoryNoteCount: number;
+  excludedMemoryNoteCount: number;
   shortNaturalSummary: string; // LLM プロンプトに渡す短い自然文
 };
+
+const MEMORY_NOTE_CATEGORIES: MemoryNoteCategory[] = [
+  "preference",
+  "project",
+  "creative_direction",
+  "technical_context",
+  "personal_note",
+  "avoid",
+  "style_preference",
+];
 
 function isTodayMs(ts: number): boolean {
   const now = new Date();
@@ -31,6 +45,19 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
   const sessionCountToday = todayEvents.filter((e) => e.type === "app_start").length;
   const recentSpeechCount = events.slice(-50).filter((e) => e.type === "speech_shown").length;
   const lastSessionBreak  = classifyBreak();
+  const allNotes = events
+    .filter((e) => e.type === "note_saved")
+    .map(noteFromEvent)
+    .filter((note): note is SavedMemoryNote => note !== null);
+  const promptMemoryNotes = allNotes
+    .filter((note) => note.includeInPrompt)
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return b.updatedAt - a.updatedAt;
+    })
+    .slice(0, 5)
+    .map(({ text, category, pinned }) => ({ text, category, pinned }));
+  const excludedMemoryNoteCount = allNotes.filter((note) => !note.includeInPrompt).length;
 
   const daily = buildDailySummary(events);
 
@@ -44,7 +71,39 @@ export function buildMemorySummary(events: MemoryEvent[]): CompanionMemorySummar
     activeHoursToday: daily.activeHoursToday,
   });
 
-  return { todayClickCount, todaySpeechCount, recentSpeechCount, sessionCountToday, lastSessionBreak, shortNaturalSummary: summary };
+  return {
+    todayClickCount,
+    todaySpeechCount,
+    recentSpeechCount,
+    sessionCountToday,
+    lastSessionBreak,
+    promptMemoryNotes,
+    promptMemoryNoteCount: promptMemoryNotes.length,
+    excludedMemoryNoteCount,
+    shortNaturalSummary: summary,
+  };
+}
+
+function normalizeNoteCategory(value: unknown): MemoryNoteCategory {
+  return typeof value === "string" && MEMORY_NOTE_CATEGORIES.includes(value as MemoryNoteCategory)
+    ? value as MemoryNoteCategory
+    : "personal_note";
+}
+
+function noteFromEvent(event: MemoryEvent): SavedMemoryNote | null {
+  const text = typeof event.data?.text === "string" ? event.data.text.trim() : "";
+  if (!text) return null;
+  return {
+    id: event.id,
+    timestamp: event.timestamp,
+    updatedAt: typeof event.data?.updatedAt === "number" && Number.isFinite(event.data.updatedAt)
+      ? event.data.updatedAt
+      : event.timestamp,
+    text: text.slice(0, 240),
+    category: normalizeNoteCategory(event.data?.category),
+    pinned: event.data?.pinned === true,
+    includeInPrompt: event.data?.includeInPrompt !== false,
+  };
 }
 
 function buildNaturalSummary(s: {

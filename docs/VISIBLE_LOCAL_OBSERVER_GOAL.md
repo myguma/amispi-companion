@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.3.0 まで進んでいる。
+現在 v1.4.0 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -183,12 +183,21 @@ v1.3.0 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.4.0 の到達点:
+
+- user-approved memory noteに category / pinned / includeInPrompt を追加
+- 保存メモの一覧・編集・削除・固定・カテゴリ変更・発話利用ON/OFFが可能
+- PromptBuilder / RuleProviderがincludeInPrompt=trueの保存メモだけを発話文脈に反映
+- Debug / Diagnosticsでprompt投入対象memoryが見える
+- Memory export JSONから保存メモだけをimport可能。発話ログ・観測ログはimportしない
+- OpenAI送信はAI設定の「保存メモを送る」が別許可。OFFなら保存メモをOpenAI promptから除外
+
 ## 直近の次の一手
 
-まず v1.3.0 実機QA 結果を踏まえる。
+まず v1.4.0 実機QA 結果を踏まえる。
 
-問題があれば v1.3.x hotfix として最小修正する。
-問題がなければ v1.4.0 Memory v2 へ進む。
+問題があれば v1.4.x hotfix として最小修正する。
+問題がなければ v1.5.0 Optional Filename Samples へ進む。
 
 v1.1.4 QA観点:
 

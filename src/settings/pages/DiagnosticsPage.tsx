@@ -1,7 +1,7 @@
 // 診断ページ — Voice / Observation / Memory / 発話抑制の内部状態を確認する
 import { useEffect, useState } from "react";
 import { useSettings } from "../store";
-import { getMemoryStats } from "../../systems/memory/memoryStore";
+import { getMemoryStats, getPromptMemoryNotes } from "../../systems/memory/memoryStore";
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
 import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
 import type { ObservationSignal } from "../../systems/observation/observationSignals";
@@ -156,6 +156,8 @@ export function DiagnosticsPage() {
       <InfoRow label="記録件数" value={`${memStats.totalEvents}件`} />
       <InfoRow label="保持期間" value={s.memoryRetentionDays === 0 ? "無期限" : `${s.memoryRetentionDays}日`} />
       <InfoRow label="保存メモ" value={`${memStats.noteCount}件`} />
+      <InfoRow label="prompt投入メモ" value={`${getPromptMemoryNotes().length}件`} />
+      <InfoRow label="OpenAIへの保存メモ送信" value={s.openaiSendMemoryNotes ? "ON" : "OFF"} />
 
       <SectionHead title="自律発話 (Autonomous Speech)" />
       <CheckRow label="自律発話" ok={s.autonomousSpeechEnabled} note={s.autonomousSpeechEnabled ? `間隔: ${s.autonomousSpeechIntervalPreset}` : "無効 — Watchful Modeで自動ON"} />
