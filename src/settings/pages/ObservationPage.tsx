@@ -93,6 +93,11 @@ export function ObservationPage() {
   const activeProcess = snapshot.activeApp?.processName ? normalizeProcessName(snapshot.activeApp.processName) : "";
   const currentCustom = s.customAppClassifications ?? {};
   const customEntries = Object.entries(currentCustom).sort(([a], [b]) => a.localeCompare(b));
+  const sampleFolders = [
+    ["Downloads", snapshot.folders.downloads?.filenameSamples ?? []] as const,
+    ["Desktop", snapshot.folders.desktop?.filenameSamples ?? []] as const,
+  ];
+  const sampleCount = sampleFolders.reduce((sum, [, samples]) => sum + samples.length, 0);
 
   const saveClassification = (processName: string, category: AppCategory) => {
     const key = normalizeProcessName(processName);
@@ -135,6 +140,7 @@ export function ObservationPage() {
         <div>アイドル時間: <strong>ON</strong></div>
         <div>フォルダメタデータ: <strong>{s.permissions.folderMetadataEnabled ? "ON" : "OFF"}</strong></div>
         <div>Filename signals: <strong>{s.filenameSignalsEnabled ? "ON" : "OFF"}</strong></div>
+        <div>Filename samples: <strong>{s.filenameSamplesEnabled ? "ON" : "OFF"}</strong> / visible: <strong>{sampleCount}件</strong></div>
         <div>ウィンドウタイトル: <strong>{s.permissions.windowTitleEnabled ? "ON" : "OFF"}</strong></div>
         <div>メディア推定: <strong>ON</strong></div>
         <div>常時マイク: <strong style={{ color: "#999" }}>OFF (push-to-talk のみ)</strong></div>
@@ -152,6 +158,60 @@ export function ObservationPage() {
           />
         </div>
       )}
+
+      <SectionHead title="ファイル名サンプル（明示ONのみ）" />
+      <div style={{ fontSize: 12, color: "#555", lineHeight: 1.8, padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ fontSize: 11, color: "#999", marginBottom: 6 }}>
+          Desktop / Downloads の直下から最大件数だけ揮発表示します。file contentは読みません。Memory exportとObservation Timelineには保存しません。
+        </div>
+        <Toggle
+          label="raw filename samplesを表示"
+          note="デフォルトOFF。ONにすると権限level 2 + filenames permission + folder metadataを有効化します。"
+          checked={s.filenameSamplesEnabled}
+          onChange={(v) => update({
+            filenameSamplesEnabled: v,
+            permissions: v
+              ? { ...s.permissions, level: (s.permissions.level >= 2 ? s.permissions.level : 2), filenamesEnabled: true, folderMetadataEnabled: true }
+              : { ...s.permissions },
+          })}
+        />
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 0" }}>
+          <span style={{ color: "#777" }}>最大件数</span>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={s.filenameSamplesMaxCount}
+            onChange={(e) => update({ filenameSamplesMaxCount: Math.max(1, Math.min(10, Number(e.target.value) || 5)) })}
+            disabled={!s.filenameSamplesEnabled}
+            style={{ width: 64, padding: "3px 6px", fontSize: 12, border: "1px solid #ddd", borderRadius: 4 }}
+          />
+          <label style={{ display: "flex", gap: 4, alignItems: "center", color: "#777", fontSize: 11 }}>
+            <input
+              type="checkbox"
+              checked={s.filenameSamplesSendToAI}
+              onChange={(e) => update({ filenameSamplesSendToAI: e.target.checked })}
+              disabled={!s.filenameSamplesEnabled}
+            />
+            外部AI送信は別許可
+          </label>
+        </div>
+        <div style={{ fontSize: 11, color: "#999", marginBottom: 6 }}>
+          v1.5.0ではraw filenameの外部AI送信は行いません。別許可の状態とpayload previewで非送信を確認できます。
+        </div>
+        {sampleCount === 0 ? (
+          <div style={{ color: "#bbb", fontSize: 11 }}>現在表示できるfilename sampleはありません</div>
+        ) : sampleFolders.map(([label, samples]) => samples.length > 0 && (
+          <div key={label} style={{ marginTop: 4 }}>
+            <div style={{ color: "#888", fontSize: 11 }}>{label}</div>
+            {samples.map((sample) => (
+              <div key={`${label}:${sample}`} style={{ color: "#555", fontSize: 11, paddingLeft: 8, overflowWrap: "anywhere" }}>
+                {sample}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
 
       <SectionHead title="ユーザー定義アプリ分類" />
       <div style={{ fontSize: 12, color: "#555", lineHeight: 1.8, padding: "4px 0", borderBottom: "1px solid #f0f0f0" }}>

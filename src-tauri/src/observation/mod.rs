@@ -44,6 +44,9 @@ pub struct FolderSummary {
     pub screenshot_pile_likely: bool,
     pub audio_pile_likely: bool,
     pub image_pile_likely: bool,
+    // v1.5.0: explicit opt-in, volatile raw filename samples for Debug/Diagnostics only.
+    // These are never persisted by Rust and are only returned when filename_samples_enabled is true.
+    pub filename_samples: Vec<String>,
     // v1.0.6: filename-derived signals
     pub filename_signals: Vec<String>,
     pub installer_pile_likely: bool,
@@ -110,6 +113,7 @@ pub struct PrivacyMeta {
     pub permission_level: u8,
     pub title_included: bool,
     pub filenames_included: bool,
+    pub filename_samples_included: bool,
     pub content_included: bool,
     pub cloud_allowed: bool,
 }
@@ -255,6 +259,8 @@ pub struct PermissionConfig {
     pub window_title_enabled: bool,
     pub folder_metadata_enabled: bool,
     pub filenames_enabled: bool,
+    pub filename_samples_enabled: bool,
+    pub filename_samples_max_count: usize,
     pub cloud_allowed: bool,
 }
 
@@ -265,6 +271,8 @@ impl Default for PermissionConfig {
             window_title_enabled: false,
             folder_metadata_enabled: true,
             filenames_enabled: false,
+            filename_samples_enabled: false,
+            filename_samples_max_count: 5,
             cloud_allowed: false,
         }
     }
@@ -555,7 +563,7 @@ fn build_filename_signals(
     (signals, installer_likely, archive_likely, audio_export_likely, image_export_likely, daw_likely, code_likely, temp_likely)
 }
 
-fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
+fn scan_folder(path: &std::path::Path, kind: &str, include_filename_samples: bool, sample_max_count: usize) -> Option<FolderSummary> {
     if !path.exists() { return None; }
 
     let mut file_count = 0usize;
@@ -563,6 +571,8 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
     let mut total_size = 0u64;
     let mut ext_counts: HashMap<String, usize> = HashMap::new();
     let mut recent_count = 0usize;
+    let mut filename_samples: Vec<String> = Vec::new();
+    let sample_limit = sample_max_count.clamp(0, 10);
 
     let cutoff = std::time::SystemTime::now()
         .checked_sub(std::time::Duration::from_secs(7 * 24 * 3600))
@@ -595,6 +605,9 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
         if file_names_lower.len() < 200 {
             file_names_lower.push(name_lower.to_string());
         }
+        if include_filename_samples && filename_samples.len() < sample_limit {
+            filename_samples.push(name.to_string_lossy().chars().take(120).collect());
+        }
 
         if let Ok(modified) = meta.modified() {
             if modified > cutoff { recent_count += 1; }
@@ -620,6 +633,7 @@ fn scan_folder(path: &std::path::Path, kind: &str) -> Option<FolderSummary> {
         screenshot_pile_likely: screenshot_pile,
         audio_pile_likely: audio_pile,
         image_pile_likely: image_pile,
+        filename_samples,
         filename_signals,
         installer_pile_likely,
         archive_pile_likely,
@@ -700,9 +714,11 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
     };
 
     // folders (level >= 1 && folder_metadata_enabled)
+    let include_filename_samples = perms.level >= 2 && perms.filenames_enabled && perms.filename_samples_enabled;
     let folders = if perms.level >= 1 && perms.folder_metadata_enabled {
-        let desktop = get_desktop_path().and_then(|p| scan_folder(&p, "desktop"));
-        let downloads = get_downloads_path().and_then(|p| scan_folder(&p, "downloads"));
+        let sample_max_count = perms.filename_samples_max_count.clamp(0, 10);
+        let desktop = get_desktop_path().and_then(|p| scan_folder(&p, "desktop", include_filename_samples, sample_max_count));
+        let downloads = get_downloads_path().and_then(|p| scan_folder(&p, "downloads", include_filename_samples, sample_max_count));
         FolderSnapshots { desktop, downloads }
     } else {
         FolderSnapshots { desktop: None, downloads: None }
@@ -727,7 +743,8 @@ pub fn build_snapshot(perms: &PermissionConfig) -> ObservationSnapshot {
         privacy: PrivacyMeta {
             permission_level: perms.level,
             title_included: perms.window_title_enabled,
-            filenames_included: perms.filenames_enabled,
+            filenames_included: include_filename_samples,
+            filename_samples_included: include_filename_samples,
             content_included: false,
             cloud_allowed: perms.cloud_allowed,
         },
@@ -758,7 +775,7 @@ pub fn get_active_app_debug_info() -> ActiveAppDebugInfo {
 
 #[cfg(test)]
 mod tests {
-    use super::classify_app;
+    use super::{classify_app, scan_folder};
 
     #[test]
     fn app_classification_table_covers_v1_3_targets() {
@@ -802,6 +819,30 @@ mod tests {
         assert_eq!(category, "unknown");
         assert_eq!(source, "unknown");
         assert!(reason.contains("no_rule_match"));
+    }
+
+    #[test]
+    fn filename_samples_are_explicit_and_limited() {
+        let dir = std::env::temp_dir().join(format!(
+            "amispi-filename-samples-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("first-visible-name.wav"), b"x").unwrap();
+        std::fs::write(dir.join("second-visible-name.zip"), b"x").unwrap();
+        std::fs::write(dir.join("third-hidden-name.txt"), b"x").unwrap();
+
+        let hidden = scan_folder(&dir, "downloads", false, 2).unwrap();
+        assert!(hidden.filename_samples.is_empty());
+
+        let visible = scan_folder(&dir, "downloads", true, 2).unwrap();
+        assert_eq!(visible.filename_samples.len(), 2);
+        assert!(visible.filename_samples.iter().all(|name| name.contains("visible-name") || name.contains("hidden-name")));
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
 

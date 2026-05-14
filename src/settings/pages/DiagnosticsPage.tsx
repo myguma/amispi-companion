@@ -95,6 +95,8 @@ export function DiagnosticsPage() {
   const topSig = signals.length > 0
     ? signals.reduce((a, b) => b.strength > a.strength ? b : a)
     : null;
+  const filenameSampleCount = (snapshot.folders.downloads?.filenameSamples?.length ?? 0) +
+    (snapshot.folders.desktop?.filenameSamples?.length ?? 0);
 
   // 現在の発話抑制理由を推定（設定ベース）
   const suppressReasons: string[] = [];
@@ -134,6 +136,8 @@ export function DiagnosticsPage() {
       <InfoRow label="classificationSource" value={snapshot.activeApp?.classificationSource ?? "-"} />
       <InfoRow label="フォルダメタデータ" value={s.permissions.folderMetadataEnabled ? "ON" : "OFF"} />
       <InfoRow label="Filename signals" value={s.filenameSignalsEnabled ? "ON" : "OFF"} />
+      <InfoRow label="Filename samples" value={s.filenameSamplesEnabled ? `ON (${filenameSampleCount}件)` : "OFF"} />
+      <InfoRow label="Filename samples external AI" value={s.filenameSamplesSendToAI ? "別許可ON / raw送信なし" : "OFF"} />
       <InfoRow label="Observation Timeline" value={`${timelineCount}件記録済み`} />
       {signals.length > 0 ? (
         <div style={{ padding: "4px 0 2px" }}>
@@ -206,9 +210,11 @@ export function DiagnosticsPage() {
             <strong>⚠ OpenAI 使用中 — 一部クラウド送信があります</strong><br />
             ✓ 送信: 活動概要・ObservationSignal(抽象)・アプリカテゴリ・ユーザー入力<br />
             ✗ 非送信: raw ファイル名 / ウィンドウタイトル / transcript 履歴<br />
+            ✗ filename samples外部送信: なし<br />
             ✗ 常時マイク監視: なし<br />
             ✗ Screen Capture / OCR: なし<br />
             ✗ raw filename 保存: なし<br />
+            ✗ filename samples外部送信: なし<br />
             ✗ transcript 永続保存: なし
           </>
         ) : (

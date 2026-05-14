@@ -283,6 +283,10 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
   const idleMin = Math.round(snap.idle.idleMs / 60_000);
   const media   = snap.media;
   const reason  = unknownReason(snap);
+  const filenameSamples = [
+    ...(snap.folders.downloads?.filenameSamples ?? []),
+    ...(snap.folders.desktop?.filenameSamples ?? []),
+  ];
 
   const activityColor =
     insight.kind === "deepFocus"     ? "#6a40d0" :
@@ -336,6 +340,16 @@ function LiveStatusPanel({ snap }: { snap: ObservationSnapshot | null }) {
       )}
       {snap.system?.cpuLoad !== undefined && snap.system.cpuLoad > 40 && (
         <div style={{ color: "#888" }}>CPU: {Math.round(snap.system.cpuLoad)}%</div>
+      )}
+      <div style={{ color: "#888", fontSize: 11 }}>
+        filename samples: {snap.privacy.filenameSamplesIncluded ? `${filenameSamples.length}件表示中` : "OFF"}
+      </div>
+      {snap.privacy.filenameSamplesIncluded && filenameSamples.length > 0 && (
+        <div style={{ color: "#777", fontSize: 11 }}>
+          {filenameSamples.slice(0, 5).map((sample) => (
+            <div key={sample} style={{ overflowWrap: "anywhere" }}>{sample}</div>
+          ))}
+        </div>
       )}
       {reasonTags.length > 0 && (
         <div style={{ marginTop: 6 }}>
@@ -496,6 +510,8 @@ export function TransparencyPage() {
           window_title_enabled: p.windowTitleEnabled,
           folder_metadata_enabled: p.folderMetadataEnabled,
           filenames_enabled: p.filenamesEnabled,
+          filename_samples_enabled: settings.filenameSamplesEnabled,
+          filename_samples_max_count: settings.filenameSamplesMaxCount,
           cloud_allowed: p.cloudAllowed,
         },
       });
@@ -623,7 +639,23 @@ export function TransparencyPage() {
           </div>
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6 }}>
             例: インストーラーが多い / DAWプロジェクトがある / 音声書き出しっぽい<br />
-            ファイル名そのもの (raw): 未使用・保存しません
+            ファイル名そのもの (raw): samples明示ON時のみ揮発表示・保存しません
+          </div>
+        </div>
+        <div style={{ padding: "6px 0", fontSize: 12 }}>
+          <div style={{ color: "#444" }}>
+            raw filename samples: <strong style={{ color: settings.filenameSamplesEnabled ? "#4a8040" : "#aaa" }}>{settings.filenameSamplesEnabled ? `表示中 最大${settings.filenameSamplesMaxCount}件` : "無効"}</strong>
+          </div>
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6 }}>
+            明示ON時のみDesktop/Downloads直下のサンプルを揮発表示。Memory/exportには保存しません。
+          </div>
+        </div>
+        <div style={{ padding: "6px 0", fontSize: 12 }}>
+          <div style={{ color: "#444" }}>
+            filename samples external AI: <strong style={{ color: settings.filenameSamplesSendToAI ? "#b08020" : "#aaa" }}>{settings.filenameSamplesSendToAI ? "別許可ON / raw送信なし" : "OFF"}</strong>
+          </div>
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6 }}>
+            v1.5.0ではraw filenameを外部AIへ送信しません。Debugのpayload previewで非送信を確認できます。
           </div>
         </div>
       </Section>

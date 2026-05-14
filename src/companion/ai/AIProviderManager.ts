@@ -155,6 +155,7 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       s.openaiTimeoutMs,
       s.openaiSendObservationSignals,
       s.openaiSendMemoryNotes,
+      s.filenameSamplesSendToAI,
     );
 
     let openaiFailReason: string | undefined;

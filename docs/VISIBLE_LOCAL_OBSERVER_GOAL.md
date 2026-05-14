@@ -145,7 +145,7 @@ release する場合は以下を確認する。
 
 ## 現在の到達点
 
-現在 v1.4.0 まで進んでいる。
+現在 v1.5.0 まで進んでいる。
 
 v1.1.4 の到達点:
 
@@ -194,12 +194,22 @@ v1.4.0 の到達点:
 - Release workflow success 済み
 - Windows installer / signature / latest.json artifact 確認済み
 
+v1.5.0 の到達点:
+
+- raw filename samplesはデフォルトOFF
+- Watchful Modeでも自動ONにしない
+- Desktop / Downloads直下のみ、最大10件まで揮発表示
+- file contentは読まない
+- MemoryEvent / Observation Timeline / Memory exportには保存しない
+- OpenAI payload previewでは可視件数と別許可状態を表示するが、raw filenameは送信しない
+- Debug / Diagnostics / Transparencyで現在見えているsamplesと境界を確認可能
+
 ## 直近の次の一手
 
-まず v1.4.0 実機QA 結果を踏まえる。
+まず v1.5.0 実機QA 結果を踏まえる。
 
-問題があれば v1.4.x hotfix として最小修正する。
-問題がなければ v1.5.0 Optional Filename Samples へ進む。
+問題があれば v1.5.x hotfix として最小修正する。
+問題がなければ v1.6.0 Daily-use Beta へ進む。
 
 v1.1.4 QA観点:
 

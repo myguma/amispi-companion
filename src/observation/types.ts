@@ -36,6 +36,7 @@ export type FolderSummary = {
   screenshotPileLikely: boolean;
   audioPileLikely: boolean;
   imagePileLikely: boolean;
+  filenameSamples: string[];
   filenameSignals: string[];
   installerPileLikely: boolean;
   archivePileLikely: boolean;
@@ -82,6 +83,7 @@ export type ObservationSnapshot = {
     permissionLevel: number;
     titleIncluded: boolean;
     filenamesIncluded: boolean;
+    filenameSamplesIncluded?: boolean;
     contentIncluded: boolean;
     cloudAllowed: boolean;
   };

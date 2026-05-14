@@ -662,6 +662,13 @@ export function AIPage() {
               onChange={(e) => update({ openaiSendMemoryNotes: e.target.checked })}
             />
           </Row>
+          <Row label="filename samples送信許可" note="別許可状態だけ記録。v1.5.0ではraw filenameはOpenAIへ送信しません">
+            <input
+              type="checkbox"
+              checked={s.filenameSamplesSendToAI}
+              onChange={(e) => update({ filenameSamplesSendToAI: e.target.checked })}
+            />
+          </Row>
 
           <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6, padding: "6px 0" }}>
             DebugページでOpenAIへ送る内容のプレビューを確認できます。

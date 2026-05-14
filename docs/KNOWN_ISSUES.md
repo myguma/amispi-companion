@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-15 (v1.4.0)**
+**最終更新: 2026-05-15 (v1.5.0)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -32,6 +32,16 @@
 | v1.2.0 | pending | ReactionIntent trace、低品質fallback削減、30分常駐時の重複抑制はfield QA pending |
 | v1.3.0 | pending | App Classification拡張、classification reason、custom classification UIはfield QA pending |
 | v1.4.0 | pending | Memory v2編集・固定・カテゴリ・prompt投入・保存メモimportはfield QA pending |
+| v1.5.0 | pending | Optional Filename Samplesの明示ON/OFF・揮発表示・非保存・非送信境界はfield QA pending |
+
+## v1.5.0 Field QA Watch Points
+
+- Watchful Mode / Balanced へ切り替えても filename samples が自動ONにならないか
+- ObservationPageで明示ONにした時だけDesktop/Downloadsのfilename samplesが表示されるか
+- 最大件数が1〜10件に制限されるか
+- Debug / Diagnostics / Transparencyでfilename samples visible countと非送信境界が見えるか
+- Memory export / Observation Timeline / `speech_shown` metadataにraw filename sampleが入らないか
+- OpenAI payload previewで `rawFilenamesSent=false` が維持されるか
 
 ## v1.4.0 Field QA Watch Points
 

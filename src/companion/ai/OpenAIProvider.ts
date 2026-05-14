@@ -19,6 +19,8 @@ export type OpenAIPayloadPreview = {
   topSignalSent: string | null;
   memorySentCount: number;
   memoryNotePreviewsSent: string[];
+  filenameSamplesVisibleCount: number;
+  filenameSamplesSendToAISetting: boolean;
   voiceInputIncluded: boolean;
   rawFilenamesSent: false;
   rawWindowTitleSent: false;
@@ -104,6 +106,7 @@ export class OpenAIProvider implements AIProvider {
     private readonly timeoutMs: number,
     private readonly sendSignals: boolean,
     private readonly sendMemoryNotes: boolean,
+    private readonly filenameSamplesSendToAISetting: boolean,
   ) {}
 
   async isAvailable(): Promise<boolean> {
@@ -140,6 +143,11 @@ export class OpenAIProvider implements AIProvider {
       topSignalSent: this.sendSignals && top ? top.summary : null,
       memorySentCount: memNotes.length,
       memoryNotePreviewsSent: memNotes.map((note) => `${note.category}:${note.text.slice(0, 48)}`),
+      filenameSamplesVisibleCount: [
+        ...(ctx.observation.folders.downloads?.filenameSamples ?? []),
+        ...(ctx.observation.folders.desktop?.filenameSamples ?? []),
+      ].length,
+      filenameSamplesSendToAISetting: this.filenameSamplesSendToAISetting,
       voiceInputIncluded: !!ctx.voiceInput?.trim(),
       rawFilenamesSent: false,
       rawWindowTitleSent: false,

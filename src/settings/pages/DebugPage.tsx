@@ -124,6 +124,7 @@ export function DebugPage() {
         <div>autonomousMovementEnabled: {String(s.autonomousMovementEnabled)}</div>
         <div>voiceInputEnabled: {String(s.voiceInputEnabled)}</div>
         <div>cryEnabled / autonomousCry: {String(s.cryEnabled)} / {String(s.playCryOnAutonomousSpeech)}</div>
+        <div>filenameSamplesEnabled: {String(s.filenameSamplesEnabled)} / max:{s.filenameSamplesMaxCount} / sendToAI:{String(s.filenameSamplesSendToAI)}</div>
       </div>
 
       <SectionHead title="AI Runtime Trace" />
@@ -157,6 +158,18 @@ export function DebugPage() {
         <div style={{ marginBottom: 6, color: "#888" }}>
           classification: {snapshot.activeApp?.classificationReason ?? "-"} / source: {snapshot.activeApp?.classificationSource ?? "-"}
         </div>
+        <div style={{ marginBottom: 6, color: "#888" }}>
+          filenameSamplesIncluded: {String(snapshot.privacy.filenameSamplesIncluded ?? false)} /
+          downloads:{snapshot.folders.downloads?.filenameSamples?.length ?? 0} /
+          desktop:{snapshot.folders.desktop?.filenameSamples?.length ?? 0}
+        </div>
+        {snapshot.privacy.filenameSamplesIncluded && (
+          <div style={{ marginBottom: 6, color: "#777" }}>
+            {[...(snapshot.folders.downloads?.filenameSamples ?? []), ...(snapshot.folders.desktop?.filenameSamples ?? [])]
+              .slice(0, 10)
+              .map((sample) => <div key={sample} style={{ overflowWrap: "anywhere" }}>{sample}</div>)}
+          </div>
+        )}
         {signals.length === 0 ? (
           <div style={{ color: "#bbb" }}>シグナルなし (コンパニオンWindow起動後に表示)</div>
         ) : signals.map((sig) => (
@@ -234,6 +247,7 @@ export function DebugPage() {
                 {openaiPreview.memoryNotePreviewsSent.length > 0 && (
                   <div><strong>memoryNotePreviews:</strong> {openaiPreview.memoryNotePreviewsSent.join(" / ")}</div>
                 )}
+                <div><strong>filenameSamplesVisible:</strong> {openaiPreview.filenameSamplesVisibleCount}件 / sendSetting: {String(openaiPreview.filenameSamplesSendToAISetting)}</div>
                 <div><strong>voiceInput:</strong> {openaiPreview.voiceInputIncluded ? "あり" : "なし"}</div>
                 <div style={{ color: "#4caf7d" }}>
                   rawFilenames: {String(openaiPreview.rawFilenamesSent)} /

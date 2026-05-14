@@ -234,6 +234,8 @@ export default function App() {
             window_title_enabled: settings.permissions.windowTitleEnabled,
             folder_metadata_enabled: settings.permissions.folderMetadataEnabled,
             filenames_enabled: settings.permissions.filenamesEnabled,
+            filename_samples_enabled: settings.filenameSamplesEnabled,
+            filename_samples_max_count: settings.filenameSamplesMaxCount,
             cloud_allowed: settings.permissions.cloudAllowed,
           },
         });
@@ -291,7 +293,7 @@ export default function App() {
     void poll();
     const timer = setInterval(poll, OBSERVE_INTERVAL_MS);
     return () => clearInterval(timer);
-  }, [settings.permissions, settings.customAppClassifications]);
+  }, [settings.permissions, settings.customAppClassifications, settings.filenameSamplesEnabled, settings.filenameSamplesMaxCount]);
 
   // 更新通知
   useEffect(() => {

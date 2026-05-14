@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.5.0] — 2026-05-15
+
+### Added
+
+- Optional Filename Samplesを追加。Desktop / Downloads直下のraw filename sampleを明示ON時だけ揮発表示
+- `filenameSamplesEnabled` / `filenameSamplesMaxCount` / `filenameSamplesSendToAI` 設定を追加
+- ObservationPage / Debug / Diagnostics / Transparencyで現在見えているfilename samplesと境界を表示
+- Rust folder scanに `filenameSamples` を追加し、OFF時は空、ON時も最大10件までに制限
+- filename samplesのRust unit testを追加
+
+### Fixed / Improved
+
+- Watchful Modeやfolder metadataではraw filename samplesを自動ONにしない
+- filename samplesはMemoryEvent / Observation Timeline / Memory exportへ保存しない
+- OpenAI payload previewでfilename samplesの可視件数と別許可状態を表示しつつ、`rawFilenamesSent=false`を維持
+
+---
+
 ## [1.4.0] — 2026-05-15
 
 ### Added

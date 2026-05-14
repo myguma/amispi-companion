@@ -76,6 +76,9 @@ export type CompanionSettings = {
   sleepSpeechEnabled: boolean;
   sleepSpeechIntervalPreset: SleepSpeechIntervalPreset;
   filenameSignalsEnabled: boolean;
+  filenameSamplesEnabled: boolean;
+  filenameSamplesMaxCount: number;
+  filenameSamplesSendToAI: boolean;
   observationLevel: ObservationLevel;
   memoryMode: MemoryMode;
   customAppClassifications: Record<string, AppCategory>;

@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-15 (v1.4.0)**
+**最終更新: 2026-05-15 (v1.5.0)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.4.0
-**フェーズ:** Visible Local Observer Companion — Memory v2
+**バージョン:** v1.5.0
+**フェーズ:** Visible Local Observer Companion — Optional Filename Samples
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,13 +24,12 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.4.0)
-✅ cargo build  → Finished dev profile (v1.4.0)
-✅ cargo test app_classification → passed (v1.3.0)
+✅ npm run build → ✓ built (v1.5.0)
+✅ cargo build  → Finished dev profile (v1.5.0)
+✅ cargo test filename_samples_are_explicit_and_limited → passed
+✅ cargo test observation::tests → 3 passed (v1.5.0)
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.4.0 success (run 25888562984)
-✅ Windows Installer artifact → `amispi-companion_1.4.0_x64-setup.exe`
-✅ Updater artifact → `latest.json`
+🔲 v1.5.0 Release workflow → push後に確認必要
 ```
 
 ---
@@ -57,7 +56,7 @@
 
 ---
 
-## v1.0.6〜v1.4.0 完了済み
+## v1.0.6〜v1.5.0 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -72,6 +71,34 @@
 | v1.2.0 | ReactionIntent system・intent trace・低品質fallback削減 | ✅ automated QA passed / field QA pending |
 | v1.3.0 | App Classification拡張・classification reason・custom classification UI | ✅ automated QA passed / field QA pending |
 | v1.4.0 | Memory v2・編集/固定/category/prompt投入・保存メモimport | ✅ automated QA passed / field QA pending |
+| v1.5.0 | Optional Filename Samples・明示ON・揮発表示・非保存/非送信境界 | 🔲 release前 / automated QA中 |
+
+## v1.5.0 実装詳細
+
+### 変更内容
+
+- `filenameSamplesEnabled` / `filenameSamplesMaxCount` / `filenameSamplesSendToAI` を追加
+- Rust `FolderSummary` に `filenameSamples` を追加。ただし `level>=2 && filenamesEnabled && filenameSamplesEnabled` の時だけ返す
+- samplesはDesktop / Downloads直下のみ、最大10件、file contentは読まない
+- ObservationPageで明示ON/OFF、最大件数、外部AI送信の別許可状態を確認可能
+- Debug / Diagnostics / Transparencyで現在見えているsamples件数と実サンプルを確認可能
+- OpenAI payload previewにfilename samples visible countと別許可状態を表示。ただしraw filenameは送信しない
+- filename samplesはMemoryEvent / Observation Timeline / Memory exportには保存しない
+- `filename_samples_are_explicit_and_limited` Rust unit testを追加
+
+### Field QA で確認すべき項目 (v1.5.0)
+
+- デフォルトOFFでfilename samplesが表示されないか
+- Watchful Modeでも自動ONにならないか
+- 明示ON時だけDesktop/Downloads直下のsamplesが最大件数以内で表示されるか
+- Debug / Diagnostics / Transparencyでfilename samples境界が確認できるか
+- OpenAI payload previewで `rawFilenamesSent=false` が維持されるか
+- Memory export / Observation Timeline / speech_shownにraw filename sampleが入っていないか
+
+## 次に着手する候補
+
+- v1.5.x hotfix: v1.5.0 field QAでsamples表示・権限境界・非保存/非送信不具合が出た場合の最小修正
+- 問題がなければ v1.6.0 Daily-use Beta へ進む
 
 ## v1.4.0 実装詳細
 
@@ -92,11 +119,6 @@
 - OpenAI送信スコープOFF時に保存メモがOpenAIへ送られないか
 - Memory export/importで保存メモだけが復元され、発話ログや観測ログが増えないか
 - transcript / text input / raw filename が勝手にlong-term memory化されていないか
-
-## 次に着手する候補
-
-- v1.4.x hotfix: v1.4.0 field QAでMemory UI保存・import・prompt表示不具合が出た場合の最小修正
-- 問題がなければ v1.5.0 Optional Filename Samples へ進む
 
 ## v1.3.0 実装詳細
 
