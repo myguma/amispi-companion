@@ -64,6 +64,11 @@ type SpeechOptions = {
   source?: SpeechSource;
   priority?: number;
   lockMs?: number;
+  // AI metadata (speech_shown の data に保存される; API key / raw prompt は含まない)
+  aiProvider?: string;
+  aiModel?: string;
+  aiStatus?: string;
+  aiFallbackReason?: string;
 };
 
 const SPEECH_PRIORITY: Record<SpeechSource, number> = {
