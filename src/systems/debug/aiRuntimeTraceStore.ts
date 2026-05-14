@@ -8,7 +8,11 @@ export type AIRuntimeTraceEntry = {
   status?: LastAIResultDebug["status"];
   latencyMs?: number;
   fallbackReason?: string;
+  safeReason?: string;
   fallbackFrom?: LastAIResultDebug["fallbackFrom"];
+  fallbackTo?: LastAIResultDebug["fallbackTo"];
+  httpStatus?: number;
+  providerErrorCode?: string;
   qualityRejectedReason?: string;
   trigger?: string;
   responsePreview?: string;
@@ -20,6 +24,10 @@ export type AIRuntimeTraceSnapshot = {
   lastStatus: LastAIResultDebug["status"] | null;
   lastLatencyMs: number | null;
   lastFallbackReason: string | null;
+  lastSafeReason: string | null;
+  lastFallbackFrom: LastAIResultDebug["fallbackFrom"] | null;
+  lastFallbackTo: LastAIResultDebug["fallbackTo"] | null;
+  lastHttpStatus: number | null;
 };
 
 const MAX_TRACE = 20;
@@ -31,6 +39,10 @@ let snapshot: AIRuntimeTraceSnapshot = {
   lastStatus: null,
   lastLatencyMs: null,
   lastFallbackReason: null,
+  lastSafeReason: null,
+  lastFallbackFrom: null,
+  lastFallbackTo: null,
+  lastHttpStatus: null,
 };
 
 const subscribers = new Set<() => void>();
@@ -63,7 +75,11 @@ export function recordAIRuntimeTrace(result: LastAIResultDebug): void {
     status: result.status,
     latencyMs: result.latencyMs,
     fallbackReason: result.fallbackReason,
+    safeReason: result.safeReason,
     fallbackFrom: result.fallbackFrom,
+    fallbackTo: result.fallbackTo,
+    httpStatus: result.httpStatus,
+    providerErrorCode: result.providerErrorCode,
     qualityRejectedReason: result.qualityRejectedReason,
     trigger: result.trigger,
     responsePreview: result.responsePreview,
@@ -76,6 +92,10 @@ export function recordAIRuntimeTrace(result: LastAIResultDebug): void {
     lastStatus: result.status ?? null,
     lastLatencyMs: result.latencyMs ?? null,
     lastFallbackReason: result.fallbackReason ?? null,
+    lastSafeReason: result.safeReason ?? null,
+    lastFallbackFrom: result.fallbackFrom ?? null,
+    lastFallbackTo: result.fallbackTo ?? null,
+    lastHttpStatus: result.httpStatus ?? null,
   };
   broadcast();
   notify();

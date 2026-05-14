@@ -89,8 +89,17 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
       {result.fallbackFrom && (
         <div style={{ color: "#8a6a30" }}>fallbackFrom: {result.fallbackFrom}</div>
       )}
+      {result.fallbackTo && (
+        <div style={{ color: "#8a6a30" }}>fallbackTo: {result.fallbackTo}</div>
+      )}
+      {result.httpStatus !== undefined && (
+        <div style={{ color: "#8a6a30" }}>httpStatus: {result.httpStatus}</div>
+      )}
       {result.fallbackReason && (
         <div style={{ color: "#e05050" }}>reason: {result.fallbackReason}</div>
+      )}
+      {result.safeReason && (
+        <div style={{ color: "#c06040" }}>safeReason: {result.safeReason}</div>
       )}
       {result.qualityRejectedReason && (
         <div style={{ color: "#c06040" }}>qualityRejectedReason: {result.qualityRejectedReason}</div>
@@ -109,6 +118,68 @@ function LastResultPanel({ result }: { result: LastAIResultDebug }) {
       {result.errorMessage && (
         <div style={{ color: "#e05050", fontSize: 11 }}>error: {result.errorMessage}</div>
       )}
+    </div>
+  );
+}
+
+function openAISummary(result: LastAIResultDebug): {
+  tone: "ok" | "warn" | "ng";
+  headline: string;
+  detail: string;
+} {
+  if (result.source === "openai" && result.status === "success") {
+    return {
+      tone: "ok",
+      headline: "OpenAI active",
+      detail: `現在 OpenAI / ${result.model ?? "-"} で応答中`,
+    };
+  }
+  if (result.fallbackFrom === "openai" && result.source !== "fallback") {
+    return {
+      tone: "warn",
+      headline: "OpenAI failed / fallback active",
+      detail: `OpenAIは応答していません。現在は ${result.source} / ${result.model ?? "-"} で応答中`,
+    };
+  }
+  if (result.fallbackFrom === "openai" || result.source === "fallback") {
+    return {
+      tone: "ng",
+      headline: "OpenAI unavailable",
+      detail: "OpenAIは応答していません。API key / billing / quota / rate limit / network を確認してください",
+    };
+  }
+  return {
+    tone: "warn",
+    headline: "OpenAI not used yet",
+    detail: "OpenAIテストを実行すると実際の provider と fallback 状態を確認できます",
+  };
+}
+
+function OpenAIStatusCard({ result, configuredModel }: { result: LastAIResultDebug; configuredModel: string }) {
+  const summary = openAISummary(result);
+  const color =
+    summary.tone === "ok" ? "#4caf7d" :
+    summary.tone === "warn" ? "#d18400" :
+    "#e05050";
+
+  return (
+    <div style={{ marginTop: 8, padding: "10px 12px", borderRadius: 8, border: `1px solid ${color}55`, background: summary.tone === "ok" ? "#f1fff6" : "#fff8ee", fontSize: 12, lineHeight: 1.8 }}>
+      <div style={{ color, fontWeight: 700 }}>{summary.headline}</div>
+      <div style={{ color: "#555" }}>{summary.detail}</div>
+      {(result.httpStatus === 429 || result.safeReason === "billing_or_quota" || result.safeReason === "billing_or_rate_limit" || result.safeReason === "rate_limited") && (
+        <div style={{ color: "#8a5000" }}>
+          理由: API quota / billing / rate limit の可能性があります。ChatGPT契約とは別にOpenAI API側の課金状態を確認してください。
+        </div>
+      )}
+      <div style={{ marginTop: 4, color: "#666" }}>configured model: {configuredModel}</div>
+      <div style={{ color: "#666" }}>actual provider used: {result.source}</div>
+      <div style={{ color: "#666" }}>actual model used: {result.model ?? "-"}</div>
+      <div style={{ color: "#666" }}>status: {result.status ?? "-"}</div>
+      <div style={{ color: "#666" }}>fallbackFrom: {result.fallbackFrom ?? "-"}</div>
+      <div style={{ color: "#666" }}>fallbackTo: {result.fallbackTo ?? (result.fallbackFrom ? result.source : "-")}</div>
+      <div style={{ color: "#666" }}>safe reason: {result.safeReason ?? result.fallbackReason ?? "-"}</div>
+      <div style={{ color: "#666" }}>latency: {result.latencyMs !== undefined ? `${result.latencyMs}ms` : "-"}</div>
+      <div style={{ color: "#666" }}>response preview: {result.responsePreview ?? "-"}</div>
     </div>
   );
 }
@@ -178,6 +249,7 @@ function OpenAITestSection({ model, timeoutMs }: { model: string; timeoutMs: num
           )}
         </div>
       )}
+      <OpenAIStatusCard result={lastResult} configuredModel={model} />
       <LastResultPanel result={lastResult} />
     </>
   );

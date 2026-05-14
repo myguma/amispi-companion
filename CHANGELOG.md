@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.4] — 2026-05-14
+
+### Fixed / Improved
+
+- OpenAI HTTP error body を安全に読み、429 を `insufficient_quota` / `billing_not_active` / `quota_exceeded` / `rate_limited` / `rate_or_quota_limited` に分類
+- AIPage の OpenAI テスト結果に configured model / actual provider / actual model / status / fallbackFrom / fallbackTo / safe reason / latency / response preview を表示
+- Debug / Diagnostics で effectiveProvider / effectiveModel / fallbackFrom / fallbackTo / safeReason / httpStatus を表示し、OpenAI失敗後のOllama fallbackを明確化
+- speech bubble 内スクロールバーを廃止。長文は短いプレビューと「全文を見る」パネルで表示
+- ChatGPT login/session auth は非目標、OpenAI API key 方式のみ対応することを docs に明記
+
+---
+
 ## [1.1.3] — 2026-05-14
 
 ### Fixed / Improved

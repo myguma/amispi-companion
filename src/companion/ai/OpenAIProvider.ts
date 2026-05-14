@@ -39,6 +39,58 @@ function setPayloadPreview(p: OpenAIPayloadPreview): void {
   _previewSubs.forEach((fn) => fn());
 }
 
+function normalizeOpenAIHttpError(status: number, bodyText: string): {
+  reason: string;
+  safeReason: string;
+  providerErrorCode?: string;
+} {
+  let providerErrorCode: string | undefined;
+  let providerErrorType: string | undefined;
+  let providerMessage: string | undefined;
+
+  try {
+    const parsed = JSON.parse(bodyText) as {
+      error?: { code?: unknown; type?: unknown; message?: unknown };
+    };
+    providerErrorCode = typeof parsed.error?.code === "string" ? parsed.error.code : undefined;
+    providerErrorType = typeof parsed.error?.type === "string" ? parsed.error.type : undefined;
+    providerMessage = typeof parsed.error?.message === "string" ? parsed.error.message : undefined;
+  } catch {
+    // Non-JSON error bodies are treated as opaque text below.
+  }
+
+  const haystack = [providerErrorCode, providerErrorType, providerMessage, bodyText]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (status === 401 || status === 403) {
+    return { reason: "unauthorized", safeReason: "unauthorized", providerErrorCode };
+  }
+  if (status === 404) {
+    return { reason: "model_not_found", safeReason: "model_not_found", providerErrorCode };
+  }
+  if (status === 429) {
+    if (haystack.includes("insufficient_quota")) {
+      return { reason: "insufficient_quota", safeReason: "billing_or_quota", providerErrorCode };
+    }
+    if (haystack.includes("billing")) {
+      return { reason: "billing_not_active", safeReason: "billing_or_quota", providerErrorCode };
+    }
+    if (haystack.includes("quota_exceeded") || haystack.includes("quota")) {
+      return { reason: "quota_exceeded", safeReason: "billing_or_quota", providerErrorCode };
+    }
+    if (haystack.includes("rate_limit_exceeded") || haystack.includes("rate limit")) {
+      return { reason: "rate_limited", safeReason: "rate_limited", providerErrorCode };
+    }
+    return { reason: "rate_or_quota_limited", safeReason: "billing_or_rate_limit", providerErrorCode };
+  }
+  if (status >= 500) {
+    return { reason: "network_error", safeReason: "network_error", providerErrorCode };
+  }
+  return { reason: `openai_http_${status}`, safeReason: "invalid_response", providerErrorCode };
+}
+
 export class OpenAIProvider implements AIProvider {
   readonly name = "openai";
   readonly kind = "cloud_openai" as const;
@@ -111,16 +163,21 @@ export class OpenAIProvider implements AIProvider {
       clearTimeout(timer);
 
       if (!res.ok) {
-        return { shouldSpeak: false, reason: `openai_http_${res.status}` };
+        const bodyText = (await res.text().catch(() => "")).slice(0, 2000);
+        const details = normalizeOpenAIHttpError(res.status, bodyText);
+        return { shouldSpeak: false, httpStatus: res.status, ...details };
       }
 
-      const json = await res.json() as {
-        choices?: { message?: { content?: string } }[];
-      };
+      let json: { choices?: { message?: { content?: string } }[] };
+      try {
+        json = await res.json() as { choices?: { message?: { content?: string } }[] };
+      } catch {
+        return { shouldSpeak: false, reason: "invalid_response", safeReason: "invalid_response" };
+      }
       const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
 
       if (!raw || raw.length > 120) {
-        return { shouldSpeak: false, reason: "openai_empty_or_too_long" };
+        return { shouldSpeak: false, reason: "openai_empty_or_too_long", safeReason: "invalid_response" };
       }
 
       return { text: raw, shouldSpeak: true, emotion: "idle" };
@@ -128,9 +185,9 @@ export class OpenAIProvider implements AIProvider {
       clearTimeout(timer);
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("abort") || msg.includes("AbortError")) {
-        return { shouldSpeak: false, reason: "openai_timeout" };
+        return { shouldSpeak: false, reason: "timeout", safeReason: "timeout" };
       }
-      return { shouldSpeak: false, reason: "openai_error" };
+      return { shouldSpeak: false, reason: "network_error", safeReason: "network_error" };
     }
   }
 }

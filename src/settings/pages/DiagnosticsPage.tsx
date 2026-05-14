@@ -152,11 +152,21 @@ export function DiagnosticsPage() {
         s.aiEngine === "openai" ? `openai / ${s.openaiModel} (⚠ クラウド送信あり)` :
                                   `${s.aiEngine} / ${s.ollamaModel}`
       } />
-      <InfoRow label="lastProviderUsed" value={aiRuntime.lastProviderUsed ?? "-"} />
-      <InfoRow label="lastModelUsed" value={aiRuntime.lastModelUsed ?? "-"} />
+      <InfoRow label="effectiveProvider" value={aiRuntime.lastProviderUsed ?? "-"} />
+      <InfoRow label="effectiveModel" value={aiRuntime.lastModelUsed ?? "-"} />
       <InfoRow label="lastStatus" value={aiRuntime.lastStatus ?? "-"} />
       <InfoRow label="lastLatencyMs" value={aiRuntime.lastLatencyMs !== null ? `${aiRuntime.lastLatencyMs}ms` : "-"} />
       <InfoRow label="lastFallbackReason" value={aiRuntime.lastFallbackReason ?? "-"} />
+      <InfoRow label="lastSafeReason" value={aiRuntime.lastSafeReason ?? "-"} />
+      <InfoRow label="fallbackFrom" value={aiRuntime.lastFallbackFrom ?? "-"} />
+      <InfoRow label="fallbackTo" value={aiRuntime.lastFallbackTo ?? "-"} />
+      <InfoRow label="httpStatus" value={aiRuntime.lastHttpStatus !== null ? String(aiRuntime.lastHttpStatus) : "-"} />
+      {s.aiEngine === "openai" && aiRuntime.lastFallbackFrom === "openai" && (
+        <div style={{ fontSize: 11, color: "#8a5000", background: "#fff8ee", border: "1px solid #f0c080", borderRadius: 6, padding: 8, marginTop: 6, lineHeight: 1.6 }}>
+          OpenAIは応答していません。現在は {aiRuntime.lastProviderUsed ?? "-"} fallback で応答しています。
+          {aiRuntime.lastHttpStatus === 429 && <div>429はAPI quota / billing / rate limit の可能性があります。</div>}
+        </div>
+      )}
       <InfoRow label="Quiet Mode" value={s.quietMode ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="Do Not Disturb" value={s.doNotDisturb ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="次回発話予定" value={fmtTime(autoDebug.nextAutonomousSpeechAt)} />

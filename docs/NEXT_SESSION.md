@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.1.2)**
+**最終更新: 2026-05-14 (v1.1.4)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.1.2
-**フェーズ:** Safe Visible Local Observer Companion — 発話バリエーション改善・AppCategory強化・OpenAI provider追加
+**バージョン:** v1.1.4
+**フェーズ:** Safe Visible Local Observer Companion — OpenAI fallback可視化・speech bubble長文UI hotfix
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,11 +24,11 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.1.2)
-✅ cargo build  → Finished dev profile (v1.1.2)
+✅ npm run build → ✓ built (v1.1.4)
+✅ cargo build  → Finished dev profile (v1.1.4)
 ✅ git diff --check → clean
-✅ GitHub Actions / Windows Installer → v1.1.1 success (前回確認済み)
-🔲 v1.1.2 Release workflow → セッション終了時点 (push後に確認必要)
+✅ GitHub Actions / Windows Installer → v1.1.3 success
+🔲 v1.1.4 Release workflow → push後に確認必要
 ```
 
 ---
@@ -55,7 +55,7 @@
 
 ---
 
-## v1.0.6〜v1.1.2 完了済み
+## v1.0.6〜v1.1.4 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -65,6 +65,17 @@
 | v1.1.0 | ObservationSignal層、Watchful Mode、診断ページ | ✅ field QA pending |
 | v1.1.1 | 実機QA hotfix: Timeline同期・sleep発話独立・preset UI・signals接続・note管理 | ✅ field QA pending |
 | v1.1.2 | 発話バリエーション改善・AppCategory強化・OpenAI provider | ✅ field QA pending |
+| v1.1.3 | AI runtime trace・OpenAI test・provider/model badge・speech_shown AI metadata | ✅ field QA pending |
+| v1.1.4 | OpenAI 429分類・fallback表示明確化・speech bubble全文パネル | ✅ field QA pending |
+
+## v1.1.4 Auth / Billing Notes
+
+- ChatGPT Web/Desktop のログインセッション流用は実装しない。
+- OpenAI API は ChatGPT subscription とは別管理。API利用にはOpenAI API keyとAPI側billing/quotaが必要。
+- このアプリは OpenAI API key 方式のみ対応する。
+- `429` は API billing / quota / rate limit / model access を確認する。
+- ChatGPT auth / unofficial cookie auth / browser session scraping は、安全性・安定性・保守性のため非目標。
+- raw filename / raw window title / transcript履歴 / file content はOpenAIへ送信しない。
 
 ---
 
@@ -338,7 +349,7 @@ memoryMode: MemoryMode;                    // default: "timeline_summary"
 
 ## 絶対禁止事項（次セッションも維持すること）
 
-- ChatGPT API / OpenAI API / Remote LLM実装
+- ChatGPT auth/session流用 / unofficial cookie auth / browser session scraping
 - Cloud STT / 常時マイク録音 / wake word
 - 常時スクリーン録画 / 常時スクリーンショット / OCR / TTS
 - shell実行 / 自動ファイル操作 / ファイル移動 / ファイル削除

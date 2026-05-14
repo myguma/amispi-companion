@@ -122,7 +122,8 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         status: "skipped",
         trigger,
         fallbackFrom: "openai",
-        fallbackReason: "openai_key_empty",
+        fallbackReason: "missing_api_key",
+        safeReason: "missing_api_key",
         updatedAt: Date.now(),
       });
       // key 未設定時は rule にフォールバック
@@ -133,7 +134,9 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
           status: "fallback",
           trigger,
           fallbackFrom: "openai",
-          fallbackReason: "openai_key_empty",
+          fallbackTo: "rule",
+          fallbackReason: "missing_api_key",
+          safeReason: "missing_api_key",
           responsePreview: ruleOut.text.slice(0, 80),
           updatedAt: Date.now(),
         });
@@ -151,6 +154,9 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     );
 
     let openaiFailReason: string | undefined;
+    let openaiSafeReason: string | undefined;
+    let openaiHttpStatus: number | undefined;
+    let openaiProviderErrorCode: string | undefined;
 
     try {
       const out      = await provider.respond(ctx);
@@ -171,6 +177,9 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       }
 
       openaiFailReason = out.reason ?? "openai_no_speech";
+      openaiSafeReason = out.safeReason ?? openaiFailReason;
+      openaiHttpStatus = out.httpStatus;
+      openaiProviderErrorCode = out.providerErrorCode;
       const qualityRejected = openaiFailReason === "openai_empty_or_too_long";
       setLastResult({
         source: "fallback",
@@ -178,8 +187,11 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         trigger,
         fallbackFrom: "openai",
         fallbackReason: openaiFailReason,
+        safeReason: openaiSafeReason,
         model: s.openaiModel,
         latencyMs,
+        httpStatus: openaiHttpStatus,
+        providerErrorCode: openaiProviderErrorCode,
         qualityRejected,
         qualityRejectedReason: qualityRejected ? openaiFailReason : undefined,
         updatedAt: Date.now(),
@@ -187,12 +199,14 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
     } catch (e) {
       const latencyMs = Date.now() - t0;
       openaiFailReason = "openai_exception";
+      openaiSafeReason = "network_error";
       setLastResult({
         source: "fallback",
         status: "failed",
         trigger,
         fallbackFrom: "openai",
         fallbackReason: openaiFailReason,
+        safeReason: openaiSafeReason,
         model: s.openaiModel,
         errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
         latencyMs,
@@ -212,8 +226,12 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
             status: "fallback",
             trigger,
             fallbackFrom: "openai",
+            fallbackTo: "ollama",
             fallbackReason: openaiFailReason,
+            safeReason: openaiSafeReason,
             model: s.ollamaModel,
+            httpStatus: openaiHttpStatus,
+            providerErrorCode: openaiProviderErrorCode,
             latencyMs: Date.now() - t0,
             responsePreview: out.text.slice(0, 80),
             updatedAt: Date.now(),
@@ -230,7 +248,11 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
         status: "fallback",
         trigger,
         fallbackFrom: "openai",
+        fallbackTo: "rule",
         fallbackReason: openaiFailReason,
+        safeReason: openaiSafeReason,
+        httpStatus: openaiHttpStatus,
+        providerErrorCode: openaiProviderErrorCode,
         latencyMs: Date.now() - t0,
         responsePreview: ruleOut.text.slice(0, 80),
         updatedAt: Date.now(),

@@ -137,7 +137,6 @@ html,
   border-radius: 12px;
   padding: 8px 12px;
   max-width: 188px;
-  max-height: 130px;
   font-size: 12px;
   font-family: system-ui, -apple-system, sans-serif;
   color: #3a2870;
@@ -145,7 +144,7 @@ html,
   box-shadow: 0 4px 16px rgba(100, 60, 200, 0.15);
   animation: bubble-appear 0.25s ease-out;
   word-break: break-word;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .speech-bubble > span:not(.speech-bubble-ai-badge) {
@@ -168,6 +167,67 @@ html,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.speech-bubble-more {
+  display: block;
+  margin-top: 5px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #6a40d0;
+  font-size: 10px;
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.speech-full-panel {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  bottom: 8px;
+  z-index: 1000;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 144, 240, 0.45);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(80, 50, 160, 0.22);
+  color: #3a2870;
+  font-family: system-ui, -apple-system, sans-serif;
+  pointer-events: auto;
+  animation: bubble-appear 0.18s ease-out;
+  overflow-y: auto;
+}
+
+.speech-full-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.speech-full-panel-close {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid rgba(168, 144, 240, 0.45);
+  border-radius: 6px;
+  background: white;
+  color: #6a40d0;
+  font-size: 10px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.speech-full-panel-text {
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .speech-bubble-tail {

@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-14 (v1.1.2)**
+**最終更新: 2026-05-14 (v1.1.4)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -27,10 +27,22 @@
 | v1.1.0 | pending | ObservationSignal層、Watchful Mode、診断ページはfield QA pending |
 | v1.1.1 | pending | Watchful preset同期・sleep発話修正・Timeline同期・note一覧/削除・filename UI修正はfield QA pending |
 | v1.1.2 | pending | 発話バリエーション・unknown category発話・AppCategory強化・PromptBuilder ObservationSignals・OpenAI provider骨格はfield QA pending |
+| v1.1.3 | pending | AI runtime trace・OpenAI test・provider/model badge・長文speech bubbleはfield QA pending |
+| v1.1.4 | pending | OpenAI 429分類・fallback表示明確化・speech bubble全文パネルはfield QA pending |
+
+## OpenAI / ChatGPT Auth Boundary
+
+- ChatGPT Web/Desktop のログインセッション流用は実装しない。
+- OpenAI API は ChatGPT subscription とは別管理。ChatGPT Plus/Pro 契約だけでは API 利用枠にはならない。
+- このアプリは OpenAI API key 方式のみ対応する。
+- API 429 が出た場合は OpenAI API 側の billing / quota / rate limit / model access を確認する。
+- ChatGPT auth / unofficial cookie auth / browser session scraping は、安全性・安定性・保守性のため非目標。
+- API key全文を表示・ログ保存しない。raw filename / raw window title / transcript履歴 / file content はOpenAIへ送信しない。
 
 ## Non-goals
 
-- クラウドAI / クラウドSTT
+- ChatGPT Web/Desktop login session auth / unofficial cookie auth
+- クラウドSTT
 - 常時マイク監視 / wake word
 - Screen Capture / OCR
 - 自動ファイル操作 / コマンド実行

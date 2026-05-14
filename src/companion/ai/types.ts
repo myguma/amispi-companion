@@ -91,6 +91,9 @@ export type AIProviderOutput = {
   shouldSpeak: boolean;
   confidence?: number;
   reason?: string;
+  safeReason?: string;
+  httpStatus?: number;
+  providerErrorCode?: string;
 };
 
 export type AIResultSource = "openai" | "ollama" | "rule" | "mock" | "fallback" | "none";
@@ -101,9 +104,13 @@ export type LastAIResultDebug = {
   status?: AIResultStatus;
   trigger?: string;
   fallbackReason?: string;
+  safeReason?: string;
   fallbackFrom?: AIResultSource;
+  fallbackTo?: AIResultSource;
   model?: string;
   baseUrl?: string;
+  httpStatus?: number;
+  providerErrorCode?: string;
   latencyMs?: number;
   responsePreview?: string;
   errorMessage?: string;
