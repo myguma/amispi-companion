@@ -7,6 +7,7 @@ import type { CompanionSettings } from "../../settings/types";
 import type { AITrigger, CompanionContext } from "../../companion/ai/types";
 import { inferActivity } from "../../companion/activity/inferActivity";
 import { buildMemorySummary } from "../../companion/memory/buildMemorySummary";
+import { buildObservationSignals } from "../observation/observationSignals";
 
 export function buildCompanionContext(
   trigger: AITrigger,
@@ -17,6 +18,7 @@ export function buildCompanionContext(
 ): CompanionContext {
   const activityInsight = inferActivity(snapshot);
   const memorySummary   = buildMemorySummary(recentEvents);
+  const signals         = buildObservationSignals(snapshot);
 
   return {
     trigger,
@@ -24,6 +26,7 @@ export function buildCompanionContext(
     observation: snapshot,
     activityInsight,
     memorySummary,
+    signals,
     speechSettings: {
       autonomousSpeechEnabled:       settings.autonomousSpeechEnabled,
       quietMode:                     settings.quietMode,

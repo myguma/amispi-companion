@@ -563,8 +563,18 @@ export function TransparencyPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
           <span style={{ fontSize: 13, flex: 1 }}>エンジン</span>
           <StatusBadge
-            color={settings.aiEngine === "none" ? "#aaa" : settings.aiEngine === "mock" ? "#f0a030" : "#4a90d9"}
-            label={settings.aiEngine === "none" ? "なし" : settings.aiEngine === "mock" ? "Mock" : "Ollama"}
+            color={
+              settings.aiEngine === "none"   ? "#aaa" :
+              settings.aiEngine === "mock"   ? "#f0a030" :
+              settings.aiEngine === "openai" ? "#e07030" :
+              "#4a90d9"
+            }
+            label={
+              settings.aiEngine === "none"   ? "なし" :
+              settings.aiEngine === "mock"   ? "Mock" :
+              settings.aiEngine === "openai" ? "OpenAI" :
+              "Ollama"
+            }
           />
         </div>
         {settings.aiEngine === "ollama" && (
@@ -573,7 +583,11 @@ export function TransparencyPage() {
             <OllamaStatus baseUrl={settings.ollamaBaseUrl} />
           </div>
         )}
-        <Row icon={NO} label="クラウド AI: なし" note="すべてローカル処理" />
+        {settings.aiEngine === "openai" ? (
+          <Row icon="⚠" label={`OpenAI: ${settings.openaiModel}`} note="クラウド送信あり — 抽象情報のみ" />
+        ) : (
+          <Row icon={NO} label="クラウド AI: なし" note="すべてローカル処理" />
+        )}
       </Section>
 
       {/* ── 気づけること ── */}

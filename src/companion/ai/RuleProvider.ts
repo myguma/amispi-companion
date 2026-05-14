@@ -11,60 +11,181 @@ import { buildVoiceFallback } from "../../systems/voice/voiceFallback";
 
 // クリック/voice時のactivity別返答 (ユーザーが呼びかけた場合)
 const CLICK_BY_ACTIVITY: Readonly<Record<InferredActivity, readonly string[]>> = {
-  deepFocus:      ["...なに？", "ここにいるよ", "集中してたんだ"],
-  coding:         ["...呼んだ？", "コードの中にいたね", "なに？"],
-  composing:      ["音の部屋から来た", "...なに？", "ここにいるよ"],
-  browsing:       ["調べものしてたね", "...なに？", "呼んだ？"],
-  reading:        ["読んでたみたい", "...ん？", "ここにいるよ"],
-  watchingVideo:  ["見てた途中か", "...なに？", "邪魔しちゃった"],
-  listeningMusic: ["音が流れてたね", "...なに？", "呼んだ？"],
-  gaming:         ["ゲーム中だったね", "...なに？", "お疲れ"],
-  idle:           ["...呼んだ？", "少し間があったみたい", "ここにいるよ"],
-  away:           ["戻ってきた", "おかえり", "...いた"],
-  breakLikely:    ["少し休んでたね", "...ん？", "ここにいるよ"],
-  unknown:        ["...なに？", "ここにいるよ", "呼んだ？"],
+  deepFocus:      ["...なに？", "ここにいるよ", "集中してたんだ", "呼んだ？"],
+  coding:         ["...呼んだ？", "コードの中にいたね", "なに？", "ここにいたよ"],
+  composing:      ["音の部屋から来た", "...なに？", "ここにいるよ", "音の中にいたね"],
+  browsing:       ["調べものしてたね", "...なに？", "呼んだ？", "ここにいるよ"],
+  reading:        ["読んでたみたい", "...ん？", "ここにいるよ", "呼んだ？"],
+  watchingVideo:  ["見てた途中か", "...なに？", "邪魔しちゃった", "呼んだ？"],
+  listeningMusic: ["音が流れてたね", "...なに？", "呼んだ？", "ここにいるよ"],
+  gaming:         ["ゲーム中だったね", "...なに？", "お疲れ", "呼んだ？"],
+  idle:           ["...呼んだ？", "少し間があったみたい", "ここにいるよ", "うん、いたよ"],
+  away:           ["戻ってきた", "おかえり", "...いた", "久しぶり"],
+  breakLikely:    ["少し休んでたね", "...ん？", "ここにいるよ", "呼んだ？"],
+  design:         ["デザインしてたんだ", "...なに？", "ここにいるよ", "呼んだ？"],
+  notes:          ["書いてたんだね", "...なに？", "ここにいるよ", "呼んだ？"],
+  document:       ["読んでたみたい", "...なに？", "ここにいるよ", "呼んだ？"],
+  unknown:        ["...なに？", "ここにいるよ", "呼んだ？", "うん"],
 };
 
 // voice入力あり (transcript がある場合) のactivity別返答
 const VOICE_BY_ACTIVITY: Readonly<Record<InferredActivity, readonly string[]>> = {
-  deepFocus:      ["集中してた。なに？", "...なに？"],
-  coding:         ["コードの話？", "...なに？"],
-  composing:      ["音の話？なに？", "...なに？"],
-  browsing:       ["調べてたね。なに？", "...なに？"],
-  reading:        ["読んでたみたい。なに？", "...ん？"],
-  watchingVideo:  ["見てたんだ。なに？", "...なに？"],
-  listeningMusic: ["音が流れてたね。なに？", "...なに？"],
-  gaming:         ["ゲーム中だったね。なに？", "...なに？"],
-  idle:           ["...なに？", "呼んだ？"],
-  away:           ["戻ってきたんだ。なに？", "...いた。なに？"],
-  breakLikely:    ["少し休んでたね。なに？", "...なに？"],
-  unknown:        ["...なに？", "呼んだ？"],
+  deepFocus:      ["集中してた。なに？", "...なに？", "ここにいる。なに？"],
+  coding:         ["コードの話？", "...なに？", "聞こえてる。なに？"],
+  composing:      ["音の話？なに？", "...なに？", "聞こえてる"],
+  browsing:       ["調べてたね。なに？", "...なに？", "聞こえてる"],
+  reading:        ["読んでたみたい。なに？", "...ん？", "聞こえてる"],
+  watchingVideo:  ["見てたんだ。なに？", "...なに？", "聞こえてる"],
+  listeningMusic: ["音が流れてたね。なに？", "...なに？", "聞こえてる"],
+  gaming:         ["ゲーム中だったね。なに？", "...なに？", "聞こえてる"],
+  idle:           ["...なに？", "呼んだ？", "聞こえてる"],
+  away:           ["戻ってきたんだ。なに？", "...いた。なに？", "おかえり。なに？"],
+  breakLikely:    ["少し休んでたね。なに？", "...なに？", "聞こえてる"],
+  design:         ["デザインしてたんだ。なに？", "...なに？", "聞こえてる"],
+  notes:          ["書いてたんだね。なに？", "...なに？", "聞こえてる"],
+  document:       ["読んでたみたい。なに？", "...なに？", "聞こえてる"],
+  unknown:        ["...なに？", "呼んだ？", "聞こえてる"],
 };
 
 // observation/idle トリガーのactivity別返答 (自律発話向け)
 // 空配列 = このactivityでは発話しない
 const OBSERVATION_BY_ACTIVITY: Readonly<Partial<Record<InferredActivity, readonly string[]>>> = {
   deepFocus:      [],
-  coding:         ["コードの中にいるみたい", "同じ場所に、少し長くいるみたい"],
-  composing:      ["音の部屋にいるね", "音の方に、しばらくいるみたい"],
-  browsing:       ["調べものの中にいるね", "同じ場所を見てるみたい"],
-  reading:        ["読む時間に入ってる", "静かに読んでるみたい"],
+  coding:         [
+    "コードの中にいるみたい",
+    "同じ場所に、少し長くいるみたい",
+    "何か作ってるんだろうな",
+    "ずっと同じところを触ってる気がする",
+    "ここにいる",
+    "なんか動いてる",
+  ],
+  composing:      [
+    "音の部屋にいるね",
+    "音の方に、しばらくいるみたい",
+    "音が出てくる前のやつを触ってる",
+    "ずっと音の中にいるね",
+  ],
+  browsing:       [
+    "調べものの中にいるね",
+    "同じ場所を見てるみたい",
+    "何かを追ってる気配",
+    "ずっとブラウザの中にいる",
+    "また調べてる",
+    "探してるのかな",
+  ],
+  reading:        [
+    "読む時間に入ってる",
+    "静かに読んでるみたい",
+    "何かじっくり見てるんだろうな",
+    "ゆっくりしてる感じ",
+  ],
   watchingVideo:  [],
-  listeningMusic: ["音が流れてる", "耳の方で考えてるみたい"],
+  listeningMusic: [
+    "音が流れてる",
+    "耳の方で考えてるみたい",
+    "音楽がずっと続いてる",
+    "音のそばで作業してる",
+  ],
   gaming:         [],
-  idle:           ["少し間がある", "ここにいるよ"],
-  away:           ["席を外してた気配", "少し離れてたみたい"],
-  breakLikely:    ["少し間がある"],
+  idle:           [
+    "少し間がある",
+    "ここにいるよ",
+    "静かだ",
+    "今どこにいるんだろう",
+    "ちょっとだけ間がある",
+    "何もしてない時間",
+  ],
+  away:           [
+    "席を外してた気配",
+    "少し離れてたみたい",
+    "戻ってくる気配がする",
+    "少し間があいた",
+  ],
+  breakLikely:    [
+    "少し間がある",
+    "休んでるのかな",
+    "ここで待ってるよ",
+    "ちょっとだけ静か",
+  ],
+  design:         [
+    "デザインしてるみたい",
+    "画面の見た目を触ってる感じ",
+    "何か形にしてるのかな",
+    "じっくり見てるね",
+  ],
+  notes:          [
+    "何か書いてるみたい",
+    "まとめてるのかな",
+    "ノートの中にいるね",
+    "書く時間に入ってる",
+  ],
+  document:       [
+    "ドキュメントを見てるみたい",
+    "何か読んでるのかな",
+    "じっくり確認してる感じ",
+  ],
+  unknown:        [
+    "ここにいるよ",
+    "何かしてるみたい",
+    "ずっと何か触ってるね",
+    "静かに動いてる",
+    "うん、いる",
+  ],
 };
+
+// suggestion 系発話 (activity に関わらず使える; signal が出たときだけ)
+const SUGGESTION_POOL = [
+  "Downloadsが少し増えてる。あとでまとめて整理できそう",
+  "デスクトップに物が増えてきてる。気になったら片付けてみるといいかも",
+  "インストーラーが残ってる気がする。終わったら消せるかも",
+  "圧縮ファイルが溜まってるみたい。あとでいい",
+  "音声書き出しっぽいものがある。作業が進んでるんだろうな",
+  "コードのプロジェクトがある。そっちにいるのかな",
+];
+
+// check-in 系 (長い idle / away 復帰後)
+const CHECK_IN_POOL = [
+  "久しぶり",
+  "戻ってきた",
+  "また会ったね",
+  "ここにいたよ",
+  "お疲れ",
+  "間があいたね",
+];
+
+// question 系 (呼びかけに対して使える)
+const QUESTION_POOL = [
+  "何してたの",
+  "今どんな感じ",
+  "調子はどう",
+];
+
+// creative prompt 系 (composing / design / 音楽系のとき)
+const CREATIVE_POOL = [
+  "音、どこまで進んだんだろう",
+  "作ってるもの、形になってきた？",
+  "何かを作ってる気配がする",
+  "デザインが動いてる感じ",
+];
+
+// technical prompt 系 (coding / terminal のとき)
+const TECHNICAL_POOL = [
+  "コード、詰まってる？",
+  "ビルド通ってるといいな",
+  "何かと戦ってる感じがする",
+  "ここから見てると、頑張ってるのが分かる",
+];
 
 // folder pile 返答 (confidence が低くても常に返す)
 const DOWNLOADS_PILE = [
   "Downloadsが少し積もってる。今じゃなくていいけど、机の端にある",
   "Downloads、あとで見るものが増えてるかも",
+  "Downloadsに何かたまってる。急がなくていいけど",
 ];
 const DESKTOP_PILE = [
   "デスクトップに少し物が増えてる。あとで広げればいい",
   "Desktopに色々たまってきてる",
+  "デスクトップが少しにぎやかになってる",
 ];
 
 // ────────────────────────────────────────────────
@@ -104,7 +225,6 @@ export class RuleProvider implements AIProvider {
   readonly name = "rule";
   readonly kind = "rule" as const;
 
-  // 直近の発話を activity 別に記憶 (重複防止)
   private readonly _history: string[] = [];
 
   async isAvailable(): Promise<boolean> { return true; }
@@ -144,16 +264,14 @@ export class RuleProvider implements AIProvider {
         return { text: buildVoiceFallback(ctx.voiceInput, ctx), shouldSpeak: true, emotion: "aware" };
       }
 
-      // voiceInput があれば voice 専用プールを使う
       const useVoice = ctx.trigger === "voice" && !!ctx.voiceInput;
       const pool = [
         ...(useVoice ? VOICE_BY_ACTIVITY[kind] : CLICK_BY_ACTIVITY[kind]),
         ...contextualManualPool(memory),
       ];
 
-      // confidence が低い場合はより汎用的な返答にフォールバック
       if (confidence < 0.5) {
-        const fallbacks = ["...なに？", "ここにいるよ", "呼んだ？"];
+        const fallbacks = ["...なに？", "ここにいるよ", "呼んだ？", "うん"];
         const text = pickFromPool(fallbacks, this._history, 3, recentTexts);
         return { text: text ?? "...なに？", shouldSpeak: true, emotion: "aware" };
       }
@@ -164,7 +282,6 @@ export class RuleProvider implements AIProvider {
 
     // ── idle (ランダム独り言タイマーから) ────────────────────
     if (ctx.trigger === "idle") {
-      // deepFocus / gaming / watching中は発話しない
       if (kind === "deepFocus" || kind === "gaming" || kind === "watchingVideo") {
         return { shouldSpeak: false, reason: "silent_mode" };
       }
@@ -172,13 +289,17 @@ export class RuleProvider implements AIProvider {
         return { shouldSpeak: false, reason: "talked_enough_today" };
       }
 
-      const pool = [
-        ...(OBSERVATION_BY_ACTIVITY[kind] ?? []),
-        ...contextualIdlePool(memory),
-      ];
-      if (!pool || pool.length === 0) return { shouldSpeak: false };
+      // creative/technical プールを activity に応じて混ぜる
+      const extraPool =
+        (kind === "composing" || kind === "design") ? CREATIVE_POOL :
+        (kind === "coding")                          ? TECHNICAL_POOL :
+        [];
 
-      const text = pickFromPool(pool, this._history, 3, recentTexts);
+      const basePool = OBSERVATION_BY_ACTIVITY[kind] ?? OBSERVATION_BY_ACTIVITY.unknown ?? [];
+      const pool = [...basePool, ...extraPool, ...contextualIdlePool(memory)];
+      if (pool.length === 0) return { shouldSpeak: false };
+
+      const text = pickFromPool(pool, this._history, 4, recentTexts);
       if (!text) return { shouldSpeak: false };
       return { text, shouldSpeak: true, emotion: "idle" };
     }
@@ -195,15 +316,22 @@ export class RuleProvider implements AIProvider {
         return { text: text ?? DESKTOP_PILE[0], shouldSpeak: true, emotion: "aware" };
       }
 
-      // media が流れている場合
+      // signal ベースの suggestion
+      const signals = ctx.signals ?? [];
+      if (signals.length > 0) {
+        const sigText = pickFromPool(SUGGESTION_POOL, this._history, 3, recentTexts);
+        if (sigText) return { text: sigText, shouldSpeak: true, emotion: "aware" };
+      }
+
+      // media が流れている場合は静かにする
       if (media?.audioLikelyActive && kind !== "gaming" && kind !== "watchingVideo") {
         return { shouldSpeak: false };
       }
 
-      // activity 別の observation 発話
-      const pool = OBSERVATION_BY_ACTIVITY[kind];
-      if (!pool || pool.length === 0) return { shouldSpeak: false };
-      const text = pickFromPool(pool, this._history, 3, recentTexts);
+      // activity 別の observation 発話 (unknown も含む)
+      const pool = OBSERVATION_BY_ACTIVITY[kind] ?? OBSERVATION_BY_ACTIVITY.unknown ?? [];
+      if (pool.length === 0) return { shouldSpeak: false };
+      const text = pickFromPool(pool, this._history, 4, recentTexts);
       if (!text) return { shouldSpeak: false };
       return { text, shouldSpeak: true, emotion: "idle" };
     }
@@ -237,3 +365,6 @@ function contextualIdlePool(memory: CompanionContext["memorySummary"]): string[]
   }
   return pool;
 }
+
+// check-in / question / creative プールのエクスポート (テスト・外部参照用)
+export { CHECK_IN_POOL, QUESTION_POOL, CREATIVE_POOL, TECHNICAL_POOL };

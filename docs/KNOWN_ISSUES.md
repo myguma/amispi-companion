@@ -1,6 +1,6 @@
 # Known Issues — AmitySpirit Companion
 
-**最終更新: 2026-05-14 (v1.1.1)**
+**最終更新: 2026-05-14 (v1.1.2)**
 
 このファイルは、daily-use beta に向けて残っている実機依存・環境依存の注意点を隠さず管理するためのもの。
 
@@ -26,6 +26,7 @@
 | v1.0.8 | pending | Memory Mode、長期記憶候補、記録層の明示化はfield QA pending |
 | v1.1.0 | pending | ObservationSignal層、Watchful Mode、診断ページはfield QA pending |
 | v1.1.1 | pending | Watchful preset同期・sleep発話修正・Timeline同期・note一覧/削除・filename UI修正はfield QA pending |
+| v1.1.2 | pending | 発話バリエーション・unknown category発話・AppCategory強化・PromptBuilder ObservationSignals・OpenAI provider骨格はfield QA pending |
 
 ## Non-goals
 

@@ -2,6 +2,7 @@ import type { AIProvider, AIProviderOutput, CompanionContext, LastAIResultDebug 
 import { MockProvider } from "./MockProvider";
 import { RuleProvider } from "./RuleProvider";
 import { OllamaProvider } from "./OllamaProvider";
+import { OpenAIProvider } from "./OpenAIProvider";
 import { getSettings } from "../../settings/store";
 
 // ──────────────────────────────────────────
@@ -99,6 +100,66 @@ export async function getAIResponse(ctx: CompanionContext): Promise<AIProviderOu
       });
       return { shouldSpeak: false, reason: "error" };
     }
+  }
+
+  // ── OpenAI ────────────────────────────────────────────────────
+  if (engine === "openai") {
+    if (!s.openaiApiKey?.trim()) {
+      setLastResult({ source: "fallback", fallbackReason: "openai_key_empty", updatedAt: Date.now() });
+      // key 未設定時は rule にフォールバック
+      const rule = STATIC_PROVIDERS.rule;
+      const out = await rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
+      return out;
+    }
+
+    const provider = new OpenAIProvider(
+      s.openaiApiKey,
+      s.openaiModel,
+      s.openaiBaseUrl,
+      s.openaiTimeoutMs,
+      s.openaiSendObservationSignals,
+      s.openaiSendMemoryNotes,
+    );
+
+    try {
+      const out      = await provider.respond(ctx);
+      const latencyMs = Date.now() - t0;
+
+      if (out.shouldSpeak && out.text) {
+        setLastResult({
+          source: "ollama",  // DebugPage表示の都合でollama枠を流用 (cloud扱い)
+          model: s.openaiModel,
+          baseUrl: s.openaiBaseUrl,
+          latencyMs,
+          responsePreview: out.text.slice(0, 60),
+          updatedAt: Date.now(),
+        });
+        return out;
+      }
+
+      // OpenAI が shouldSpeak: false → Ollama にフォールバック
+      const reason = out.reason ?? "openai_no_speech";
+      setLastResult({ source: "fallback", fallbackReason: reason, updatedAt: Date.now() });
+    } catch (e) {
+      setLastResult({
+        source: "fallback",
+        fallbackReason: "openai_exception",
+        errorMessage: (e instanceof Error ? e.message : String(e)).slice(0, 100),
+        updatedAt: Date.now(),
+      });
+    }
+
+    // OpenAI 失敗 → Ollama → Rule の順でフォールバック
+    if (s.ollamaBaseUrl) {
+      const ollamaProvider = new OllamaProvider(s.ollamaBaseUrl, s.ollamaModel, s.ollamaTimeoutMs);
+      const avail = await ollamaProvider.checkAvailability().catch(() => ({ available: false, reason: "check_failed" }));
+      if (avail.available) {
+        const out = await ollamaProvider.respond(ctx).catch(() => null);
+        if (out?.shouldSpeak && out.text) return out;
+      }
+    }
+    const ruleOut = await STATIC_PROVIDERS.rule.respond(ctx).catch(() => ({ shouldSpeak: false as const, reason: "rule_error" }));
+    return ruleOut;
   }
 
   // ── rule / mock ────────────────────────────────────────────────

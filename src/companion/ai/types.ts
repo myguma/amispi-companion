@@ -3,10 +3,11 @@ import type { ActivityKind, AppCategory, ObservationSnapshot } from "../../obser
 import type { ActivityInsight } from "../activity/inferActivity";
 import type { CompanionMemorySummary } from "../memory/buildMemorySummary";
 import type { MemoryEvent } from "../../types/companion";
+import type { ObservationSignal } from "../../systems/observation/observationSignals";
 
 // ──── 新型: CompanionContext / CompanionUtterance ────────────────
 
-export type AIEngine = "none" | "mock" | "ollama";
+export type AIEngine = "none" | "mock" | "ollama" | "openai";
 
 /** AI トリガーの発生元 */
 export type AITrigger =
@@ -26,6 +27,8 @@ export type CompanionContext = {
   observation: ObservationSnapshot;
   activityInsight: ActivityInsight;
   memorySummary: CompanionMemorySummary;
+  /** 現在の ObservationSignals (プロンプト・RuleProvider で参照) */
+  signals?: ObservationSignal[];
   /** autonomous speech / quiet / focus / DND etc. */
   speechSettings: {
     autonomousSpeechEnabled: boolean;
@@ -45,7 +48,7 @@ export type CompanionUtterance = {
   source: "none" | "dialogue" | "reaction" | "mock" | "ollama" | "rule";
 };
 
-export type AIProviderKind = "mock" | "rule" | "local_http" | "cloud";
+export type AIProviderKind = "mock" | "rule" | "local_http" | "cloud" | "cloud_openai";
 
 export type CompanionRuntimeContext = {
   nowLocal: string;

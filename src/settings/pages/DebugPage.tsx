@@ -9,6 +9,8 @@ import type { AutonomousSpeechDebugState } from "../../systems/debug/autonomousS
 import { getCurrentSignals, subscribeCurrentSignals } from "../../systems/observation/currentSignalStore";
 import type { ObservationSignal } from "../../systems/observation/observationSignals";
 import { getObservationTimeline } from "../../systems/observation/observationTimelineStore";
+import { getOpenAIPayloadPreview, subscribeOpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
+import type { OpenAIPayloadPreview } from "../../companion/ai/OpenAIProvider";
 
 function Toggle({
   label, note, checked, onChange,
@@ -59,10 +61,12 @@ export function DebugPage() {
   const [autoDebug, setAutoDebug] = useState<AutonomousSpeechDebugState>(getAutonomousSpeechDebug());
   const [signals, setSignals] = useState<ObservationSignal[]>(getCurrentSignals);
   const [timelineCount, setTimelineCount] = useState(() => getObservationTimeline().length);
+  const [openaiPreview, setOpenaiPreview] = useState<OpenAIPayloadPreview | null>(getOpenAIPayloadPreview());
 
   useEffect(() => subscribeInteractionTrace(() => setTraces([...getInteractionTraces()])), []);
   useEffect(() => subscribeAutonomousSpeechDebug(() => setAutoDebug({ ...getAutonomousSpeechDebug() })), []);
   useEffect(() => subscribeCurrentSignals(() => setSignals([...getCurrentSignals()])), []);
+  useEffect(() => subscribeOpenAIPayloadPreview(() => setOpenaiPreview(getOpenAIPayloadPreview())), []);
   useEffect(() => {
     const timer = setInterval(() => setTimelineCount(getObservationTimeline().length), 5000);
     return () => clearInterval(timer);
@@ -144,6 +148,35 @@ export function DebugPage() {
           ※ sleep発話はautonomousSpeechEnabled=falseでも動作します (sleepSpeechEnabled=trueなら)
         </div>
       </div>
+
+      {s.aiEngine === "openai" && (
+        <>
+          <SectionHead title="OpenAI 送信 Payload Preview" />
+          <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.8, color: "#666", background: "#fff8ee", border: "1px solid #f0c080", borderRadius: 6, padding: 10 }}>
+            {openaiPreview === null ? (
+              <div style={{ color: "#bbb" }}>まだ OpenAI へのリクエストがありません</div>
+            ) : (
+              <>
+                <div><strong>model:</strong> {openaiPreview.model}</div>
+                <div><strong>systemPrompt:</strong> {openaiPreview.systemPromptChars}文字</div>
+                <div><strong>userPromptPreview:</strong> {openaiPreview.userPromptPreview}{openaiPreview.userPromptPreview.length >= 200 ? "…" : ""}</div>
+                <div><strong>signalsSent:</strong> {openaiPreview.signalsSent.length === 0 ? "なし" : openaiPreview.signalsSent.join(" / ")}</div>
+                <div><strong>topSignal:</strong> {openaiPreview.topSignalSent ?? "なし"}</div>
+                <div><strong>memoryNotesSent:</strong> {openaiPreview.memorySentCount}件</div>
+                <div><strong>voiceInput:</strong> {openaiPreview.voiceInputIncluded ? "あり" : "なし"}</div>
+                <div style={{ color: "#4caf7d" }}>
+                  rawFilenames: {String(openaiPreview.rawFilenamesSent)} /
+                  rawWindowTitle: {String(openaiPreview.rawWindowTitleSent)} /
+                  transcriptHistory: {String(openaiPreview.rawTranscriptHistorySent)}
+                </div>
+                <div style={{ color: "#bbb", fontSize: 10 }}>
+                  {new Date(openaiPreview.builtAt).toLocaleTimeString()} 時点
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       <SectionHead title="直近の発話トレース" />
       <div style={{ marginTop: 8, fontSize: 11, lineHeight: 1.7, color: "#666" }}>

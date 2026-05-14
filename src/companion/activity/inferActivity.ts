@@ -15,6 +15,9 @@ export type InferredActivity =
   | "idle"           // 軽い idle (5-30分)
   | "away"           // 長時間離席 (30分超)
   | "breakLikely"    // office / unknown + 中程度 idle
+  | "design"         // デザインツール使用中 (Figma / Photoshop等)
+  | "notes"          // ノート・メモアプリ使用中 (Obsidian等)
+  | "document"       // PDFビューア / ドキュメントビューア
   | "unknown";       // 判定不能
 
 export type ActivityInsight = {
@@ -142,6 +145,35 @@ export function inferActivity(snapshot: ObservationSnapshot): ActivityInsight {
       reasons: [`bg_media:${media.sourceCategory}`],
       summary: "音楽を流しながら作業中",
     };
+  }
+
+  // ── デザインツール ────────────────────────────────────────────
+  if (cat === "design") {
+    const reasons: string[] = ["category=design"];
+    if (inputActive) reasons.push("input_active");
+    return { kind: "design", confidence: 0.8, reasons, summary: "デザインを触っている" };
+  }
+
+  // ── ノート / メモアプリ ───────────────────────────────────────
+  if (cat === "notes") {
+    const reasons: string[] = ["category=notes"];
+    if (inputActive) reasons.push("input_active");
+    return {
+      kind: inputActive ? "notes" : "reading",
+      confidence: inputActive ? 0.75 : 0.6,
+      reasons,
+      summary: inputActive ? "何か書いている" : "ノートを見ている",
+    };
+  }
+
+  // ── ドキュメントビューア ──────────────────────────────────────
+  if (cat === "document") {
+    return { kind: "document", confidence: 0.7, reasons: ["category=document"], summary: "ドキュメントを読んでいる" };
+  }
+
+  // ── アーカイブツール ──────────────────────────────────────────
+  if (cat === "archive_tool") {
+    return { kind: "idle", confidence: 0.5, reasons: ["category=archive_tool"], summary: "ファイルを整理している" };
   }
 
   // ── コミュニケーションアプリ ──────────────────────────────────

@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.1.2] — 2026-05-14
+
+### Fixed / Improved
+
+- **発話単調問題の抜本改善**: `RuleProvider` の自律発話プールを全面拡充。全 `InferredActivity` に発話候補を追加 (`unknown` 含む)。`suggestion` / `check-in` / `creative` / `technical` プールを追加。重複回避 history バッファを 3→4 に強化
+- **unknown category で発話ゼロ**: `OBSERVATION_BY_ACTIVITY.unknown` を新設。`classify_app` に入っていないアプリ使用時も自律発話が生成されるよう修正
+- **PromptBuilder に ObservationSignals を追加**: `buildCompanionContext` で `buildObservationSignals` を実行し `CompanionContext.signals` として渡す。`buildPrompt` で `topSignal`(strength≥0.5)をプロンプトに付加。Ollama/OpenAI がより文脈的な発話を生成できるよう改善
+- **AppCategory 強化**: `classify_app` (Rust) に `design` / `notes` / `document` / `archive_tool` を追加。Figma, Photoshop, Obsidian, Logseq, SumatraPDF, 7-Zip, WinRAR 等を認識。TS 側 `AppCategory` / `InferredActivity` / `inferActivity()` を同期更新
+
+### Added
+
+- **OpenAI provider (optional・明示的ON・default OFF)**: `src/companion/ai/OpenAIProvider.ts` 新規。API key 未設定なら絶対呼ばない。失敗時は Ollama → Rule の順でフォールバック。送信は活動概要・ObservationSignal(抽象)・アプリカテゴリ・ユーザー入力のみ。raw ファイル名/ウィンドウタイトル/transcript 履歴は送らない
+- **OpenAI payload preview**: DebugPage に送信内容の可視化セクションを追加
+- **AIPage OpenAI 設定UI**: API key(警告付き) / モデル / ベースURL / タイムアウト / 送信スコープ設定を追加
+
+### Changed
+
+- `CompanionContext` に `signals?: ObservationSignal[]` フィールドを追加
+- `AIEngine` 型に `"openai"` を追加
+- `AppCategory` 型に `design / notes / archive_tool / document` を追加
+- `InferredActivity` 型に `design / notes / document` を追加
+
+---
+
 ## [1.1.1] — 2026-05-14
 
 ### Fixed (v1.1.0 実機QA hotfix)

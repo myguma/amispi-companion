@@ -2,6 +2,7 @@
 // 抽象化・プライバシーフィルタ・禁止事項を一元管理する
 
 import type { CompanionContext } from "../../companion/ai/types";
+import { topSignal } from "../observation/observationSignals";
 
 const SYSTEM_PROMPT = `あなたは「無明」という名前のデスクトップ常駐キャラクターです。
 
@@ -104,7 +105,7 @@ function triggerHint(trigger: CompanionContext["trigger"]): string {
 }
 
 export function buildPrompt(ctx: CompanionContext): { system: string; user: string } {
-  const { activityInsight, memorySummary, observation, recentEvents, trigger } = ctx;
+  const { activityInsight, memorySummary, observation, recentEvents, trigger, signals } = ctx;
   const isConversationalInput = (trigger === "voice" || trigger === "text") && !!ctx.voiceInput?.trim();
 
   const contextLines: string[] = [];
@@ -154,6 +155,14 @@ export function buildPrompt(ctx: CompanionContext): { system: string; user: stri
   const dt = observation.folders.desktop?.fileCount ?? 0;
   if (dl > 20) contextLines.push("Downloadsにファイルが溜まっている");
   if (dt > 15) contextLines.push("Desktopにもファイルが多い");
+
+  // ObservationSignals (topSignal のみ。rawデータは含まない)
+  if (signals && signals.length > 0) {
+    const top = topSignal(signals);
+    if (top && top.strength >= 0.5) {
+      contextLines.push(`観察: ${top.summary}`);
+    }
+  }
 
   // 記憶サマリー — voice/text会話時はスキップ（過去発話本文のprompt汚染防止）
   if (!isConversationalInput && memorySummary.shortNaturalSummary) {

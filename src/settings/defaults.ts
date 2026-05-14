@@ -38,6 +38,13 @@ export const DEFAULT_SETTINGS: CompanionSettings = {
   ollamaModel: "llama3.2:3b",
   ollamaTimeoutMs: 20_000,
 
+  openaiApiKey: "",
+  openaiModel: "gpt-4o-mini",
+  openaiBaseUrl: "https://api.openai.com/v1",
+  openaiTimeoutMs: 20_000,
+  openaiSendObservationSignals: true,
+  openaiSendMemoryNotes: false,
+
   voiceInputEnabled: false,
   voiceInputMode: "off",
   maxRecordingMs: 15_000,

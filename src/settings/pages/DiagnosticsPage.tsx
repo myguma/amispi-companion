@@ -139,7 +139,11 @@ export function DiagnosticsPage() {
       <SectionHead title="自律発話 (Autonomous Speech)" />
       <CheckRow label="自律発話" ok={s.autonomousSpeechEnabled} note={s.autonomousSpeechEnabled ? `間隔: ${s.autonomousSpeechIntervalPreset}` : "無効 — Watchful Modeで自動ON"} />
       <CheckRow label="Sleep発話" ok={s.sleepSpeechEnabled} note={`プリセット: ${s.sleepSpeechIntervalPreset} / autonomousSpeechと独立して動作`} />
-      <CheckRow label="AI エンジン" ok={s.aiEngine !== "none"} note={s.aiEngine === "none" ? "なし (rule-based fallback)" : `${s.aiEngine} / ${s.ollamaModel}`} />
+      <CheckRow label="AI エンジン" ok={s.aiEngine !== "none"} note={
+        s.aiEngine === "none"   ? "なし (rule-based fallback)" :
+        s.aiEngine === "openai" ? `openai / ${s.openaiModel} (⚠ クラウド送信あり)` :
+                                  `${s.aiEngine} / ${s.ollamaModel}`
+      } />
       <InfoRow label="Quiet Mode" value={s.quietMode ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="Do Not Disturb" value={s.doNotDisturb ? "ON (抑制中)" : "OFF"} />
       <InfoRow label="次回発話予定" value={fmtTime(autoDebug.nextAutonomousSpeechAt)} />
@@ -157,15 +161,29 @@ export function DiagnosticsPage() {
       <InfoRow label="次回まで" value={fmtMs(autoDebug.autonomousSpeechDelayMs)} />
 
       <SectionHead title="プライバシー境界" />
-      <div style={{ marginTop: 8, padding: "10px 12px", background: "#f5f0ff", borderRadius: 8, fontSize: 11, color: "#6a40d0", lineHeight: 1.8 }}>
-        <strong>このアプリは完全ローカルです</strong><br />
-        ✗ クラウドAI / クラウドSTT: 未接続<br />
-        ✗ 常時マイク監視: なし<br />
-        ✗ Screen Capture / OCR: なし<br />
-        ✗ raw filename 保存: なし<br />
-        ✗ transcript 永続保存: なし<br />
-        ✗ window title 本文保存: なし<br />
-        ✗ 外部APIへの送信: なし
+      <div style={{ marginTop: 8, padding: "10px 12px", background: s.aiEngine === "openai" ? "#fff8ee" : "#f5f0ff", borderRadius: 8, fontSize: 11, color: s.aiEngine === "openai" ? "#8a5000" : "#6a40d0", lineHeight: 1.8, border: s.aiEngine === "openai" ? "1px solid #f0c080" : "none" }}>
+        {s.aiEngine === "openai" ? (
+          <>
+            <strong>⚠ OpenAI 使用中 — 一部クラウド送信があります</strong><br />
+            ✓ 送信: 活動概要・ObservationSignal(抽象)・アプリカテゴリ・ユーザー入力<br />
+            ✗ 非送信: raw ファイル名 / ウィンドウタイトル / transcript 履歴<br />
+            ✗ 常時マイク監視: なし<br />
+            ✗ Screen Capture / OCR: なし<br />
+            ✗ raw filename 保存: なし<br />
+            ✗ transcript 永続保存: なし
+          </>
+        ) : (
+          <>
+            <strong>このアプリは完全ローカルです</strong><br />
+            ✗ クラウドAI / クラウドSTT: 未接続<br />
+            ✗ 常時マイク監視: なし<br />
+            ✗ Screen Capture / OCR: なし<br />
+            ✗ raw filename 保存: なし<br />
+            ✗ transcript 永続保存: なし<br />
+            ✗ window title 本文保存: なし<br />
+            ✗ 外部APIへの送信: なし
+          </>
+        )}
       </div>
     </div>
   );

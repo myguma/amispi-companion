@@ -11,6 +11,10 @@ export type AppCategory =
   | "terminal"
   | "communication"
   | "system"
+  | "design"        // デザインツール (Figma / Photoshop等)
+  | "notes"         // ノート / メモアプリ (Obsidian等)
+  | "archive_tool"  // アーカイブマネージャー (7-Zip / WinRAR等)
+  | "document"      // PDFビューア / ドキュメントビューア
   | "self"      // 自アプリ (設定画面・コンパニオン本体)
   | "unknown";
 

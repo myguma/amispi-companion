@@ -37,6 +37,7 @@ const ENGINE_OPTIONS: { v: AIEngine; label: string; note: string }[] = [
   { v: "none",   label: "なし",   note: "AI を使わない (ルールベース発話のみ)" },
   { v: "mock",   label: "Mock",   note: "開発用ダミー応答" },
   { v: "ollama", label: "Ollama", note: "ローカル LLM (要 Ollama 起動)" },
+  { v: "openai", label: "OpenAI", note: "クラウド LLM — API key 必須・外部送信あり" },
 ];
 
 function sourceLabel(source: LastAIResultDebug["source"]): { text: string; color: string } {
@@ -406,6 +407,98 @@ export function AIPage() {
         </>
       )}
 
+      {/* OpenAI 設定 (engine=openai のときのみ表示) */}
+      {s.aiEngine === "openai" && (
+        <>
+          <SectionHead title="OpenAI 接続設定" />
+
+          <div style={{
+            marginBottom: 8, padding: "8px 12px", background: "#fff3e0",
+            borderRadius: 8, fontSize: 11, color: "#8a5000", lineHeight: 1.7,
+            border: "1px solid #f0c080",
+          }}>
+            <strong>⚠ 外部送信・API key 保存について</strong><br />
+            API key は現在 <strong>端末内 localStorage に平文保存</strong> されます。
+            端末を共有している場合は使用しないでください。<br />
+            OpenAI にはクラウド経由でリクエストが送信されます。
+            送る情報: 活動概要・ObservationSignal(抽象)・アプリカテゴリ・ユーザー入力。
+            <strong>raw ファイル名・ウィンドウタイトル・transcript 履歴は送りません。</strong>
+          </div>
+
+          <Row label="API Key" note="sk-... — 端末内保存。漏洩注意">
+            <input
+              type="password"
+              value={s.openaiApiKey}
+              placeholder="sk-..."
+              onChange={(e) => update({ openaiApiKey: e.target.value })}
+              style={{
+                fontSize: 12, border: "1px solid #ddd", borderRadius: 6,
+                padding: "3px 8px", width: 200,
+              }}
+            />
+          </Row>
+
+          <Row label="モデル名" note="例: gpt-4o-mini / gpt-4o">
+            <input
+              type="text"
+              value={s.openaiModel}
+              onChange={(e) => update({ openaiModel: e.target.value })}
+              style={{
+                fontSize: 12, border: "1px solid #ddd", borderRadius: 6,
+                padding: "3px 8px", width: 200,
+              }}
+            />
+          </Row>
+
+          <Row label="ベース URL" note="互換APIの場合のみ変更 (通常は変更不要)">
+            <input
+              type="text"
+              value={s.openaiBaseUrl}
+              onChange={(e) => update({ openaiBaseUrl: e.target.value })}
+              style={{
+                fontSize: 12, border: "1px solid #ddd", borderRadius: 6,
+                padding: "3px 8px", width: 200,
+              }}
+            />
+          </Row>
+
+          <Row label="タイムアウト (ms)" note="">
+            <input
+              type="number"
+              min={3000}
+              max={60000}
+              step={1000}
+              value={s.openaiTimeoutMs}
+              onChange={(e) => update({ openaiTimeoutMs: Number(e.target.value) })}
+              style={{
+                fontSize: 12, border: "1px solid #ddd", borderRadius: 6,
+                padding: "3px 8px", width: 90,
+              }}
+            />
+          </Row>
+
+          <SectionHead title="送信スコープ設定" />
+          <Row label="ObservationSignal を送る" note="アプリカテゴリ・フォルダ状況の抽象シグナル (raw除外)">
+            <input
+              type="checkbox"
+              checked={s.openaiSendObservationSignals}
+              onChange={(e) => update({ openaiSendObservationSignals: e.target.checked })}
+            />
+          </Row>
+          <Row label="保存メモを送る" note="note_savedで保存したメモ (最大5件)">
+            <input
+              type="checkbox"
+              checked={s.openaiSendMemoryNotes}
+              onChange={(e) => update({ openaiSendMemoryNotes: e.target.checked })}
+            />
+          </Row>
+
+          <div style={{ fontSize: 11, color: "#999", lineHeight: 1.6, padding: "6px 0" }}>
+            DebugページでOpenAIへ送る内容のプレビューを確認できます。
+          </div>
+        </>
+      )}
+
       {/* プライバシーノート */}
       <div style={{
         marginTop: 20, padding: "10px 12px", background: "#f5f0ff",
@@ -413,8 +506,9 @@ export function AIPage() {
       }}>
         <strong>プライバシー保護について</strong><br />
         AI に渡されるのは「活動の概要」「時刻帯」「席を離れた時間」などの抽象情報のみです。
-        ウィンドウタイトル・ファイル名・URL・入力内容は一切送信されません。
-        Ollama は完全にローカルで動作し、クラウドへの送信はありません。
+        ウィンドウタイトル・ファイル名・URL・入力内容は一切送信されません (Ollama / rule)。
+        OpenAI を使用する場合は上記の警告を確認してください。
+        Ollama は完全にローカルで動作します。
       </div>
     </div>
   );

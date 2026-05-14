@@ -4,14 +4,14 @@
 > チャット履歴に頼らず、ここだけ読めば現状を把握できるようにする。
 > 作業完了後は必ず更新すること。
 
-**最終更新: 2026-05-14 (v1.1.1)**
+**最終更新: 2026-05-14 (v1.1.2)**
 
 ---
 
 ## 現在のステータス
 
-**バージョン:** v1.1.1
-**フェーズ:** Safe Visible Local Observer Companion — 実機QA hotfix完了
+**バージョン:** v1.1.2
+**フェーズ:** Safe Visible Local Observer Companion — 発話バリエーション改善・AppCategory強化・OpenAI provider追加
 **全体進捗:** 約 99%
 **ロードマップ:** docs/PRODUCT_COMPLETION_ROADMAP.md 参照
 **進捗管理:** docs/PROGRESS_TRACKER.md 参照
@@ -24,9 +24,11 @@
 ## ビルド状態
 
 ```
-✅ npm run build → ✓ built (v1.1.0)
-✅ cargo build  → Finished dev profile (v1.1.0)
-✅ GitHub Actions / Windows Installer → v1.0.6〜v1.0.8 success / v1.1.0 in progress at session end
+✅ npm run build → ✓ built (v1.1.2)
+✅ cargo build  → Finished dev profile (v1.1.2)
+✅ git diff --check → clean
+✅ GitHub Actions / Windows Installer → v1.1.1 success (前回確認済み)
+🔲 v1.1.2 Release workflow → セッション終了時点 (push後に確認必要)
 ```
 
 ---
@@ -53,7 +55,7 @@
 
 ---
 
-## v1.0.6〜v1.1.1 完了済み
+## v1.0.6〜v1.1.2 完了済み
 
 | バージョン | 内容 | 状態 |
 |---|---|---|
@@ -62,6 +64,70 @@
 | v1.0.8 | Memory Mode、長期記憶候補、記録層の明示化 | ✅ field QA pending |
 | v1.1.0 | ObservationSignal層、Watchful Mode、診断ページ | ✅ field QA pending |
 | v1.1.1 | 実機QA hotfix: Timeline同期・sleep発話独立・preset UI・signals接続・note管理 | ✅ field QA pending |
+| v1.1.2 | 発話バリエーション改善・AppCategory強化・OpenAI provider | ✅ field QA pending |
+
+---
+
+## v1.1.2 実装詳細
+
+### 変更ファイル一覧
+
+| ファイル | 変更内容 |
+|---|---|
+| `src/companion/ai/RuleProvider.ts` | 発話プール全面拡充。unknown対応。suggestion/creative/technical追加 |
+| `src/companion/ai/types.ts` | `AIEngine`に"openai"追加。`CompanionContext.signals`追加 |
+| `src/companion/ai/OpenAIProvider.ts` | NEW: OpenAI API呼び出し。payload previewエクスポート |
+| `src/companion/ai/AIProviderManager.ts` | openaiブランチ追加。失敗時Ollama→Rule fallback |
+| `src/companion/activity/inferActivity.ts` | `InferredActivity`にdesign/notes/document追加。推論ロジック追加 |
+| `src/observation/types.ts` | `AppCategory`にdesign/notes/archive_tool/document追加 |
+| `src/systems/ai/buildCompanionContext.ts` | `buildObservationSignals`を呼んでsignalsをContextに追加 |
+| `src/systems/ai/PromptBuilder.ts` | topSignalをプロンプトに付加 |
+| `src/settings/types.ts` | `AIEngine`に"openai"。openai*設定フィールド追加 |
+| `src/settings/defaults.ts` | openai*デフォルト値追加 |
+| `src/settings/pages/AIPage.tsx` | OpenAIエンジン選択肢・設定UI・警告文追加 |
+| `src/settings/pages/DebugPage.tsx` | OpenAI payload preview追加 |
+| `src/settings/pages/DiagnosticsPage.tsx` | OpenAI使用時のプライバシー境界表示更新 |
+| `src/settings/pages/TransparencyPage.tsx` | aiEngineにopenai表示追加 |
+| `src-tauri/src/observation/mod.rs` | `classify_app`にdesign/notes/document/archive_toolカテゴリ追加 |
+| `package.json` / `Cargo.toml` / `tauri.conf.json` | v1.1.2に更新 |
+
+### C群 — v1.1.3以降に持ち越す設計メモ
+
+#### C1: Filename Samples (explicit ON, default OFF)
+
+**設計:**
+- `settings.filenameSamplesEnabled: boolean` (default: false) を追加
+- Rust `scan_folder()` 内で `file_names_lower` から最大10件をサンプリング
+- `FolderSummary` に `filenameSamples: Vec<String>` を追加 (settings ON時のみ)
+- TS側 `ObservationSnapshot.folders.*.filenameSamples?: string[]` に対応
+- **OpenAIへは送らない** (ObservationSignal変換後のみ使用)
+- 表示はDebugPageのみ (DiagnosticsPage / 発話候補には使わない)
+
+**リスク:** Rust側FolderSummary構造変更が必要。TS型も変更が必要。テスト不足のまま追加しない。
+
+#### C2: OS Credential Store (OpenAI API key)
+
+**設計:**
+- Windows: `Windows Credential Manager` API 経由で保存
+- Rust側に `tauri-plugin-stronghold` または `keyring` crateを使用
+- 現状: localStorage平文保存 + 警告文表示 (v1.1.2時点の状態)
+- 移行: 旧localStorage keyを読んで新ストアに移し、localStorageから削除
+
+**注意:** Tauriプラグイン追加が必要。Cargo.toml変更 + Rust実装が必要。
+
+---
+
+## v1.1.2 Field QA で確認すべき項目
+
+- unknownカテゴリのアプリ (例: Figma, Obsidian) 使用中に自律発話が出るか
+- 同じ発話が繰り返されにくくなったか (historyバッファ4件)
+- Watchful Mode中に suggestion/check-in 系の発話が出るか
+- DebugPage の ObservationSignals に topSignal が表示されるか
+- AIPage > OpenAI 選択時にAPI key警告文が表示されるか
+- OpenAI engine 選択 + key未入力 → Ruleにフォールバックするか
+- DebugPage の「OpenAI 送信 Payload Preview」にrawFilenames=falseが表示されるか
+- DiagnosticsPage のプライバシー境界がOpenAI使用時に橙色警告になるか
+- TransparencyPage のAIエンジン表示が "OpenAI" になるか
 
 ---
 

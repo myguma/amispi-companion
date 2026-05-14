@@ -5,7 +5,7 @@ import type { PermissionSettings } from "../privacy/permissions";
 export type MovementFrequency = "low" | "normal" | "high";
 export type SpeechFrequency = "rare" | "low" | "normal";
 export type SpeechIntervalPreset = "rare" | "calm" | "normal" | "lively";
-export type AIEngine = "none" | "mock" | "ollama";
+export type AIEngine = "none" | "mock" | "ollama" | "openai";
 export type VoiceInputMode = "off" | "pushToTalk";
 export type STTEngine = "mock" | "whisperCli";
 export type WhisperLanguage = "ja" | "auto" | "en" | "pt" | "es" | "ko" | "zh" | "fr" | "de" | "custom";
@@ -50,6 +50,14 @@ export type CompanionSettings = {
   ollamaBaseUrl: string;
   ollamaModel: string;
   ollamaTimeoutMs: number;
+
+  // OpenAI 設定 (明示的ONのみ使用。デフォルトOFF)
+  openaiApiKey: string;
+  openaiModel: string;
+  openaiBaseUrl: string;
+  openaiTimeoutMs: number;
+  openaiSendObservationSignals: boolean;
+  openaiSendMemoryNotes: boolean;
 
   // Phase 6: 音声入力
   voiceInputEnabled: boolean;

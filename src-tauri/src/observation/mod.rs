@@ -439,6 +439,35 @@ mod windows_impl {
             return "system".to_string();
         }
 
+        // デザインツール (Figma / Photoshop / Illustrator 等)
+        if ["figma.exe", "photoshop.exe", "illustrator.exe", "indesign.exe",
+            "xd.exe", "canva.exe", "inkscape.exe", "gimp.exe",
+            "affinity publisher.exe", "affinity designer.exe", "affinity photo.exe",
+            "affpub.exe", "affdes.exe", "affphoto.exe",
+            "sketch.exe", "penpot.exe", "lunacy.exe"].contains(&name) {
+            return "design".to_string();
+        }
+
+        // ノート / メモアプリ (Obsidian / Notion は office に入っているので Obsidian 等を追加)
+        if ["obsidian.exe", "logseq.exe", "joplin.exe", "standardnotes.exe",
+            "zettlr.exe", "marktext.exe", "typora.exe", "notable.exe",
+            "evernote.exe", "notesnook.exe"].contains(&name) {
+            return "notes".to_string();
+        }
+
+        // ドキュメントビューア (PDF / 電子書籍等)
+        if ["sumatrapdf.exe", "acrord32.exe", "acrobat.exe", "foxitreader.exe",
+            "evince.exe", "okular.exe", "calibre.exe", "kindle.exe",
+            "drawboard pdf.exe"].contains(&name) {
+            return "document".to_string();
+        }
+
+        // アーカイブツール (7-Zip / WinRAR / Bandizip 等)
+        if ["7zfm.exe", "7z.exe", "winrar.exe", "bandizip.exe",
+            "peazip.exe", "izarc.exe"].contains(&name) {
+            return "archive_tool".to_string();
+        }
+
         "unknown".to_string()
     }
 }
