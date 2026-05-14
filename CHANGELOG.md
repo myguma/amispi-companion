@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.1.0] — 2026-05-14
+
+### Added (Watchful Local Observer Companion Foundation)
+
+- **ObservationSignal層**:
+  - `src/systems/observation/observationSignals.ts` 新規作成
+  - `ObservationSnapshot` → `ObservationSignal[]` 変換層
+  - signal kinds: downloads_pile / installer_pile / archive_pile / audio_work / image_pile / daw_active / music_playing / video_playing / long_idle / user_returned / code_work / settings_open / fullscreen / gaming
+  - `buildObservationSignals(snapshot)` / `topSignal(signals)` API
+  - raw snapshotを直接会話に使わず安全なSignalに変換
+- **Watchful Mode クイック設定**:
+  - BehaviorPageにクイック設定プリセットバーを追加
+  - Watchful Mode / バランス / 静かに の3プリセット
+  - Watchful: observationLevel=watchful + folder scan + speech normal + filename signals
+  - 何がONになり何がONにならないかをUI上に明記
+- **診断ページ (Setup Health Check)**:
+  - `DiagnosticsPage.tsx` 新規作成
+  - Voice / Observation / Memory / Autonomous Speech の設定状態を一覧表示
+  - Whisper executable / model / FFmpeg の設定確認
+  - 設定ウィンドウに「診断」タブを追加
+
+### Design
+
+- v1.1.0の位置づけ: Local observer companion beta
+- Watchful modeあり / Remote LLMなし / 危険な自律操作なし / Screen OCRなし / 常時マイクなし
+
+### Maintained
+
+- compact 200x280 / click-through / hit test
+- transcript / text input / raw filename は保存しない
+- v1.0.6/v1.0.7/v1.0.8 の全機能
+
 ## [1.0.8] — 2026-05-14
 
 ### Added (Memory Modes and Long-term Memory Boundary)

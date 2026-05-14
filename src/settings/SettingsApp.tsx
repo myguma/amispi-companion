@@ -13,9 +13,10 @@ import { UpdatePage } from "./pages/UpdatePage";
 import { DebugPage } from "./pages/DebugPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { ObservationPage } from "./pages/ObservationPage";
+import { DiagnosticsPage } from "./pages/DiagnosticsPage";
 import { getSettings, useSettings } from "./store";
 
-type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug";
+type Tab = "onboarding" | "transparency" | "behavior" | "observation" | "ai" | "voice" | "memory" | "update" | "debug" | "diagnostics";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "onboarding", label: "はじめに" },
@@ -27,6 +28,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "memory",       label: "記憶" },
   { id: "update",       label: "アップデート" },
   { id: "debug",        label: "デバッグ" },
+  { id: "diagnostics",  label: "診断" },
 ];
 
 // タブごとのエラーをキャッチし、白画面を防ぐ
@@ -145,6 +147,7 @@ export function SettingsApp() {
           {tab === "memory"       && <MemoryPage />}
           {tab === "update"       && <UpdatePage />}
           {tab === "debug"        && <DebugPage />}
+          {tab === "diagnostics"  && <DiagnosticsPage />}
         </TabErrorBoundary>
       </div>
 

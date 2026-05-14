@@ -75,6 +75,60 @@ export function BehaviorPage() {
   return (
     <div>
       <SectionHead title="モード" />
+      <div style={{ padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
+        <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>クイック設定:</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <button
+            onClick={() => update({
+              observationLevel: "watchful",
+              autonomousSpeechEnabled: true,
+              autonomousSpeechIntervalPreset: "normal",
+              sleepSpeechEnabled: true,
+              filenameSignalsEnabled: true,
+              permissions: { ...s.permissions, folderMetadataEnabled: true },
+            })}
+            style={{
+              fontSize: 11, padding: "4px 10px", border: "1px solid #a890f0",
+              borderRadius: 12, background: "#f4f0ff", color: "#6a40d0", cursor: "pointer",
+            }}
+          >
+            Watchful Mode
+          </button>
+          <button
+            onClick={() => update({
+              observationLevel: "balanced",
+              autonomousSpeechEnabled: true,
+              autonomousSpeechIntervalPreset: "calm",
+              sleepSpeechEnabled: true,
+              filenameSignalsEnabled: true,
+            })}
+            style={{
+              fontSize: 11, padding: "4px 10px", border: "1px solid #ddd",
+              borderRadius: 12, background: "white", color: "#888", cursor: "pointer",
+            }}
+          >
+            バランス
+          </button>
+          <button
+            onClick={() => update({
+              observationLevel: "minimal",
+              autonomousSpeechEnabled: false,
+              sleepSpeechEnabled: false,
+              filenameSignalsEnabled: false,
+              quietMode: true,
+            })}
+            style={{
+              fontSize: 11, padding: "4px 10px", border: "1px solid #ddd",
+              borderRadius: 12, background: "white", color: "#888", cursor: "pointer",
+            }}
+          >
+            静かに
+          </button>
+        </div>
+        <div style={{ fontSize: 10, color: "#bbb", marginTop: 4, lineHeight: 1.5 }}>
+          Watchful: ローカル観察を少し増やす。画面録画・常時マイク・外部送信はしない。
+        </div>
+      </div>
       <Toggle label="おとなしくする (Quiet Mode)" note="自律発話と観測反応を止めます。クリック反応は残ります" checked={s.quietMode} onChange={(v) => update({ quietMode: v })} />
       <Toggle label="集中モード (Focus Mode)" note="集中を切りそうな自律発話を控えます" checked={s.focusMode} onChange={(v) => update({ focusMode: v })} />
       <Toggle label="邪魔しない (Do Not Disturb)" note="クリックなどの手動反応以外は黙ります" checked={s.doNotDisturb} onChange={(v) => update({ doNotDisturb: v })} />
