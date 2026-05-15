@@ -106,6 +106,18 @@ else
   pass "no true raw external payload send flags found"
 fi
 
+printf '\n%s\n' '--- Tauri capability permissions ---'
+
+if rg -n "\"(fs|shell|http|clipboard|global-shortcut):" src-tauri/capabilities; then
+  fail "broad or sensitive frontend capability permission found"
+else
+  pass "no fs/shell/http/clipboard/global-shortcut frontend permissions found"
+fi
+
+if rg -n "\"updater:default\"|\"autostart:allow-" src-tauri/capabilities; then
+  warn "updater/autostart frontend permissions found; verify UI-triggered behavior during field QA"
+fi
+
 printf '\n=== Summary ===\n'
 printf 'Failures: %s\n' "$FAILURES"
 printf 'Warnings: %s\n' "$WARNINGS"

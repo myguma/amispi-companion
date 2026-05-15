@@ -91,9 +91,10 @@
 - `git diff --check`: clean
 - working tree: clean
 - main / origin/main: match
-- `npm run qa:privacy`: failures 0 / warnings 2
+- `npm run qa:privacy`: failures 0 / warnings 3
   - warning: global shortcut reference exists for visible app toggle; verify it is not keylogging
   - warning: future screen/OCR setting flags exist; verify default OFF and no capture implementation
+  - warning: updater/autostart frontend permissions exist; verify UI-triggered behavior during field QA
 - 注意: この確認はDay 1実機QAの代替ではない。Day 1は2時間以上の起動・基本操作・Debug / Diagnostics visibilityの実測記録が必要
 
 ### Day 1 / 起動・基本操作・Debug / Diagnostics visibility 記録欄
