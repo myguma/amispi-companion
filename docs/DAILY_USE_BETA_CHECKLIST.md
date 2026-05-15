@@ -77,6 +77,7 @@ npm run qa:day-note -- 1
 - 日付:
 - 実行時間:
 - 起動経路: installer / updater / dev build
+- QA対象: release artifact / main dev build
 - AI provider構成: OpenAI / Ollama / RuleProvider
 - 主要作業:
 - crash / freeze:

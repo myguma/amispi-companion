@@ -15,6 +15,7 @@ case "$DAY" in
 - 日付: ${DATE_VALUE}
 - 実行時間:
 - 起動経路: installer / updater / dev build
+- QA対象: v1.5.4 release artifact / main dev build
 - app version:
 - OS / environment:
 - AI provider構成:
@@ -54,6 +55,7 @@ EOF
 - 日付: ${DATE_VALUE}
 - 実行時間:
 - 起動経路: installer / updater / dev build
+- QA対象: v1.5.4 release artifact / main dev build
 - AI provider構成: OpenAIなし / Ollama未起動 / RuleProvider
 - OpenAIなし結果:
 - Ollama未起動 / model missing / timeout結果:
@@ -72,6 +74,7 @@ EOF
 - 日付: ${DATE_VALUE}
 - 実行時間:
 - 起動経路: installer / updater / dev build
+- QA対象: release artifact / main dev build
 - AI provider構成: OpenAI / Ollama / RuleProvider
 - 主要作業:
 - crash / freeze:

@@ -100,6 +100,7 @@ Day 1 は、この欄を埋めるまで passed 扱いにしない。
 - 日付:
 - 実行時間:
 - 起動経路: installer / updater / dev build
+- QA対象: v1.5.4 release artifact / main dev build
 - app version:
 - OS / environment:
 - AI provider構成:
