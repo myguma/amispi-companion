@@ -371,8 +371,13 @@ do
 done
 
 printf '\n%s\n' '--- Known issues ---'
-day1_status="$(table_status "$KNOWN_ISSUES" "v1.6.0 Day 1")"
-check_status "Known issue" "v1.6.0 Day 1" "$day1_status"
+for day in 1 2 3 4 5 6 7; do
+  day_status="$(table_status "$KNOWN_ISSUES" "v1.6.0 Day $day")"
+  check_status "Known issue" "v1.6.0 Day $day" "$day_status"
+done
+
+critical_status="$(table_status "$KNOWN_ISSUES" "Critical issueなし")"
+check_status "Known issue" "Critical issueなし" "$critical_status"
 
 printf '\n=== Summary ===\n'
 if [[ "$BLOCKERS" -gt 0 ]]; then

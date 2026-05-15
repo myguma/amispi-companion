@@ -39,6 +39,12 @@
 | v1.5.4 | pending | Daily-use Beta preflight GitHub照会robust化。実機QAは未実施 |
 | v1.6.0 Day 0 | passed | preflight failures 0 / warnings 0、completion audit、Day 1 worksheetを確認。実機常駐QAは未実施 |
 | v1.6.0 Day 1 | pending | 2時間以上の起動・基本操作・Debug / Diagnostics visibilityの実機記録が必要 |
+| v1.6.0 Day 2 | pending | OpenAIなし、Ollama未起動、RuleProvider fallbackの実機記録が必要 |
+| v1.6.0 Day 3 | pending | Memory v2 edit/delete/export/importの実機記録が必要 |
+| v1.6.0 Day 4 | pending | Observation visibility、custom app classificationの実機記録が必要 |
+| v1.6.0 Day 5 | pending | filename samples明示ON/OFF、非保存/非送信の実機記録が必要 |
+| v1.6.0 Day 6 | pending | updater / installer実機経路の記録が必要 |
+| v1.6.0 Day 7 | pending | comfort、speech quality、critical issueなしの実機記録が必要 |
 
 ## v1.5.1 Daily-use Beta Readiness Gate
 
