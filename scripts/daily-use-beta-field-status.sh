@@ -283,12 +283,25 @@ if command_exists git; then
     else
       blocker "$TARGET_TAG is not an annotated tag"
     fi
+    remote_tag_refs="$(git ls-remote --tags origin "refs/tags/${TARGET_TAG}" "refs/tags/${TARGET_TAG}^{}" 2>/dev/null || true)"
+    if printf '%s\n' "$remote_tag_refs" | grep -q "refs/tags/${TARGET_TAG}$"; then
+      pass "$TARGET_TAG tag exists on origin"
+    else
+      blocker "$TARGET_TAG tag is not pushed to origin"
+    fi
+    if printf '%s\n' "$remote_tag_refs" | grep -q "refs/tags/${TARGET_TAG}\\^{}$"; then
+      pass "$TARGET_TAG annotated tag dereference exists on origin"
+    else
+      blocker "$TARGET_TAG annotated tag dereference is not available on origin"
+    fi
   elif [[ -z "$latest_tag" ]]; then
     blocker "latest tag unavailable; expected $TARGET_TAG"
     blocker "$TARGET_TAG annotated tag is unavailable"
+    blocker "$TARGET_TAG tag is not pushed to origin"
   else
     blocker "latest tag is $latest_tag; expected $TARGET_TAG"
     blocker "$TARGET_TAG annotated tag is unavailable"
+    blocker "$TARGET_TAG tag is not pushed to origin"
   fi
 fi
 
