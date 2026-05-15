@@ -124,6 +124,81 @@ check_package_lock_version() {
   fi
 }
 
+check_github_release_artifacts() {
+  if [[ "${latest_tag:-}" != "$TARGET_TAG" ]]; then
+    blocker "release workflow not checked because latest tag is not $TARGET_TAG"
+    blocker "GitHub release not checked because latest tag is not $TARGET_TAG"
+    blocker "Windows installer artifact not checked because latest tag is not $TARGET_TAG"
+    blocker "installer signature artifact not checked because latest tag is not $TARGET_TAG"
+    blocker "latest.json updater artifact not checked because latest tag is not $TARGET_TAG"
+    return
+  fi
+
+  if ! command_exists gh; then
+    blocker "gh is unavailable; cannot verify $TARGET_TAG release workflow or artifacts"
+    return
+  fi
+
+  if ! command_exists node; then
+    blocker "node is unavailable; cannot parse GitHub release metadata"
+    return
+  fi
+
+  local run_file
+  local release_file
+  run_file="$(mktemp)"
+  release_file="$(mktemp)"
+
+  if gh run list --limit 50 --json headBranch,workflowName,status,conclusion > "$run_file" 2>/dev/null; then
+    local run_match
+    run_match="$(node -e "
+const fs = require('fs');
+const tag = process.argv[1];
+const runs = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const run = runs.find((r) => r.headBranch === tag && /Release/.test(r.workflowName || ''));
+if (run) process.stdout.write([run.status, run.conclusion].join(' '));
+" "$TARGET_TAG" "$run_file" 2>/dev/null || true)"
+    if [[ "$run_match" == "completed success" ]]; then
+      pass "release workflow succeeded for $TARGET_TAG"
+    else
+      blocker "release workflow success not found for $TARGET_TAG"
+    fi
+  else
+    blocker "failed to query GitHub Actions runs for $TARGET_TAG"
+  fi
+
+  if gh release view "$TARGET_TAG" --json assets,isDraft,isPrerelease,tagName > "$release_file" 2>/dev/null; then
+    local release_tag
+    release_tag="$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); process.stdout.write(data.tagName || '');" "$release_file" 2>/dev/null || true)"
+    if [[ "$release_tag" == "$TARGET_TAG" ]]; then
+      pass "GitHub release exists for $TARGET_TAG"
+    else
+      blocker "GitHub release tag mismatch for $TARGET_TAG"
+    fi
+
+    local setup_name
+    setup_name="amispi-companion_${TARGET_VERSION}_x64-setup.exe"
+    for asset in "$setup_name" "$setup_name.sig" "latest.json"; do
+      local has_asset
+      has_asset="$(node -e "
+const fs = require('fs');
+const name = process.argv[1];
+const data = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+process.stdout.write((data.assets || []).some((asset) => asset.name === name) ? 'yes' : 'no');
+" "$asset" "$release_file" 2>/dev/null || true)"
+      if [[ "$has_asset" == "yes" ]]; then
+        pass "release artifact exists: $asset"
+      else
+        blocker "release artifact missing: $asset"
+      fi
+    done
+  else
+    blocker "GitHub release not found for $TARGET_TAG"
+  fi
+
+  rm -f "$run_file" "$release_file"
+}
+
 printf '=== AmitySpirit Companion v1.6.0 Field QA Status ===\n\n'
 
 for file in "$CHECKLIST" "$FIELD_NOTES" "$KNOWN_ISSUES" "$NEXT_SESSION" "$CHANGELOG"; do
@@ -184,6 +259,10 @@ printf '\n%s\n' '--- Release docs ---'
 check_file_contains "CHANGELOG entry" "$CHANGELOG" "^## \\[${TARGET_VERSION_PATTERN}\\]"
 check_file_contains "NEXT_SESSION current version" "$NEXT_SESSION" "^\\*\\*バージョン:\\*\\* v${TARGET_VERSION_PATTERN}$"
 check_file_contains "NEXT_SESSION phase" "$NEXT_SESSION" "v${TARGET_VERSION_PATTERN} Daily-use Beta"
+
+printf '\n%s\n' '--- Release workflow and artifacts ---'
+
+check_github_release_artifacts
 
 printf '\n%s\n' '--- Automated checks ---'
 for check in \
