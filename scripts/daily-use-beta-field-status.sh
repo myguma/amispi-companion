@@ -11,6 +11,8 @@ cd "$ROOT" || exit 1
 CHECKLIST="docs/DAILY_USE_BETA_CHECKLIST.md"
 FIELD_NOTES="docs/FIELD_QA_NOTES.md"
 KNOWN_ISSUES="docs/KNOWN_ISSUES.md"
+TARGET_VERSION="1.6.0"
+TARGET_TAG="v${TARGET_VERSION}"
 
 BLOCKERS=0
 WARNINGS=0
@@ -71,6 +73,54 @@ check_status() {
   fi
 }
 
+check_file_contains() {
+  local label="$1"
+  local file="$2"
+  local pattern="$3"
+  if [[ ! -f "$file" ]]; then
+    blocker "$label missing: $file"
+  elif rg -q "$pattern" "$file"; then
+    pass "$label is set for $TARGET_VERSION"
+  else
+    blocker "$label is not set for $TARGET_VERSION"
+  fi
+}
+
+check_json_version() {
+  local label="$1"
+  local file="$2"
+  if [[ ! -f "$file" ]]; then
+    blocker "$label missing: $file"
+  elif ! command_exists node; then
+    blocker "$label cannot be checked because node is unavailable"
+  else
+    local actual
+    actual="$(node -e "const p=require('./${file}'); process.stdout.write(String(p.version || ''));" 2>/dev/null || true)"
+    if [[ "$actual" == "$TARGET_VERSION" ]]; then
+      pass "$label is $TARGET_VERSION"
+    else
+      blocker "$label is ${actual:-unknown}; expected $TARGET_VERSION"
+    fi
+  fi
+}
+
+check_package_lock_version() {
+  local file="package-lock.json"
+  if [[ ! -f "$file" ]]; then
+    blocker "package-lock.json missing"
+  elif ! command_exists node; then
+    blocker "package-lock.json version cannot be checked because node is unavailable"
+  else
+    local actual
+    actual="$(node -e "const p=require('./package-lock.json'); const root=p.packages && p.packages['']; process.stdout.write(String((p.version || '') + '/' + ((root && root.version) || '')));" 2>/dev/null || true)"
+    if [[ "$actual" == "$TARGET_VERSION/$TARGET_VERSION" ]]; then
+      pass "package-lock.json top/root versions are $TARGET_VERSION"
+    else
+      blocker "package-lock.json top/root versions are ${actual:-unknown}; expected $TARGET_VERSION/$TARGET_VERSION"
+    fi
+  fi
+}
+
 printf '=== AmitySpirit Companion v1.6.0 Field QA Status ===\n\n'
 
 for file in "$CHECKLIST" "$FIELD_NOTES" "$KNOWN_ISSUES"; do
@@ -106,6 +156,24 @@ if command_exists git; then
   fi
 else
   warn "git is unavailable"
+fi
+
+printf '\n%s\n' '--- Release target version ---'
+
+check_json_version "package.json version" "package.json"
+check_package_lock_version
+check_file_contains "Cargo.toml package version" "src-tauri/Cargo.toml" "^version = \"${TARGET_VERSION}\""
+check_file_contains "tauri.conf.json version" "src-tauri/tauri.conf.json" "\"version\": \"${TARGET_VERSION}\""
+
+if command_exists git; then
+  latest_tag="$(git tag --sort=-creatordate | head -1 2>/dev/null || true)"
+  if [[ "$latest_tag" == "$TARGET_TAG" ]]; then
+    pass "latest tag is $TARGET_TAG"
+  elif [[ -z "$latest_tag" ]]; then
+    blocker "latest tag unavailable; expected $TARGET_TAG"
+  else
+    blocker "latest tag is $latest_tag; expected $TARGET_TAG"
+  fi
 fi
 
 printf '\n%s\n' '--- Automated checks ---'
