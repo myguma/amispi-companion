@@ -43,6 +43,7 @@
 ✅ npm run qa:privacy → failures 0 / warnings 4 (global shortcut toggle, future screen/OCR flags, OpenAI API key localStorage field, updater/autostart capabilities)
 ✅ bash -n scripts/daily-use-beta-field-status.sh → passed
 ✅ npm run qa:field-status → correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / Known Issues / gates remain pending
+✅ npm run qa:field-status:smoke → status gate blocks while pending markers remain
 ```
 
 ---
