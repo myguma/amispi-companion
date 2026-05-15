@@ -108,6 +108,17 @@ else
   warn "git is unavailable"
 fi
 
+printf '\n%s\n' '--- Automated checks ---'
+for check in \
+  "\`npm run build\`" \
+  "\`cd src-tauri && cargo build && cd ..\`" \
+  "\`cd src-tauri && cargo test observation::tests -- --nocapture && cd ..\`" \
+  "\`git diff --check\`"
+do
+  status="$(table_status "$CHECKLIST" "$check")"
+  check_status "Automated check" "$check" "$status"
+done
+
 printf '\n%s\n' '--- 7-day residency QA ---'
 for day in 1 2 3 4 5 6 7; do
   status="$(table_status "$CHECKLIST" "Day $day")"
