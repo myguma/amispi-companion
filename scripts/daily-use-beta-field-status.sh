@@ -11,8 +11,11 @@ cd "$ROOT" || exit 1
 CHECKLIST="docs/DAILY_USE_BETA_CHECKLIST.md"
 FIELD_NOTES="docs/FIELD_QA_NOTES.md"
 KNOWN_ISSUES="docs/KNOWN_ISSUES.md"
+NEXT_SESSION="docs/NEXT_SESSION.md"
+CHANGELOG="CHANGELOG.md"
 TARGET_VERSION="1.6.0"
 TARGET_TAG="v${TARGET_VERSION}"
+TARGET_VERSION_PATTERN="${TARGET_VERSION//./\\.}"
 
 BLOCKERS=0
 WARNINGS=0
@@ -123,7 +126,7 @@ check_package_lock_version() {
 
 printf '=== AmitySpirit Companion v1.6.0 Field QA Status ===\n\n'
 
-for file in "$CHECKLIST" "$FIELD_NOTES" "$KNOWN_ISSUES"; do
+for file in "$CHECKLIST" "$FIELD_NOTES" "$KNOWN_ISSUES" "$NEXT_SESSION" "$CHANGELOG"; do
   require_file "$file" || true
 done
 
@@ -175,6 +178,12 @@ if command_exists git; then
     blocker "latest tag is $latest_tag; expected $TARGET_TAG"
   fi
 fi
+
+printf '\n%s\n' '--- Release docs ---'
+
+check_file_contains "CHANGELOG entry" "$CHANGELOG" "^## \\[${TARGET_VERSION_PATTERN}\\]"
+check_file_contains "NEXT_SESSION current version" "$NEXT_SESSION" "^\\*\\*バージョン:\\*\\* v${TARGET_VERSION_PATTERN}$"
+check_file_contains "NEXT_SESSION phase" "$NEXT_SESSION" "v${TARGET_VERSION_PATTERN} Daily-use Beta"
 
 printf '\n%s\n' '--- Automated checks ---'
 for check in \
