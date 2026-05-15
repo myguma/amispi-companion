@@ -99,7 +99,7 @@
 - `bash -n scripts/daily-use-beta-field-status.sh`: passed
 - `bash -n scripts/daily-use-beta-day-note.sh`: passed
 - `npm run qa:day-note -- 3 / -- 5 / -- 7`: Day-specific templates available for Memory v2 / filename samples / comfort QA
-- `npm run qa:field-status`: correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / Product Gates / Privacy Boundary / Known Issues Day 1-7 / critical issue remain pending
+- `npm run qa:field-status`: correctly blocked release readiness while v1.6.0 version files/annotated tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / Product Gates / Privacy Boundary / Known Issues Day 1-7 / critical issue remain pending
 - `npm run qa:field-status:smoke`: passed; status gate blocks while pending markers remain
 - 注意: この確認はDay 1実機QAの代替ではない。Day 1は2時間以上の起動・基本操作・Debug / Diagnostics visibilityの実測記録が必要
 

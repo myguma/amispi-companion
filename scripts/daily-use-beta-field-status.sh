@@ -277,10 +277,18 @@ if command_exists git; then
   latest_tag="$(git tag --sort=-creatordate | head -1 2>/dev/null || true)"
   if [[ "$latest_tag" == "$TARGET_TAG" ]]; then
     pass "latest tag is $TARGET_TAG"
+    tag_type="$(git cat-file -t "$TARGET_TAG" 2>/dev/null || true)"
+    if [[ "$tag_type" == "tag" ]]; then
+      pass "$TARGET_TAG is an annotated tag"
+    else
+      blocker "$TARGET_TAG is not an annotated tag"
+    fi
   elif [[ -z "$latest_tag" ]]; then
     blocker "latest tag unavailable; expected $TARGET_TAG"
+    blocker "$TARGET_TAG annotated tag is unavailable"
   else
     blocker "latest tag is $latest_tag; expected $TARGET_TAG"
+    blocker "$TARGET_TAG annotated tag is unavailable"
   fi
 fi
 
