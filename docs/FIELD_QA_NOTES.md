@@ -97,6 +97,8 @@
   - warning: OpenAI API key is still a settings/localStorage field; verify UI warning and future credential-store migration
   - warning: updater/autostart frontend permissions exist; verify UI-triggered behavior during field QA
 - `bash -n scripts/daily-use-beta-field-status.sh`: passed
+- `bash -n scripts/daily-use-beta-day-note.sh`: passed
+- `npm run qa:day-note -- 3 / -- 5 / -- 7`: Day-specific templates available for Memory v2 / filename samples / comfort QA
 - `npm run qa:field-status`: correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / Product Gates / Privacy Boundary / Known Issues remain pending
 - 注意: この確認はDay 1実機QAの代替ではない。Day 1は2時間以上の起動・基本操作・Debug / Diagnostics visibilityの実測記録が必要
 

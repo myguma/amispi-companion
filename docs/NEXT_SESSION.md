@@ -39,6 +39,7 @@
 ✅ v1.6.0 completion audit → Day 0のみ / goal未完了を確認
 ✅ v1.6.0 Day 1 readiness recheck → npm run build / cargo build / cargo test / git diff --check passed
 ✅ npm run qa:day-note -- 1 → Day 1 note template helper available
+✅ npm run qa:day-note -- 3/5/7 → Day-specific Memory / filename samples / comfort templates available
 ✅ npm run qa:privacy → failures 0 / warnings 4 (global shortcut toggle, future screen/OCR flags, OpenAI API key localStorage field, updater/autostart capabilities)
 ✅ bash -n scripts/daily-use-beta-field-status.sh → passed
 ✅ npm run qa:field-status → correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / gates remain pending

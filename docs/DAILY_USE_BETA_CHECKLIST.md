@@ -71,6 +71,8 @@ v1.6.0 release候補ごとに必ず実行する。
 npm run qa:day-note -- 1
 ```
 
+Day 2〜7 も同じコマンドで各日の重点項目に合わせたテンプレートを表示できる。
+
 ```md
 ### v1.6.0 Daily-use QA Day N
 
