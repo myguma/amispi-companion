@@ -66,9 +66,9 @@ v1.6.0 Daily-use Beta では、以下を実機で確認する。
 | Product Gates がすべて passed または許容済み | checklist remains pending | pending |
 | Privacy Boundary Regression Checks がすべて passed | checklist remains pending | pending |
 | critical issueが残っていない | no preflight critical issue; field QA not performed | weakly verified |
-| `npm run build` 成功 | last passed for v1.5.4; v1.6.0 candidate not cut | pending for v1.6.0 |
-| `cargo build` 成功 | last passed for v1.5.4; v1.6.0 candidate not cut | pending for v1.6.0 |
-| `git diff --check` 成功 | clean before Day 0 docs commit; rerun before release | pending for v1.6.0 |
+| `npm run build` 成功 | passed on 2026-05-15 for Day 1 readiness; v1.6.0 candidate not cut | weakly verified |
+| `cargo build` 成功 | passed on 2026-05-15 for Day 1 readiness; v1.6.0 candidate not cut | weakly verified |
+| `git diff --check` 成功 | clean on 2026-05-15 for Day 1 readiness; rerun before release | weakly verified |
 | main push成功 | latest docs commits pushed | passed |
 | annotated tag push成功 | latest tag is v1.5.4; no v1.6.0 tag | pending |
 | Release workflow success確認 | v1.5.4 success; no v1.6.0 release | pending |

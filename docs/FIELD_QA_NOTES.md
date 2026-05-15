@@ -81,6 +81,17 @@
 - filename samples 明示ON/OFFと非保存/非送信境界
 - UI comfort / speech quality / critical issueなし
 
+### Day 1 readiness automated recheck
+
+- 日付: 2026-05-15
+- 実行内容: Day 1 実機QA前の作業台確認
+- `npm run build`: passed
+- `cargo build`: passed
+- `git diff --check`: clean
+- working tree: clean
+- main / origin/main: match
+- 注意: この確認はDay 1実機QAの代替ではない。Day 1は2時間以上の起動・基本操作・Debug / Diagnostics visibilityの実測記録が必要
+
 ### Day 1 / 起動・基本操作・Debug / Diagnostics visibility 記録欄
 
 Day 1 は、この欄を埋めるまで passed 扱いにしない。

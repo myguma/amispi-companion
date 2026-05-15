@@ -37,6 +37,7 @@
 ✅ Updater artifact → latest.json
 ✅ v1.6.0 field QA preflight → failures 0 / warnings 0 (2026-05-15)
 ✅ v1.6.0 completion audit → Day 0のみ / goal未完了を確認
+✅ v1.6.0 Day 1 readiness recheck → npm run build / cargo build / git diff --check passed
 ```
 
 ---
