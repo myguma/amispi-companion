@@ -87,6 +87,7 @@
 - 実行内容: Day 1 実機QA前の作業台確認
 - `npm run build`: passed
 - `cargo build`: passed
+- `cargo test`: passed (3 passed / 0 failed)
 - `git diff --check`: clean
 - working tree: clean
 - main / origin/main: match
