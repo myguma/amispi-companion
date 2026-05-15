@@ -76,6 +76,17 @@ check_status() {
   fi
 }
 
+field_day_has_pattern() {
+  local day="$1"
+  local pattern="$2"
+  awk -v day="$day" -v pattern="$pattern" '
+    $0 == "### v1.6.0 Daily-use QA Day " day { in_section=1; next }
+    /^### / && in_section { exit }
+    in_section && $0 ~ pattern { found=1 }
+    END { exit found ? 0 : 1 }
+  ' "$FIELD_NOTES"
+}
+
 check_file_contains() {
   local label="$1"
   local file="$2"
@@ -301,11 +312,21 @@ for day in 1 2 3 4 5 6 7; do
 done
 
 for day in 1 2 3 4 5 6 7; do
-  if grep -q "Day ${day}判定: passed" "$FIELD_NOTES"; then
+  if ! field_day_has_pattern "$day" "^- 日付:[[:space:]]*[^[:space:]]"; then
+    blocker "FIELD_QA_NOTES Day ${day} dated section evidence not found"
+  fi
+
+  if field_day_has_pattern "$day" "^- 実行時間:[[:space:]]*(([2-9][[:space:]]*h)|([2-9]時間)|([1-9][0-9]{2,}分))"; then
+    pass "FIELD_QA_NOTES Day ${day} execution time is recorded as 2h+"
+  else
+    blocker "FIELD_QA_NOTES Day ${day} 2h+ execution time evidence not found"
+  fi
+
+  if field_day_has_pattern "$day" "^- Day ${day}判定:[[:space:]]*passed"; then
     pass "FIELD_QA_NOTES Day ${day}判定 is passed"
-  elif grep -q "Day ${day}判定: pending" "$FIELD_NOTES"; then
+  elif field_day_has_pattern "$day" "^- Day ${day}判定:[[:space:]]*pending"; then
     blocker "FIELD_QA_NOTES Day ${day}判定 is still pending"
-  elif grep -q "Day ${day}判定: failed" "$FIELD_NOTES"; then
+  elif field_day_has_pattern "$day" "^- Day ${day}判定:[[:space:]]*failed"; then
     blocker "FIELD_QA_NOTES Day ${day}判定 is failed"
   else
     blocker "FIELD_QA_NOTES Day ${day}判定 evidence not found"

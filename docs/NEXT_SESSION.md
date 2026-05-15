@@ -41,7 +41,7 @@
 ✅ npm run qa:day-note -- 1 → Day 1 note template helper available
 ✅ npm run qa:privacy → failures 0 / warnings 4 (global shortcut toggle, future screen/OCR flags, OpenAI API key localStorage field, updater/autostart capabilities)
 ✅ bash -n scripts/daily-use-beta-field-status.sh → passed
-✅ npm run qa:field-status → correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 evidence / gates remain pending
+✅ npm run qa:field-status → correctly blocked release readiness while v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / gates remain pending
 ```
 
 ---
@@ -180,7 +180,7 @@
 ## 次に着手する候補
 
 - v1.6.0 Daily-use Beta Day 1: `npm run qa:day-note -- 1` で記録テンプレートを確認し、2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認して `docs/FIELD_QA_NOTES.md` のDay 1記録欄を埋める
-- v1.6.0 release判断前: `npm run qa:field-status` を実行し、v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 evidence / Product Gates / Privacy Boundary / Known Issues のpendingが残っていないことを確認する
+- v1.6.0 release判断前: `npm run qa:field-status` を実行し、v1.6.0 version files/tag / release docs / Release workflow/artifacts / Automated Checks / Day 1-7 2h evidence / Product Gates / Privacy Boundary / Known Issues のpendingが残っていないことを確認する
 - v1.5.x hotfix: Day 1以降のfield QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 
 ## v1.4.0 実装詳細

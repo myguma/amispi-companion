@@ -93,7 +93,7 @@ npm run qa:day-note -- 1
 
 ### Field QA status gate
 
-現在のQA通過状態は以下で確認できる。このコマンドはread-onlyで、v1.6.0 version files/tag、release docs、Release workflow/artifacts、Automated Checks、Day 1〜7、日次記録の `Day N判定`、Product Gates、Privacy Boundary Regression Checks、Known Issues の pending を検出する。
+現在のQA通過状態は以下で確認できる。このコマンドはread-onlyで、v1.6.0 version files/tag、release docs、Release workflow/artifacts、Automated Checks、Day 1〜7、日次記録の `Day N判定` と2時間以上の実行時間、Product Gates、Privacy Boundary Regression Checks、Known Issues の pending を検出する。
 実機QAが揃うまでは非ゼロ終了するのが正しい挙動であり、QAをpassed扱いにしない。
 
 ```bash
