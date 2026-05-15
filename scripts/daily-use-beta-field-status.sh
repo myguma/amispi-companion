@@ -124,6 +124,24 @@ check_package_lock_version() {
   fi
 }
 
+check_cargo_lock_version() {
+  local file="src-tauri/Cargo.lock"
+  if [[ ! -f "$file" ]]; then
+    blocker "Cargo.lock missing: $file"
+  else
+    local actual
+    actual="$(awk '
+      $0 == "name = \"amispi-companion\"" { found=1; next }
+      found && /^version = / { gsub(/"/, "", $3); print $3; exit }
+    ' "$file")"
+    if [[ "$actual" == "$TARGET_VERSION" ]]; then
+      pass "Cargo.lock package version is $TARGET_VERSION"
+    else
+      blocker "Cargo.lock package version is ${actual:-unknown}; expected $TARGET_VERSION"
+    fi
+  fi
+}
+
 check_github_release_artifacts() {
   if [[ "${latest_tag:-}" != "$TARGET_TAG" ]]; then
     blocker "release workflow not checked because latest tag is not $TARGET_TAG"
@@ -241,6 +259,7 @@ printf '\n%s\n' '--- Release target version ---'
 check_json_version "package.json version" "package.json"
 check_package_lock_version
 check_file_contains "Cargo.toml package version" "src-tauri/Cargo.toml" "^version = \"${TARGET_VERSION}\""
+check_cargo_lock_version
 check_file_contains "tauri.conf.json version" "src-tauri/tauri.conf.json" "\"version\": \"${TARGET_VERSION}\""
 
 if command_exists git; then
