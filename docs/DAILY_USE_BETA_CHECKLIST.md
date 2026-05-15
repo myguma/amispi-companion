@@ -65,6 +65,12 @@ v1.6.0 release候補ごとに必ず実行する。
 
 ### 日次記録テンプレート
 
+テンプレートは以下でも表示できる。このコマンドはread-onlyで、docsを編集せず、QAをpassed扱いにしない。
+
+```bash
+npm run qa:day-note -- 1
+```
+
 ```md
 ### v1.6.0 Daily-use QA Day N
 

@@ -38,6 +38,7 @@
 ✅ v1.6.0 field QA preflight → failures 0 / warnings 0 (2026-05-15)
 ✅ v1.6.0 completion audit → Day 0のみ / goal未完了を確認
 ✅ v1.6.0 Day 1 readiness recheck → npm run build / cargo build / git diff --check passed
+✅ npm run qa:day-note -- 1 → Day 1 note template helper available
 ```
 
 ---
@@ -175,7 +176,7 @@
 
 ## 次に着手する候補
 
-- v1.6.0 Daily-use Beta Day 1: 2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認し、`docs/FIELD_QA_NOTES.md` のDay 1記録欄を埋める
+- v1.6.0 Daily-use Beta Day 1: `npm run qa:day-note -- 1` で記録テンプレートを確認し、2時間以上の起動・基本操作・Debug / Diagnostics visibilityを実機確認して `docs/FIELD_QA_NOTES.md` のDay 1記録欄を埋める
 - v1.5.x hotfix: Day 1以降のfield QAでsamples表示・権限境界・非保存/非送信・QA gate不備が出た場合の最小修正
 
 ## v1.4.0 実装詳細
