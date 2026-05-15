@@ -106,6 +106,51 @@ else
   pass "no true raw external payload send flags found"
 fi
 
+printf '\n%s\n' '--- OpenAI API key boundary ---'
+
+KEY_MEMORY_REFS="$(rg -n "openaiApiKey|apiKey|Authorization|Bearer" src/systems/memory src/settings/pages/MemoryPage.tsx || true)"
+if [[ -n "$KEY_MEMORY_REFS" ]]; then
+  printf '%s\n' "$KEY_MEMORY_REFS"
+  fail "OpenAI API key reference found in memory/export implementation"
+else
+  pass "no OpenAI API key references found in memory/export implementation"
+fi
+
+AUTH_REFS="$(rg -n "Authorization.*Bearer|Bearer \\\$\\{" src src-tauri \
+  --glob '!src-tauri/gen/**' \
+  --glob '!src-tauri/target/**' \
+  --glob '!src-tauri/Cargo.lock' || true)"
+if [[ -z "$AUTH_REFS" ]]; then
+  warn "no Authorization Bearer reference found; verify OpenAI provider transport did not move"
+else
+  printf '%s\n' "$AUTH_REFS"
+  BAD_AUTH_REFS="$(printf '%s\n' "$AUTH_REFS" | rg -v "src/companion/ai/OpenAIProvider\.ts" || true)"
+  if [[ -n "$BAD_AUTH_REFS" ]]; then
+    printf '%s\n' "$BAD_AUTH_REFS"
+    fail "Authorization Bearer reference outside OpenAIProvider"
+  else
+    pass "Authorization Bearer reference is limited to OpenAIProvider"
+  fi
+fi
+
+if rg -n "console\.(log|warn|error|debug).*openaiApiKey|console\.(log|warn|error|debug).*apiKey|openaiApiKey.*console\." src \
+  --glob '!src-tauri/gen/**' \
+  --glob '!src-tauri/target/**'; then
+  fail "possible OpenAI API key logging reference found"
+else
+  pass "no obvious OpenAI API key console logging references found"
+fi
+
+if rg -n "openaiApiKey" src/settings/defaults.ts src/settings/types.ts src/settings/pages/AIPage.tsx; then
+  warn "OpenAI API key is still a settings/localStorage field; verify UI warning and future credential-store migration"
+fi
+
+if rg -n "API key は現在 .*localStorage に平文保存|raw ファイル名・ウィンドウタイトル・transcript 履歴は送りません" src/settings/pages/AIPage.tsx; then
+  pass "OpenAI settings UI includes localStorage and raw payload boundary warning text"
+else
+  fail "OpenAI settings UI warning text not found"
+fi
+
 printf '\n%s\n' '--- Tauri capability permissions ---'
 
 if rg -n "\"(fs|shell|http|clipboard|global-shortcut):" src-tauri/capabilities; then
