@@ -115,6 +115,12 @@ npm run qa:day-note -- 1
 
 以下が1つでも崩れたら v1.6.0 へ進まない。
 
+実機確認の補助として、source上の明白な禁止API参照は以下でread-only確認できる。このコマンドはfield QAをpassed扱いにしない。
+
+```bash
+npm run qa:privacy
+```
+
 | 境界 | 状態 | 通過条件 |
 |---|---|---|
 | 常時マイク監視なし | pending | Push-to-Talk以外で録音しない |

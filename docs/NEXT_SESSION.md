@@ -39,6 +39,7 @@
 ✅ v1.6.0 completion audit → Day 0のみ / goal未完了を確認
 ✅ v1.6.0 Day 1 readiness recheck → npm run build / cargo build / cargo test / git diff --check passed
 ✅ npm run qa:day-note -- 1 → Day 1 note template helper available
+✅ npm run qa:privacy → failures 0 / warnings 2 (global shortcut toggle and future screen/OCR setting flags)
 ```
 
 ---
