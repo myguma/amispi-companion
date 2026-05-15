@@ -90,6 +90,15 @@ npm run qa:day-note -- 1
 - 次の対応:
 ```
 
+### Field QA status gate
+
+現在のQA通過状態は以下で確認できる。このコマンドはread-onlyで、Day 1〜7、Product Gates、Privacy Boundary Regression Checks、Known Issues の pending を検出する。
+実機QAが揃うまでは非ゼロ終了するのが正しい挙動であり、QAをpassed扱いにしない。
+
+```bash
+npm run qa:field-status
+```
+
 ## Product Gates
 
 | Gate | 状態 | 通過条件 |

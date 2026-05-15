@@ -70,6 +70,7 @@ v1.6.0 Daily-use Beta では、以下を実機で確認する。
 | `cargo build` 成功 | passed on 2026-05-15 for Day 1 readiness; v1.6.0 candidate not cut | weakly verified |
 | `cargo test` 成功 | passed on 2026-05-15 for Day 1 readiness; 3 passed / 0 failed | weakly verified |
 | `npm run qa:privacy` 成功 | failures 0 / warnings 4; warnings require field verification | weakly verified |
+| `npm run qa:field-status` 成功 | correctly blocks release readiness while Day 1-7 / gates remain pending | pending |
 | `git diff --check` 成功 | clean on 2026-05-15 for Day 1 readiness; rerun before release | weakly verified |
 | main push成功 | latest docs commits pushed | passed |
 | annotated tag push成功 | latest tag is v1.5.4; no v1.6.0 tag | pending |

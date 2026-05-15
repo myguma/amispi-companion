@@ -10,6 +10,7 @@
     "qa:preflight": "bash scripts/daily-use-beta-preflight.sh",
     "qa:day-note": "bash scripts/daily-use-beta-day-note.sh",
     "qa:privacy": "bash scripts/privacy-boundary-audit.sh",
+    "qa:field-status": "bash scripts/daily-use-beta-field-status.sh",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
