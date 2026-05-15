@@ -1,6 +1,6 @@
 # v1.6.0 Daily-use Beta Checklist
 
-**最終更新: 2026-05-15 (v1.6.0 field QA preflight)**
+**最終更新: 2026-05-15 (v1.6.0 field QA Day 1 ready)**
 
 このチェックリストは、v1.6.0 Daily-use Beta を release してよいかを判断するための実機QA runbookである。
 v1.5.2時点では、このチェックリストは準備完了を示すだけで、実機QA通過を意味しない。
