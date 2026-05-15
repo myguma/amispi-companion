@@ -64,6 +64,7 @@ EOF
 - fallback reason visibility:
 - crash / freeze:
 - critical issue:
+- Day 2判定: pending / passed / failed
 - 次の対応:
 EOF
     ;;
@@ -84,6 +85,7 @@ EOF
 - filename samples:
 - 気になった発話:
 - critical issue:
+- Day ${DAY}判定: pending / passed / failed
 - 次の対応:
 EOF
     ;;

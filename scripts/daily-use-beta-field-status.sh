@@ -300,13 +300,17 @@ for day in 1 2 3 4 5 6 7; do
   check_status "7-day residency QA" "Day $day" "$status"
 done
 
-if grep -q "Day 1判定: pending" "$FIELD_NOTES"; then
-  blocker "FIELD_QA_NOTES Day 1判定 is still pending"
-elif grep -q "Day 1判定: passed" "$FIELD_NOTES"; then
-  pass "FIELD_QA_NOTES Day 1判定 is passed"
-else
-  warn "FIELD_QA_NOTES Day 1判定 not found"
-fi
+for day in 1 2 3 4 5 6 7; do
+  if grep -q "Day ${day}判定: passed" "$FIELD_NOTES"; then
+    pass "FIELD_QA_NOTES Day ${day}判定 is passed"
+  elif grep -q "Day ${day}判定: pending" "$FIELD_NOTES"; then
+    blocker "FIELD_QA_NOTES Day ${day}判定 is still pending"
+  elif grep -q "Day ${day}判定: failed" "$FIELD_NOTES"; then
+    blocker "FIELD_QA_NOTES Day ${day}判定 is failed"
+  else
+    blocker "FIELD_QA_NOTES Day ${day}判定 evidence not found"
+  fi
+done
 
 printf '\n%s\n' '--- Product gates ---'
 for gate in \
